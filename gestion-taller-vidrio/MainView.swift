@@ -3,74 +3,68 @@ import Combine
 
 struct MainView: View {
     
-    // --- INICIO DE LA CORRECCIÓN ---
-    
-    // 1. Declaramos las propiedades. MainView POSEE ambos VMs.
+    // StateObjects (Dueños de los datos)
     @StateObject private var dashboardViewModel: DashboardViewModel
     @StateObject private var cajaViewModel: CajaViewModel
+    
+    // --- CAMBIO 1: Elevamos CronogramaViewModel ---
+    @StateObject private var cronogramaViewModel = CronogramaViewModel()
+    
+    // --- CAMBIO 2: Inyectamos el Manager de Navegación ---
+    @StateObject private var navManager = NavigationManager()
 
-    // 2. Implementamos el init() para la inyección de dependencias
     init() {
-        // 3. Creamos el VM "Fuente" (Dashboard) primero, como variable local
         let dashboardVM = DashboardViewModel()
         
-        // 4. Creamos el VM "Dependiente" (Caja) usando los publicadores del primero
         let cajaVM = CajaViewModel(
             fechaInicioPublisher: dashboardVM.$fechaInicio.eraseToAnyPublisher(),
             fechaFinPublisher: dashboardVM.$fechaFin.eraseToAnyPublisher()
         )
         
-        // 5. Asignamos las variables locales a las propiedades @StateObject.
-        //    Esta es la sintaxis correcta para inicializar @StateObject
-        //    dentro de un init y resuelve el error "'self' used...".
         _dashboardViewModel = StateObject(wrappedValue: dashboardVM)
         _cajaViewModel = StateObject(wrappedValue: cajaVM)
+        // Cronograma y NavManager se inicializan vacíos arriba, es válido.
     }
-    // --- FIN DE LA CORRECCIÓN ---
     
     var body: some View {
-        TabView {
+        // Enlazamos la selección del Tab con el Manager
+        TabView(selection: $navManager.selectedTab) {
+            
             // Pestaña 1: Inicio
             NavigationStack {
-                // Pasamos el VM que POSEEMOS
                 DashboardView(viewModel: dashboardViewModel)
             }
-            .tabItem {
-                Label("Inicio", systemImage: "house")
-            }
+            .tabItem { Label("Inicio", systemImage: "house") }
+            .tag(AppTab.inicio) // Usamos el enum
 
             // Pestaña 2: Cronograma
-            NavigationStack {
-                CronogramaView()
-            }
-            .tabItem {
-                Label("Cronograma", systemImage: "calendar")
-            }
+            // NOTA: CronogramaView ahora recibe el path y el VM
+            CronogramaView(viewModel: cronogramaViewModel)
+                .tabItem { Label("Cronograma", systemImage: "calendar") }
+                .tag(AppTab.cronograma)
 
             // Pestaña 3: Pedidos
             NavigationStack {
                 PedidosView()
             }
-            .tabItem {
-                Label("Pedidos", systemImage: "tray.and.arrow.down.fill")
-            }
+            .tabItem { Label("Pedidos", systemImage: "tray.and.arrow.down.fill") }
+            .tag(AppTab.pedidos)
 
             // Pestaña 4: Caja
             NavigationStack {
-                // Pasamos el VM que POSEEMOS
                 CajaView(viewModel: cajaViewModel)
             }
-            .tabItem {
-                Label("Caja", systemImage: "dollarsign.circle")
-            }
+            .tabItem { Label("Caja", systemImage: "dollarsign.circle") }
+            .tag(AppTab.caja)
 
             // Pestaña 5: Gestión
             NavigationStack {
                 GestionView()
             }
-            .tabItem {
-                Label("Gestión", systemImage: "gearshape")
-            }
+            .tabItem { Label("Gestión", systemImage: "gearshape") }
+            .tag(AppTab.gestion)
         }
+        // Inyectamos el navManager al árbol de vistas para que Dashboard pueda usarlo
+        .environmentObject(navManager)
     }
 }

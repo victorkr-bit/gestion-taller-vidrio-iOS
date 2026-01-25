@@ -1,7 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct CronogramaItem: Codable, Identifiable {
+struct CronogramaItem: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     var cursoId: String
     var cursoNombre: String
@@ -17,5 +17,15 @@ struct CronogramaItem: Codable, Identifiable {
     // Computed property defensiva para la UI
     var inscriptosReales: Int {
         return cant_inscriptos ?? 0
+    }
+    
+    // Implementación de Hashable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(cursoId)
+    }
+
+    static func == (lhs: CronogramaItem, rhs: CronogramaItem) -> Bool {
+        return lhs.id == rhs.id && lhs.cursoId == rhs.cursoId
     }
 }
