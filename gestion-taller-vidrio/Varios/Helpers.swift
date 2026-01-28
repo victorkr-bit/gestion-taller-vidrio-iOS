@@ -245,7 +245,8 @@ extension Pedido {
             "descripcion": descripcion,
             "presupuesto": presupuesto,
             "tipo": tipo.rawValue,
-            "fecha": isoFormatter.string(from: fecha)
+            "fecha": isoFormatter.string(from: fecha),
+            "estado_entrega": estado_entrega
             // NOTA CRÍTICA: NO enviamos 'monto_adeudado' ni 'monto_abonado'.
             // La Cloud Function 'actualizarPedido' se encarga de calcular eso
             // para evitar inconsistencias financieras.
