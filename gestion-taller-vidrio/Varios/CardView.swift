@@ -17,9 +17,6 @@ struct CardView<Content: View>: View {
             .padding() // Padding interno para el contenido
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                // Tarea 1.6.3: Usamos colores semánticos
-                // .background es obsoleto, usamos la nueva forma
-                // que respeta el modo oscuro/claro automáticamente.
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(uiColor: .secondarySystemGroupedBackground))
             )

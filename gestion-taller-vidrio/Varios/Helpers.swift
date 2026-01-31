@@ -216,41 +216,5 @@ struct SelectorContactoView: View {
     }
 }
 
-extension Pedido {
-    
-    // 1. Payload para CREAR (Se usa en createPedidoRemote)
-    // Manda todos los datos necesarios para inicializar el pedido
-    var asCloudPayload: [String: Any] {
-        return [
-            // "id": No lo mandamos porque lo genera Firebase o la Cloud Function
-            "clienteId": cliente_id,
-            "clienteNombre": cliente_nombre,
-            "descripcion": descripcion,
-            "presupuesto": presupuesto,
-            "tipo": tipo.rawValue, // Importante: Mandar el String, no el Enum
-            // La fecha la puede poner el servidor, o la mandamos nosotros formateada:
-            "fecha": ISO8601DateFormatter().string(from: fecha)
-        ]
-    }
-    
-    // 2. Payload para ACTUALIZAR (Se usa en updatePedidoRemote)
-    // Solo manda los campos que permitimos editar desde la App + el ID
-    var updatePayload: [String: Any] {
-        // Usamos un formatter ISO8601 estándar
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
-        return [
-            "cliente_nombre": cliente_nombre,
-            "descripcion": descripcion,
-            "presupuesto": presupuesto,
-            "tipo": tipo.rawValue,
-            "fecha": isoFormatter.string(from: fecha),
-            "estado_entrega": estado_entrega
-            // NOTA CRÍTICA: NO enviamos 'monto_adeudado' ni 'monto_abonado'.
-            // La Cloud Function 'actualizarPedido' se encarga de calcular eso
-            // para evitar inconsistencias financieras.
-        ]
-    }
-}
+
 

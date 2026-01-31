@@ -10,7 +10,7 @@ class DashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // MARK: - Filtros de Fecha (RESTAURADOS)
+    // MARK: - Filtros de Fecha
     // Usamos didSet para recargar los datos cuando el usuario cambia la fecha en MainView
     @Published var fechaInicio: Date = Date() {
         didSet { refreshData() }
@@ -23,10 +23,12 @@ class DashboardViewModel: ObservableObject {
     // MARK: - KPIs Financieros
     @Published var totalIngresosMes: Double = 0.0
     @Published var totalDeuda: Double = 0.0
-    @Published var pagosDelMes: [Pago] = [] // Para gráfico de torta
+    @Published var pagosDelMes: [Pago] = [] // Para gráfico de barras
     
     // MARK: - KPIs Operativos
     @Published var proximaClase: CronogramaItem? = nil
+    // NUEVO: Datos para el gráfico de ocupación por hora
+    @Published var ocupacionTaller: [OcupacionHoraDato] = []
     
     // Listeners
     private var metricasListener: ListenerRegistration?
@@ -42,18 +44,28 @@ class DashboardViewModel: ObservableObject {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.tallerRepo = tallerRepo ?? TallerRepository()
         
-        // Configuración inicial de fechas: Todo el mes actual por defecto
+        // Configuración inicial de fechas (ROBUSTA)
         let calendar = Calendar.current
         let now = Date()
         
-        // Inicio del mes
-        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
+        // 1. Calcular Inicio del Mes (Forzando día 1)
+        var components = calendar.dateComponents([.year, .month], from: now)
+        components.day = 1
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        let startOfMonth = calendar.date(from: components) ?? now
         self.fechaInicio = startOfMonth
         
-        // Fin del mes (calculado sumando 1 mes y restando 1 día)
-        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) ?? now
-        // Ajustamos al final del día (23:59:59)
-        self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: endOfMonth) ?? endOfMonth
+        // 2. Calcular Fin del Mes
+        if let nextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) {
+            let endOfMonth = calendar.date(byAdding: .day, value: -1, to: nextMonth) ?? now
+            // Ajustamos al final del día (23:59:59)
+            self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: endOfMonth) ?? endOfMonth
+        } else {
+            self.fechaFin = now
+        }
         
         // Iniciamos listeners
         setupListeners()
@@ -67,7 +79,7 @@ class DashboardViewModel: ObservableObject {
     func setupListeners() {
         isLoading = true
         
-        // 1. Escuchar Métricas Globales (Deuda Total - Siempre es histórica, no depende del filtro de fecha)
+        // 1. Escuchar Métricas Globales (Deuda Total)
         metricasListener?.remove()
         metricasListener = finanzasRepo.listenToMetricas { [weak self] result in
             guard let self = self else { return }
@@ -79,7 +91,7 @@ class DashboardViewModel: ObservableObject {
             }
         }
         
-        // 2. Escuchar Pagos (Depende de fechaInicio y fechaFin)
+        // 2. Escuchar Pagos (Filtrado por fechas)
         pagosListener?.remove()
         
         // Aseguramos que fechaFin cubra hasta el último segundo del día seleccionado
@@ -96,16 +108,50 @@ class DashboardViewModel: ObservableObject {
             }
         }
         
-        // 3. Obtener Próxima Clase
+        // 3. Obtener Próxima Clase y Calcular Ocupación
+        loadProximaClase()
+    }
+    
+    // Función separada para la lógica asíncrona de agenda
+    private func loadProximaClase() {
         Task {
             do {
                 let proximos = try await tallerRepo.fetchCursosProximos()
-                self.proximaClase = proximos.first
+                
+                if let primera = proximos.first {
+                    self.proximaClase = primera
+                    
+                    // LÓGICA DE OCUPACIÓN:
+                    // Si es un Taller y tiene ID, calculamos la ocupación por hora
+                    if primera.cursoTipo == .taller, let id = primera.id {
+                        await loadOcupacion(cronogramaId: id)
+                    } else {
+                        // Si es Online o Presencial (sin turnos), limpiamos el gráfico
+                        self.ocupacionTaller = []
+                    }
+                } else {
+                    self.proximaClase = nil
+                    self.ocupacionTaller = []
+                }
+                
                 self.isLoading = false
             } catch {
                 self.errorMessage = "Error cargando agenda: \(error.localizedDescription)"
                 self.isLoading = false
             }
+        }
+    }
+    
+    // Función auxiliar para calcular ocupación específica
+    private func loadOcupacion(cronogramaId: String) async {
+        do {
+            let inscripciones = try await tallerRepo.fetchInscripciones(cronogramaID: cronogramaId)
+            // Usamos el helper matemático TallerCalculator
+            let datosGrafico = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
+            self.ocupacionTaller = datosGrafico
+        } catch {
+            print("Error calculando ocupación: \(error)")
+            self.ocupacionTaller = []
         }
     }
     

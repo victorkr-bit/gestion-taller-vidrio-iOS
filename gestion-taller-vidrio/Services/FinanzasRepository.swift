@@ -9,11 +9,11 @@ final class FinanzasRepository {
     private let functions = FirestoreManager.shared.functions
     
     // Formateador de fecha para enviar a Cloud Functions (ISO 8601)
-    private let isoDateFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
+    //    private let isoDateFormatter: ISO8601DateFormatter = {
+    //        let formatter = ISO8601DateFormatter()
+    //        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    //        return formatter
+    //    }()
     
     // MARK: - Pagos (Lectura)
     
@@ -107,7 +107,7 @@ final class FinanzasRepository {
             "monto": pago.monto,
             "medio_de_pago": pago.medio_de_pago.rawValue,
             "notas": pago.notas ?? "",
-            "fecha": isoDateFormatter.string(from: pago.fecha),
+            "fecha": Formatters.iso8601.string(from: pago.fecha),
             "descripcion": pago.descripcion_origen,
             "tipo_venta": pago.tipo_venta.rawValue
         ]
@@ -142,7 +142,7 @@ final class FinanzasRepository {
         
         let nuevosDatos: [String: Any] = [
             "monto": pagoActualizado.monto,
-            "fecha": isoDateFormatter.string(from: pagoActualizado.fecha),
+            "fecha": Formatters.iso8601.string(from: pagoActualizado.fecha),
             "medio_de_pago": pagoActualizado.medio_de_pago.rawValue,
             "notas": pagoActualizado.notas ?? "",
             "descripcion": pagoActualizado.descripcion_origen,
@@ -184,7 +184,7 @@ final class FinanzasRepository {
             "monto": pago.monto,
             "medio_de_pago": pago.medio_de_pago.rawValue,
             "notas": pago.notas ?? "",
-            "fecha": isoDateFormatter.string(from: pago.fecha),
+            "fecha": Formatters.iso8601.string(from: pago.fecha),
             "cliente_nombre": pago.cliente_nombre,
             "tipo_venta": pago.tipo_venta.rawValue
         ]

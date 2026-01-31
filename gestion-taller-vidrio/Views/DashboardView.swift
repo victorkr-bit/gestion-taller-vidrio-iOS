@@ -7,15 +7,6 @@ struct DashboardView: View {
     // Inyectamos el Manager para poder cambiar de pestaña al hacer click
     @EnvironmentObject var navManager: NavigationManager
     
-    // Formateador de moneda SIN DECIMALES (Punto 3)
-    private let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.locale = Locale(identifier: "es_AR")
-        formatter.maximumFractionDigits = 0 // Sin decimales
-        return formatter
-    }()
-    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -41,84 +32,83 @@ struct DashboardView: View {
                 .cornerRadius(10)
                 
                 // MARK: - Tarjetas de Resumen (KPIs)
-                // Punto 1: Mismo tamaño usando maxWidth: .infinity
                 HStack(spacing: 15) {
-                    kpiCard(
-                        title: "Ingresos",
-                        value: viewModel.totalIngresosMes,
+                    KpiCardView(
+                        titulo: "Ingresos",
+                        valor: viewModel.totalIngresosMes,
                         icon: "arrow.up.circle.fill",
-                        color: .green
+                        color: .blue
                     )
                     
-                    kpiCard(
-                        title: "Deuda Total",
-                        value: viewModel.totalDeuda,
+                    KpiCardView(
+                        titulo: "Deuda Total",
+                        valor: viewModel.totalDeuda,
                         icon: "exclamationmark.circle.fill",
                         color: .red
                     )
                 }
                 .padding(.horizontal)
                 
-                // MARK: - Próxima Actividad (Clickeable)
-                VStack(alignment: .leading) {
+                // MARK: - Próxima Actividad
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Próxima Actividad")
-                        .font(.headline)
+                        .font(.title2)
+                        .fontWeight(.semibold)
                         .padding(.horizontal)
                     
-                    if let clase = viewModel.proximaClase {
+                    if let actividad = viewModel.proximaClase {
+                        // 1. Tarjeta Clickeable
                         Button {
-                            // Punto 4: Ir al Tab de Cronograma
                             navManager.selectedTab = .cronograma
-                            navManager.cronogramaPath.append(clase)
+                            navManager.cronogramaPath.append(actividad)
                         } label: {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(clase.cursoNombre)
-                                        .font(.title3)
-                                        .bold()
-                                        .foregroundColor(.primary)
-                                    Text(clase.fecha.formatted(date: .abbreviated, time: .shortened))
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                VStack(alignment: .trailing) {
-                                    Text(clase.cursoTipo.rawValue)
-                                        .font(.caption)
-                                        .padding(5)
-                                        .background(Color.blue.opacity(0.1))
-                                        .cornerRadius(5)
-                                        .foregroundColor(.blue)
-                                    
-                                    Text("\(clase.inscriptosReales) inscriptos")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
+                            CardView {
+                                GenericRowView(
+                                    titulo: actividad.cursoNombre,
+                                    subtitulo: nil, //actividad.cursoTipo.descripcion.uppercased(),
+                                    infoSuperior: Formatters.date(actividad.fecha),
+                                    infoSuperiorSecundaria: nil, //Formatters.time(actividad.fecha),
+                                    iconoSuperior: "calendar",
+                                    monto: nil,
+                                    tags: [
+                                        TagConfig(
+                                            text: "Inscriptos: \(actividad.inscriptosReales)",
+                                            color: .blue
+                                        )
+                                    ]
+                                )
                             }
-                            .padding()
-                            .background(Color(.systemBackground))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                         }
+                        .buttonStyle(.plain)
                         .padding(.horizontal)
                         
+                        // 2. Gráfico de Ocupación (Solo si es Taller y hay datos)
+                        if actividad.cursoTipo == .taller && !viewModel.ocupacionTaller.isEmpty {
+                            ocupacionChart
+                        }
+                        
                     } else {
+                        // Estado Vacío
                         HStack {
                             Spacer()
-                            Text("No hay actividades programadas")
-                                .foregroundColor(.secondary)
-                                .padding()
+                            VStack(spacing: 8) {
+                                Image(systemName: "calendar.badge.clock")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.tertiary)
+                                Text("No hay actividades próximas.")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 20)
                             Spacer()
                         }
                     }
                 }
                 
-                // MARK: - Gráfico de Ingresos por Tipo
+                // MARK: - Gráfico de Ingresos por Tipo (REFACTORIZADO)
                 VStack(alignment: .leading) {
                     Text("Ingresos por Tipo")
-                        .font(.headline)
+                        .font(.title2)
+                        .fontWeight(.semibold)
                         .padding(.horizontal)
                     
                     if datosGraficoPorTipo.isEmpty {
@@ -130,26 +120,31 @@ struct DashboardView: View {
                             ForEach(datosGraficoPorTipo) { dato in
                                 BarMark(
                                     x: .value("Monto", dato.monto),
-                                    y: .value("Tipo", dato.tipo)
+                                    y: .value("Tipo", dato.tipo),
+                                    height: .fixed(25)
                                 )
                                 .foregroundStyle(by: .value("Tipo", dato.tipo))
+                                // 1. Nombre del Tipo ARRIBA de la barra
+                                .annotation(position: .top, alignment: .leading) {
+                                    Text(dato.tipo)
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.secondary)
+                                }
+                                // 2. Monto y Porcentaje al COSTADO
                                 .annotation(position: .trailing) {
-                                    Text(currencyFormatter.string(from: NSNumber(value: dato.monto)) ?? "")
+                                    Text("\(Formatters.money(dato.monto)) (\(dato.porcentaje)%)")
                                         .font(.caption2)
                                         .foregroundColor(.secondary)
                                 }
                             }
                         }
+                        // Aumentamos altura para dar espacio a las etiquetas superiores
                         .frame(height: 250)
-                        .chartForegroundStyleScale { tipoValue in
-                            colorParaTipo(tipoValue)
-                        }
+                        .chartForegroundStyleScale { tipoValue in colorParaTipo(tipoValue) }
                         .chartLegend(.hidden)
-                        // CAMBIO: Ocultamos completamente el Eje X (Líneas verticales y valores numéricos abajo)
                         .chartXAxis(.hidden)
-                        .chartYAxis(.hidden)
-                        
-                        // Estilos del contenedor
+                        .chartYAxis(.hidden) // Ocultamos eje Y porque la etiqueta ya está arriba
                         .padding()
                         .background(Color(.systemBackground))
                         .cornerRadius(12)
@@ -166,80 +161,112 @@ struct DashboardView: View {
         .background(Color(.systemGroupedBackground))
     }
     
-    // MARK: - Componentes Auxiliares
-    
-    private func kpiCard(title: String, value: Double, icon: String, color: Color) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Image(systemName: icon)
-                        .foregroundColor(color)
-                    Text(title)
-                        .font(.caption)
+    // MARK: - Subvista del Gráfico de Ocupación
+    private var ocupacionChart: some View {
+        VStack(alignment: .leading) {
+            Text("Ocupación estimada por hora")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+            
+            Chart(viewModel.ocupacionTaller) { dato in
+                BarMark(
+                    x: .value("Hora", dato.horaString),
+                    y: .value("Cantidad", dato.cantidad)
+                )
+                .foregroundStyle(Color.blue.gradient)
+                .annotation(position: .top) {
+                    Text("\(dato.cantidad)")
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                
-                // Punto 2: Sin wrapping, mismo linea
-                Text(currencyFormatter.string(from: NSNumber(value: value)) ?? "$0")
-                    .font(.title2)
-                    .bold()
-                    .lineLimit(1) // Fuerza una sola linea
-                    .minimumScaleFactor(0.5) // Se achica si no entra
             }
-            Spacer()
+            .frame(height: 150)
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .padding(.horizontal)
         }
-        .padding()
-        // Punto 1: Forzar expansión para igualar tamaños
-        .frame(maxWidth: .infinity)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
     }
     
+    // MARK: - Lógica para Gráfico de Ingresos
+    
     private func colorParaTipo(_ tipo: String) -> Color {
-            // Comparamos con las descripciones del enum TipoVenta
-            switch tipo {
-            case TipoVenta.piezas.descripcion:
-                return Color.blue
-            case TipoVenta.materiales.descripcion:
-                return Color.orange
-            case TipoVenta.joyeria.descripcion:
-                return Color.purple
-            case TipoVenta.taller.descripcion:
-                return Color.green
-            case TipoVenta.online.descripcion:
-                return Color.cyan
-            case TipoVenta.presencial.descripcion:
-                return Color.indigo
-            case TipoVenta.otros.descripcion:
-                return Color.gray
-            default:
-                // Color por defecto si aparece un tipo nuevo no mapeado
-                return Color.blue.opacity(0.5)
-            }
+        switch tipo {
+        case TipoVenta.piezas.descripcion: return Color.mint
+        case TipoVenta.materiales.descripcion: return Color.orange
+        case TipoVenta.joyeria.descripcion: return Color.purple
+        case TipoVenta.taller.descripcion: return Color.green
+        case TipoVenta.online.descripcion: return Color.cyan
+        case TipoVenta.presencial.descripcion: return Color.indigo
+        case TipoVenta.otros.descripcion: return Color.gray
+        default: return Color.blue.opacity(0.5)
         }
+    }
     
-    // MARK: - Lógica para Gráfico "Ingresos por Tipo"
-    
+    // Struct auxiliar mejorada con porcentaje
     struct DatoGraficoTipo: Identifiable {
         let id = UUID()
         let tipo: String
         let monto: Double
+        let porcentaje: Int
     }
     
+    // Propiedad computada con cálculo de porcentaje
     var datosGraficoPorTipo: [DatoGraficoTipo] {
         let pagos = viewModel.pagosDelMes
         
-        // Agrupar por Tipo de Venta
-        // (Nota: Asegúrate de que Pago tenga 'tipo_venta'. Si usas descripción, ajusta aquí)
+        // 1. Calcular total global para sacar porcentajes
+        let totalGlobal = pagos.reduce(0) { $0 + $1.monto }
+        
+        // 2. Agrupar
         let agrupados = Dictionary(grouping: pagos) { pago in
-            // Usamos rawValue o description del enum
-            pago.tipo_venta.descripcion // o .rawValue
+            pago.tipo_venta.descripcion
         }
         
-        // Sumar y Ordenar (De Mayor a Menor monto)
-        return agrupados.map { (tipo, pagos) in
-            DatoGraficoTipo(tipo: tipo, monto: pagos.reduce(0) { $0 + $1.monto })
-        }.sorted { $0.monto > $1.monto } // Orden descendente
+        // 3. Mapear y calcular %
+        return agrupados.map { (tipo, pagosGrupo) in
+            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
+            
+            // Cálculo seguro del porcentaje (evitar división por cero)
+            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
+            
+            return DatoGraficoTipo(
+                tipo: tipo,
+                monto: montoGrupo,
+                porcentaje: porcentaje
+            )
+        }.sorted { $0.monto > $1.monto }
     }
 }
+
+// MARK: - Componentes Visuales (KPI)
+struct KpiCardView: View {
+    let titulo: String
+    let valor: Double
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon).foregroundStyle(color)
+                Text(titulo).font(.caption).foregroundStyle(.secondary)
+            }
+            Text(Formatters.money(valor))
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+}
+

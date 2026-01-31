@@ -15,8 +15,7 @@ class PedidosViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var filtroPagoSeleccionado: FiltroEstadoPago = .todos
     // AGREGADO: Estado para el filtro de entregas
-    @Published var filtroEntregaSeleccionado: FiltroEstadoEntrega = .todos
-    
+    @Published var filtroEntregaSeleccionado: FiltroEstadoEntrega = .pendientes    
     // Caché de pagos
     @Published var pagosPorPedido: [String: [Pago]] = [:]
     
