@@ -57,43 +57,50 @@ struct TallerCalculator {
      * Se usará en `DashboardViewModel` para el gráfico de barras.
      * Devuelve solo las horas donde la ocupación es > 0.
      */
-    static func calcularOcupacionPorHora(para inscripciones: [Inscripcion]) -> [OcupacionHoraDato] {
+    // MARK: - Tarea 5.1: Cálculo de Ocupación por Hora (Rango Fijo 13-20)
         
-        var ocupacionPorHora: [Int: Int] = [:] // [Hora: Cantidad]
-        let horasDelTaller = 8...20 // Rango de 8:00 a 20:00
-
-        // 1. Obtener todos los rangos de los alumnos
-        let rangosAlumnos = inscripciones.compactMap { inscripcion -> (inicio: Int, fin: Int)? in
-            guard let inicio = minutosDesdeMedianoche(from: inscripcion.horario_inicio),
-                  let turnos = inscripcion.turnos else {
-                return nil
-            }
-            return (inicio, inicio + (turnos * 60))
-        }
-        
-        // 2. Iterar por cada hora del día
-        for hora in horasDelTaller {
-            let horaEnMinutos = hora * 60
-            var cantidadEnEsaHora = 0
+        static func calcularOcupacionPorHora(para inscripciones: [Inscripcion]) -> [OcupacionHoraDato] {
             
-            // 3. Contar cuántos rangos de alumnos contienen esta hora
-            for rango in rangosAlumnos {
-                // Lógica: (A.inicio <= H) Y (A.fin > H)
-                if (rango.inicio <= horaEnMinutos) && (rango.fin > horaEnMinutos) {
-                    cantidadEnEsaHora += 1
+            // 1. Definir el Rango Fijo del Taller (13:00 a 20:00)
+            let rangoHorario = 13...20
+            
+            // 2. Inicializar "cubetas" en 0 para todas las horas (Zero-Filling)
+            // Esto asegura que el gráfico siempre muestre el eje completo, aunque esté vacío.
+            var ocupacionPorHora: [Int: Int] = [:]
+            for hora in rangoHorario {
+                ocupacionPorHora[hora] = 0
+            }
+
+            // 3. Procesar Inscripciones
+            for inscripcion in inscripciones {
+                // Obtenemos hora de inicio en minutos (ej: 13:30 -> 810)
+                guard let inicioMinutos = minutosDesdeMedianoche(from: inscripcion.horario_inicio) else { continue }
+                
+                // Lógica Inclusiva: Si llega 13:30, ocupa la franja de las 13.
+                // División entera: 810 / 60 = 13.
+                let horaInicio = inicioMinutos / 60
+                let cantidadTurnos = inscripcion.turnos ?? 1
+                
+                // 4. Llenar las cubetas según la duración
+                for i in 0..<cantidadTurnos {
+                    let horaAfectada = horaInicio + i
+                    
+                    // Solo sumamos si la hora cae dentro del rango operativo del taller
+                    if ocupacionPorHora[horaAfectada] != nil {
+                        ocupacionPorHora[horaAfectada]! += 1
+                    }
                 }
             }
             
-            if cantidadEnEsaHora > 0 {
-                ocupacionPorHora[hora] = cantidadEnEsaHora
-            }
+            // 5. Convertir a Array ordenado para el Gráfico
+            return ocupacionPorHora.map { (hora, cantidad) in
+                OcupacionHoraDato(
+                    hora: hora,
+                    horaString: "\(hora)hs", // Etiqueta eje X
+                    cantidad: cantidad
+                )
+            }.sorted(by: { $0.hora < $1.hora })
         }
-        
-        // 4. Convertir a struct para el Chart
-        return ocupacionPorHora.map { (hora, cantidad) in
-            OcupacionHoraDato(hora: hora, horaString: "\(hora):00", cantidad: cantidad)
-        }.sorted(by: { $0.hora < $1.hora })
-    }
 
     /**
      * Helper para convertir "HH:mm" a un Int (minutos desde medianoche).

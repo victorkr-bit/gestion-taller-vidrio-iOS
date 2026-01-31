@@ -20,12 +20,18 @@ struct DashboardView: View {
                     
                     DatePicker("Desde", selection: $viewModel.fechaInicio, displayedComponents: .date)
                         .labelsHidden()
+                        .scaleEffect(0.8)
+                        //.environment(\.locale, Formatters.uiLocale)
+                        .frame(maxWidth: .infinity)
                     Text("Hasta:")
                             .font(.footnote)
                             .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
                     DatePicker("Hasta", selection: $viewModel.fechaFin, displayedComponents: .date)
                         .labelsHidden()
+                        .scaleEffect(0.8)
+                        //.environment(\.locale, Formatters.uiLocale)
+                        .frame(maxWidth: .infinity)
                 }
                 .padding()
                 .background(Color(.secondarySystemBackground))
@@ -162,10 +168,11 @@ struct DashboardView: View {
     }
     
     // MARK: - Subvista del Gráfico de Ocupación
+   
     private var ocupacionChart: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Ocupación estimada por hora")
-                .font(.caption)
+                .font(.callout)
                 .fontWeight(.bold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
@@ -176,13 +183,35 @@ struct DashboardView: View {
                     y: .value("Cantidad", dato.cantidad)
                 )
                 .foregroundStyle(Color.blue.gradient)
+                .cornerRadius(4) // Bordes redondeados superiores en las barras
+                // Anotación numérica sobre la barra
                 .annotation(position: .top) {
-                    Text("\(dato.cantidad)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    if dato.cantidad > 0 { // Solo mostrar número si hay alguien
+                        Text("\(dato.cantidad)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
-            .frame(height: 150)
+            .frame(height: 180) // Un poco más alto para apreciar las diferencias
+            // Eje Y: Ocultamos etiquetas pero dejamos líneas de referencia suaves
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) {
+                    AxisGridLine().foregroundStyle(.gray.opacity(0.2))
+                }
+            }
+            // Eje X: Etiquetas fijas
+            .chartXAxis {
+                AxisMarks(values: .automatic) { value in
+                    AxisValueLabel()
+                        .font(.caption2)
+                        .foregroundStyle(.primary)
+                }
+            }
+            // Escala Y: Para que siempre empiece de 0 y tenga aire arriba
+            .chartYScale(domain: 0...( (viewModel.ocupacionTaller.map{$0.cantidad}.max() ?? 5) + 1 ))
+            
             .padding()
             .background(Color(.systemBackground))
             .cornerRadius(12)

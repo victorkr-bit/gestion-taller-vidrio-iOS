@@ -18,6 +18,7 @@ struct CronogramaFormView: View {
     
     var body: some View {
         NavigationStack {
+            let hoy = Calendar.current.startOfDay(for: Date())
             Form {
                 Section("Datos del Evento") {
                     Picker("Curso a Programar*", selection: $selectedCursoID) {
@@ -28,7 +29,12 @@ struct CronogramaFormView: View {
                         }
                     }
                     
-                    DatePicker("Fecha y Hora*", selection: $fecha, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker(
+                        "Fecha de Inicio*",
+                        selection: $fecha,
+                        in: hoy..., // <--- ESTO ES LA MAGIA (De hoy al infinito)
+                        displayedComponents: .date
+                    )
                 }
                 
                 Section {
@@ -60,13 +66,26 @@ struct CronogramaFormView: View {
             return
         }
         
-        // 2. Crear el nuevo CronogramaItem denormalizando los datos
+        // --- NUEVO: Lógica para fijar la hora a las 13:00 ---
+        let calendar = Calendar.current
+        // Extraemos año, mes y día de lo que eligió el usuario
+        var components = calendar.dateComponents([.year, .month, .day], from: fecha)
+        // Forzamos la hora
+        components.hour = 13
+        components.minute = 0
+        components.second = 0
+        
+        // Reconstruimos la fecha final (Si falla por algo raro, usamos la fecha original)
+        let fechaFinal = calendar.date(from: components) ?? fecha
+        // ----------------------------------------------------
+        
+        // 2. Crear el nuevo CronogramaItem con la fecha ajustada
         let newItem = CronogramaItem(
             cursoId: selectedCurso.id ?? "",
             cursoNombre: selectedCurso.nombre,
             cursoTipo: selectedCurso.tipo,
             precio_curso: selectedCurso.precio,
-            fecha: fecha
+            fecha: fechaFinal // <--- Usamos la fecha con hora 13:00
         )
         
         // 3. Llamar al ViewModel para guardar

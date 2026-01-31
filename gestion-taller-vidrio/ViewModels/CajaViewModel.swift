@@ -20,12 +20,20 @@ class CajaViewModel: ObservableObject {
         if searchText.isEmpty {
             return pagos
         } else {
+            let query = searchText.lowercased()
+            
             return pagos.filter { pago in
-                let query = searchText.lowercased()
-                // Buscamos en Cliente, Descripción o Notas
-                return pago.cliente_nombre.lowercased().contains(query) ||
-                       pago.descripcion_origen.lowercased().contains(query) ||
-                       (pago.notas ?? "").lowercased().contains(query)
+                // 1. Buscamos en Cliente, Descripción o Notas (Lo que ya tenías)
+                let coincideTexto = pago.cliente_nombre.lowercased().contains(query) ||
+                                    pago.descripcion_origen.lowercased().contains(query) ||
+                                    (pago.notas ?? "").lowercased().contains(query)
+                
+                // 2. NUEVO: Buscamos también en los datos de los TAGS
+                // (Medio de pago y Tipo de venta)
+                let coincideTags = pago.medio_de_pago.rawValue.lowercased().contains(query) ||
+                                   pago.tipo_venta.descripcion.lowercased().contains(query) // Usamos .descripcion para que encuentre "Joyería" con tilde si aplica
+                
+                return coincideTexto || coincideTags
             }
         }
     }

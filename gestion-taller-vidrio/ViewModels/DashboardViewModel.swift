@@ -11,7 +11,6 @@ class DashboardViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     // MARK: - Filtros de Fecha
-    // Usamos didSet para recargar los datos cuando el usuario cambia la fecha en MainView
     @Published var fechaInicio: Date = Date() {
         didSet { refreshData() }
     }
@@ -23,23 +22,23 @@ class DashboardViewModel: ObservableObject {
     // MARK: - KPIs Financieros
     @Published var totalIngresosMes: Double = 0.0
     @Published var totalDeuda: Double = 0.0
-    @Published var pagosDelMes: [Pago] = [] // Para gráfico de barras
+    @Published var pagosDelMes: [Pago] = []
     
     // MARK: - KPIs Operativos
     @Published var proximaClase: CronogramaItem? = nil
-    // NUEVO: Datos para el gráfico de ocupación por hora
     @Published var ocupacionTaller: [OcupacionHoraDato] = []
     
     // Listeners
     private var metricasListener: ListenerRegistration?
     private var pagosListener: ListenerRegistration?
+    // NUEVO: Listener para que la agenda se actualice sola
+    private var cronogramaListener: ListenerRegistration?
     
     // MARK: - Inyección de Dependencias
     
     private let finanzasRepo: FinanzasRepository
     private let tallerRepo: TallerRepository
     
-    // Inicializador con Instanciación Perezosa
     init(finanzasRepo: FinanzasRepository? = nil, tallerRepo: TallerRepository? = nil) {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.tallerRepo = tallerRepo ?? TallerRepository()
@@ -61,7 +60,6 @@ class DashboardViewModel: ObservableObject {
         // 2. Calcular Fin del Mes
         if let nextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) {
             let endOfMonth = calendar.date(byAdding: .day, value: -1, to: nextMonth) ?? now
-            // Ajustamos al final del día (23:59:59)
             self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: endOfMonth) ?? endOfMonth
         } else {
             self.fechaFin = now
@@ -74,12 +72,13 @@ class DashboardViewModel: ObservableObject {
     deinit {
         metricasListener?.remove()
         pagosListener?.remove()
+        cronogramaListener?.remove() // Limpieza del nuevo listener
     }
     
     func setupListeners() {
         isLoading = true
         
-        // 1. Escuchar Métricas Globales (Deuda Total)
+        // 1. Escuchar Métricas Globales
         metricasListener?.remove()
         metricasListener = finanzasRepo.listenToMetricas { [weak self] result in
             guard let self = self else { return }
@@ -93,8 +92,6 @@ class DashboardViewModel: ObservableObject {
         
         // 2. Escuchar Pagos (Filtrado por fechas)
         pagosListener?.remove()
-        
-        // Aseguramos que fechaFin cubra hasta el último segundo del día seleccionado
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: fechaFin) ?? fechaFin
         
         pagosListener = finanzasRepo.listenToPagos(from: fechaInicio, to: endOfDay) { [weak self] result in
@@ -108,45 +105,46 @@ class DashboardViewModel: ObservableObject {
             }
         }
         
-        // 3. Obtener Próxima Clase y Calcular Ocupación
-        loadProximaClase()
+        // 3. Escuchar Agenda (CAMBIO CRÍTICO: De load a listen)
+        listenToProximaClase()
     }
     
-    // Función separada para la lógica asíncrona de agenda
-    private func loadProximaClase() {
-        Task {
-            do {
-                let proximos = try await tallerRepo.fetchCursosProximos()
-                
+    // Renombramos y cambiamos la lógica para usar Listeners en lugar de Fetch
+    private func listenToProximaClase() {
+        cronogramaListener?.remove()
+        
+        // Usamos la función del repo que ya existía: listenToCursosProximos
+        cronogramaListener = tallerRepo.listenToCursosProximos { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let proximos):
                 if let primera = proximos.first {
                     self.proximaClase = primera
                     
-                    // LÓGICA DE OCUPACIÓN:
-                    // Si es un Taller y tiene ID, calculamos la ocupación por hora
+                    // Si la próxima clase cambió, recalculamos la ocupación
                     if primera.cursoTipo == .taller, let id = primera.id {
-                        await loadOcupacion(cronogramaId: id)
+                        // Como estamos dentro de un closure no-async, lanzamos una Task
+                        Task { await self.loadOcupacion(cronogramaId: id) }
                     } else {
-                        // Si es Online o Presencial (sin turnos), limpiamos el gráfico
                         self.ocupacionTaller = []
                     }
                 } else {
                     self.proximaClase = nil
                     self.ocupacionTaller = []
                 }
-                
                 self.isLoading = false
-            } catch {
-                self.errorMessage = "Error cargando agenda: \(error.localizedDescription)"
+                
+            case .failure(let error):
+                self.errorMessage = "Error sincronizando agenda: \(error.localizedDescription)"
                 self.isLoading = false
             }
         }
     }
     
-    // Función auxiliar para calcular ocupación específica
     private func loadOcupacion(cronogramaId: String) async {
         do {
             let inscripciones = try await tallerRepo.fetchInscripciones(cronogramaID: cronogramaId)
-            // Usamos el helper matemático TallerCalculator
             let datosGrafico = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
             self.ocupacionTaller = datosGrafico
         } catch {
