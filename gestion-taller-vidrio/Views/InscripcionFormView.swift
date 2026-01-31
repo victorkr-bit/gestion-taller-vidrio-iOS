@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct InscripcionFormView: View {
     
@@ -329,7 +330,8 @@ struct InscripcionFormView: View {
         if inscripcionToEdit != nil { return }
         if contactos.isEmpty {
             do {
-                self.contactos = try await FirestoreTallerRepository.shared.fetchContactos()
+                let repo = VentasRepository()
+                self.contactos = try await repo.fetchContactos()
             } catch {
                 print("Error: \(error)")
             }
@@ -381,3 +383,4 @@ struct InscripcionFormView: View {
         dismiss()
     }
 }
+

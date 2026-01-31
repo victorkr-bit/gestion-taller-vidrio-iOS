@@ -168,7 +168,7 @@ struct PedidoFormView: View {
             // Cargamos contactos solo si es nuevo
             if !viewModel.isEditing && contactos.isEmpty {
                 do {
-                    contactos = try await FirestoreTallerRepository.shared.fetchContactos()
+                    contactos = try await TallerRepository().fetchContactos()
                 } catch {
                     print("Error cargando contactos: \(error)")
                 }
