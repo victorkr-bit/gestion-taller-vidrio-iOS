@@ -1,183 +1,179 @@
 import Foundation
-import SwiftUI
 import Combine
+import SwiftUI
 import FirebaseFirestore
 
 @MainActor
 class CajaViewModel: ObservableObject {
     
-    // MARK: - Estado de la Vista
+    // MARK: - Estado de Datos (Backend)
+    @Published var pagos: [Pago] = []
+    @Published var contactos: [Contacto] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // "Fuente de la Verdad": Todos los datos crudos de Firestore
-    @Published private(set) var pagos: [Pago] = []
+    // MARK: - Estado de UI (Buscador y Totales) -- AGREGADO
+    @Published var searchText: String = ""
     
-    // MARK: - Salidas para la UI (Outputs)
-    
-    // 1. Lista filtrada para iterar en la View
-    @Published var filteredAndSearchedPagos: [Pago] = []
-    
-    // 2. El Total ya calculado (La View solo lo muestra)
-    @Published var totalFiltrado: Double = 0.0
-    
-    @Published var contactos: [Contacto] = []
-    
-    // MARK: - Entradas (Inputs)
-    
-    // Fechas (Privadas, manejadas por el init y combine)
-    private var fechaInicio: Date = Date()
-    private var fechaFin: Date = Date()
-    
-    // Texto de Búsqueda: Reactivo (Al cambiar, se dispara el filtro)
-    var searchText: String = "" {
-        didSet { aplicarFiltros() }
+    /// Filtra los pagos locales por el texto de búsqueda
+    var pagosFiltrados: [Pago] {
+        if searchText.isEmpty {
+            return pagos
+        } else {
+            return pagos.filter { pago in
+                let query = searchText.lowercased()
+                // Buscamos en Cliente, Descripción o Notas
+                return pago.cliente_nombre.lowercased().contains(query) ||
+                       pago.descripcion_origen.lowercased().contains(query) ||
+                       (pago.notas ?? "").lowercased().contains(query)
+            }
+        }
     }
     
-    // MARK: - Dependencias
-    private let repository = FirestoreTallerRepository.shared
+    /// Calcula el total de dinero visible en la lista filtrada
+    var totalFiltrado: Double {
+        return pagosFiltrados.reduce(0) { $0 + $1.monto }
+    }
+    
+    // MARK: - Filtros de Fecha
+    @Published var fechaInicio: Date = Date() {
+        didSet { restartListener() }
+    }
+    
+    @Published var fechaFin: Date = Date() {
+        didSet { restartListener() }
+    }
+    
     private var cancellables = Set<AnyCancellable>()
-    private var pagosListener: ListenerRegistration?
+    private var listener: ListenerRegistration?
+    
+    // MARK: - Inyección de Dependencias
+    private let finanzasRepo: FinanzasRepository
+    private let ventasRepo: VentasRepository
     
     // MARK: - Inicializador
-    
-    init(fechaInicioPublisher: AnyPublisher<Date, Never>,
-         fechaFinPublisher: AnyPublisher<Date, Never>) {
+    init(
+        finanzasRepo: FinanzasRepository? = nil,
+        ventasRepo: VentasRepository? = nil,
+        fechaInicioPublisher: AnyPublisher<Date, Never>? = nil,
+        fechaFinPublisher: AnyPublisher<Date, Never>? = nil
+    ) {
+        self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
+        self.ventasRepo = ventasRepo ?? VentasRepository()
         
+        let calendar = Calendar.current
+        self.fechaInicio = calendar.startOfDay(for: Date())
+        self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: Date()) ?? Date()
+        
+        // Conexión reactiva con el Dashboard
+        if let startPub = fechaInicioPublisher, let endPub = fechaFinPublisher {
+            Publishers.CombineLatest(startPub, endPub)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] (inicio, fin) in
+                    guard let self = self else { return }
+                    if self.fechaInicio != inicio { self.fechaInicio = inicio }
+                    if self.fechaFin != fin { self.fechaFin = fin }
+                }
+                .store(in: &cancellables)
+        }
+        
+        restartListener()
         fetchContactos()
-        
-        // Escuchamos cambios en las fechas del Dashboard
-        Publishers.CombineLatest(fechaInicioPublisher, fechaFinPublisher)
-            .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
-            .sink { [weak self] (inicio, fin) in
-                guard let self = self else { return }
-                
-                self.fechaInicio = inicio
-                self.fechaFin = fin
-                
-                // Al cambiar fechas, recargamos la suscripción a Firebase
-                self.subscribeToPagos()
-            }
-            .store(in: &cancellables)
-    }
-    
-    // Init de conveniencia para pruebas
-    convenience init() {
-        let previewInicio = Just(Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()).eraseToAnyPublisher()
-        let previewFin = Just(Date()).eraseToAnyPublisher()
-        self.init(fechaInicioPublisher: previewInicio, fechaFinPublisher: previewFin)
     }
     
     deinit {
-        pagosListener?.remove()
+        listener?.remove()
+        cancellables.removeAll()
     }
     
-    // MARK: - Lógica Real-time
+    // MARK: - Lógica de Caja
     
-    func subscribeToPagos() {
+    func restartListener() {
         isLoading = true
         errorMessage = nil
+        listener?.remove()
         
-        pagosListener?.remove()
+        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: fechaFin) ?? fechaFin
         
-        pagosListener = repository.listenToPagos(from: fechaInicio, to: fechaFin) { [weak self] result in
+        listener = finanzasRepo.listenToPagos(from: fechaInicio, to: endOfDay) { [weak self] result in
             guard let self = self else { return }
-            
             self.isLoading = false
             
             switch result {
-            case .success(let pagosActualizados):
-                // 1. Actualizamos fuente de verdad
-                self.pagos = pagosActualizados
-                
-                // 2. Re-aplicamos filtros (para mantener la búsqueda si el usuario estaba escribiendo)
-                self.aplicarFiltros()
-                
+            case .success(let pagosNuevos):
+                self.pagos = pagosNuevos
             case .failure(let error):
-                self.errorMessage = "Error en tiempo real: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando caja: \(error.localizedDescription)"
             }
         }
     }
-    
-    func fetchContactos() {
-        Task {
-            do {
-                self.contactos = try await repository.fetchContactos()
-            } catch {
-                self.errorMessage = "Error al cargar contactos: \(error.localizedDescription)"
-            }
-        }
-    }
-    
-    // MARK: - Lógica de Filtrado Centralizada
-    
-    private func aplicarFiltros() {
-        // 1. Si no hay texto, mostramos todo
-        if searchText.isEmpty {
-            self.filteredAndSearchedPagos = self.pagos
-        } else {
-            // 2. Lógica de filtrado "AND" (debe contener todas las palabras)
-            let terminos = searchText
-                .lowercased()
-                .folding(options: .diacriticInsensitive, locale: .current)
-                .components(separatedBy: " ")
-                .filter { !$0.isEmpty }
-            
-            self.filteredAndSearchedPagos = self.pagos.filter { pago in
-                // Construimos el contenido buscable
-                // Truco: Agregamos el monto como string para poder buscar "$1500"
-                let contenidoBuscable = """
-                    \(pago.cliente_nombre)
-                    \(pago.descripcion_origen)
-                    \(pago.medio_de_pago.rawValue)
-                    \(pago.notas ?? "")
-                    \(String(format: "%.0f", pago.monto))
-                    """
-                    .lowercased()
-                    .folding(options: .diacriticInsensitive, locale: .current)
-                
-                return terminos.allSatisfy { termino in
-                    contenidoBuscable.contains(termino)
-                }
-            }
-        }
-        
-        // 3. CÁLCULO DEL TOTAL
-        // El VM es responsable de sumar. La View solo muestra el número.
-        self.totalFiltrado = self.filteredAndSearchedPagos.reduce(0) { $0 + $1.monto }
-    }
-    
-    // MARK: - Acciones (CRUD)
     
     func deletePago(_ pago: Pago) {
         Task {
             do {
-                try await repository.deletePago(pago: pago)
+                try await finanzasRepo.deletePago(pago: pago)
             } catch {
-                self.errorMessage = "Error al borrar: \(error.localizedDescription)"
+                self.errorMessage = "No se pudo borrar el pago: \(error.localizedDescription)"
             }
         }
     }
     
-    // Nota: El edit se suele hacer presentando un sheet,
-    // pero si necesitas lógica de guardado aquí:
+    // Edición
     func savePagoEditado(pago: Pago, montoAntiguo: Double) {
+        isLoading = true
         Task {
             do {
-                try await repository.editPago(pagoActualizado: pago, montoAntiguo: montoAntiguo)
+                try await finanzasRepo.editPago(pagoActualizado: pago, montoAntiguo: montoAntiguo)
+                self.isLoading = false
             } catch {
-                self.errorMessage = "Error al editar: \(error.localizedDescription)"
+                self.errorMessage = "Error al editar pago: \(error.localizedDescription)"
+                self.isLoading = false
             }
         }
     }
     
+    func registrarPago(pago: Pago, origen: Origen) async throws {
+        try await finanzasRepo.registrarPago(pago: pago, origen: origen)
+    }
+    
+    // MARK: - Venta Directa
+    
+    func fetchContactos() {
+        Task {
+            do {
+                self.contactos = try await ventasRepo.fetchContactos()
+            } catch {
+                print("Error cargando contactos: \(error)")
+            }
+        }
+    }
+    
+    // Opción 1: Manual (Objeto completo)
     func saveVentaDirecta(pago: Pago) {
         Task {
             do {
-                try await repository.saveVentaDirecta(pago: pago)
+                try await finanzasRepo.saveVentaDirecta(pago: pago)
             } catch {
-                self.errorMessage = "Error al guardar venta: \(error.localizedDescription)"
+                self.errorMessage = "Error guardando venta: \(error.localizedDescription)"
             }
         }
+    }
+    
+    // Opción 2: Automática (Argumentos sueltos)
+    func saveVentaDirecta(monto: Double, medioPago: MedioDePago, notas: String, cliente: Contacto?) {
+        let nuevoPago = Pago(
+            id: nil,
+            fecha: Date(),
+            monto: monto,
+            medio_de_pago: medioPago,
+            cliente_id: cliente?.id ?? "",
+            cliente_nombre: cliente?.nombreCompleto ?? "Consumidor Final",
+            tipo_venta: .otros,
+            notas: notas,
+            origen_tipo: .ventaDirecta,
+            descripcion_origen: "Venta Directa",
+            origen_id: nil
+        )
+        saveVentaDirecta(pago: nuevoPago)
     }
 }

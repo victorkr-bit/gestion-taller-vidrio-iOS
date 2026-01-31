@@ -1,42 +1,32 @@
-//
-//  PedidoFormViewModel.swift
-//  gestion-taller-vidrio
-//
-//  Created by Victor Krongold on 13/12/2025.
-//
-
-
 import Foundation
 import Combine
 
 @MainActor
 class PedidoFormViewModel: ObservableObject {
     
-    // MARK: - Bindings de UI (Datos editables)
+    // (Propiedades @Published siguen igual...)
     @Published var clienteId: String = ""
     @Published var clienteNombre: String = ""
     @Published var descripcion: String = ""
     @Published var presupuesto: Double = 0.0
-    @Published var tipo: TipoPedido = .otros // Asumo que TipoPedido es tu enum (o TipoVenta)
+    @Published var tipo: TipoPedido = .otros
     @Published var fecha: Date = Date()
     @Published var estadoEntrega: Bool = false
-    
-    // Datos de solo lectura (para mostrar saldos al editar)
     @Published var montoAbonadoOriginal: Double = 0.0
-    
-    // Estados de UI
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var shouldDismiss: Bool = false
     
-    // MARK: - Privados
-    private let repository = FirestoreTallerRepository.shared
+    // CAMBIO 1: Repo de Ventas
+    private let repository: VentasRepository
     private let editingPedidoID: String?
-    
-    // MARK: - Init
-    init(pedido: Pedido? = nil) {
+
+    // CAMBIO 2: Init actualizado
+    // Notar que 'pedido' es opcional, repository tiene valor por defecto
+    init(pedido: Pedido? = nil, repository: VentasRepository? = nil) {
+        self.repository = repository ?? VentasRepository()
+        
         if let p = pedido {
-            // MODO EDICIÓN
             self.editingPedidoID = p.id
             self.clienteId = p.cliente_id
             self.clienteNombre = p.cliente_nombre
@@ -47,35 +37,26 @@ class PedidoFormViewModel: ObservableObject {
             self.estadoEntrega = p.estado_entrega
             self.montoAbonadoOriginal = p.monto_abonado
         } else {
-            // MODO CREACIÓN
             self.editingPedidoID = nil
             self.fecha = Date()
             self.tipo = .otros
         }
     }
     
-    // MARK: - Lógica Computada
+    // (Propiedades computadas isValid, isEditing siguen igual...)
     var isValid: Bool {
         !clienteId.isEmpty && !descripcion.trimmingCharacters(in: .whitespaces).isEmpty && presupuesto >= 0
     }
-    
-    var isEditing: Bool {
-        editingPedidoID != nil
-    }
-    
-    // MARK: - Acciones
-    
+    var isEditing: Bool { editingPedidoID != nil }
+
     func guardar() {
         guard isValid else { return }
-        
         self.isLoading = true
         
         Task {
             do {
-                // CAMBIO 1: Inicializamos con id: nil.
-                // Al no tocar la propiedad @DocumentID, el warning DESAPARECE.
                 let pedido = Pedido(
-                    id: nil, // <--- LA CLAVE: Lo dejamos limpio
+                    id: nil,
                     numero_pedido: "",
                     cliente_id: self.clienteId,
                     cliente_nombre: self.clienteNombre,
@@ -89,7 +70,7 @@ class PedidoFormViewModel: ObservableObject {
                     estado_entrega: self.estadoEntrega
                 )
                 
-                // CAMBIO 2: Pasamos el ID por separado para que el Repo sepa qué hacer
+                // Aquí llamamos al nuevo repo
                 try await repository.savePedido(pedido: pedido, existingID: self.editingPedidoID)
                 
                 self.shouldDismiss = true

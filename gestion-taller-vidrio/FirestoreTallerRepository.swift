@@ -2,32 +2,6 @@ import Foundation
 import FirebaseFirestore // Solo esta importación, como indicaste.
 import FirebaseFunctions
 
-enum TallerError: Error, LocalizedError {
-    case tienePagos
-    case tieneInscriptos
-    // Nuevo error para transacciones
-    case origenNoEncontrado
-    case pagoNoEncontrado
-    // Error para la transacción
-    case transaccionFallida(String)
-    
-    // Esto mostrará un mensaje amigable en las Alertas de la UI
-    var errorDescription: String? {
-        switch self {
-        case .tienePagos:
-            return "Operación bloqueada: El ítem tiene pagos asociados."
-        case .tieneInscriptos:
-            return "Operación bloqueada: El curso tiene alumnos inscriptos."
-        case .origenNoEncontrado:
-            return "Error de Transacción: No se encontró el pedido o inscripción original."
-        case .pagoNoEncontrado:
-            return "Error de Transacción: No se encontró el pago a modificar."
-        case .transaccionFallida(let detalle):
-            return "Error de Transacción: \(detalle)"
-        }
-    }
-}
-
 
 // Capa 4: Repositorio
 // Unica clase concreta que funciona como Singleton [cite: 167]
@@ -128,16 +102,7 @@ final class FirestoreTallerRepository {
         // Eliminamos el .sorted() final. El array ya viene ordenado.
     }
 
-    // 1. Helper privado para obtener el "Hoy" de Argentina
-    private func getStartOfTodayInArgentina() -> Date {
-        var calendar = Calendar(identifier: .gregorian)
-        // Forzamos la zona horaria de Argentina
-        if let timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires") {
-            calendar.timeZone = timeZone
-        }
-        // Devolvemos las 00:00:00 de hoy en hora Argentina
-        return calendar.startOfDay(for: Date())
-    }
+    
 
     /// Obtiene los cursos programados a futuro (incluyendo todo el día de hoy)
     func fetchCursosProximos() async throws -> [CronogramaItem] {
@@ -862,6 +827,18 @@ final class FirestoreTallerRepository {
         
         return listener
     }
+    
+    // 1. Helper privado para obtener el "Hoy" de Argentina
+        private func getStartOfTodayInArgentina() -> Date {
+            var calendar = Calendar(identifier: .gregorian)
+            // Forzamos la zona horaria de Argentina
+            if let timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires") {
+                calendar.timeZone = timeZone
+            }
+            // Devolvemos las 00:00:00 de hoy en hora Argentina
+            return calendar.startOfDay(for: Date())
+        }
+    
     // MARK: - Helpers Privados (Cloud Functions)
 
         /// Traduce los errores genéricos de Firebase Functions a nuestros TallerError de dominio.

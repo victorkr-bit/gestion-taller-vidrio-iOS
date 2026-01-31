@@ -2,25 +2,26 @@ import SwiftUI
 import Charts
 
 struct DashboardView: View {
+    @ObservedObject var viewModel: DashboardViewModel
     
-    // 1. Inyectamos el VM
-    @ObservedObject private var viewModel: DashboardViewModel
-    
-    // 2. Inyectamos el NavigationManager para poder saltar de pestaña
+    // Inyectamos el Manager para poder cambiar de pestaña al hacer click
     @EnvironmentObject var navManager: NavigationManager
     
-    @AppStorage("isDarkMode") private var isDarkMode = true
-    
-    init(viewModel: DashboardViewModel) {
-        self.viewModel = viewModel
-    }
+    // Formateador de moneda SIN DECIMALES (Punto 3)
+    private let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "es_AR")
+        formatter.maximumFractionDigits = 0 // Sin decimales
+        return formatter
+    }()
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(spacing: 20) {
                 
-                // --- Filtros de Fecha (Con Locale corregido) ---
-                HStack(spacing: 8) {
+                // MARK: - Filtro de Fechas
+                HStack {
                     Text("Desde:")
                         .font(.footnote)
                         .fontWeight(.semibold)
@@ -28,197 +29,217 @@ struct DashboardView: View {
                     
                     DatePicker("Desde", selection: $viewModel.fechaInicio, displayedComponents: .date)
                         .labelsHidden()
-                        .scaleEffect(0.8)
-                        .environment(\.locale, Formatters.uiLocale)
-                        .frame(maxWidth: .infinity)
-                    
                     Text("Hasta:")
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-                    
+                            .font(.footnote)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
                     DatePicker("Hasta", selection: $viewModel.fechaFin, displayedComponents: .date)
                         .labelsHidden()
-                        .scaleEffect(0.8)
-                        .environment(\.locale, Formatters.uiLocale)
-                        .frame(maxWidth: .infinity)
+                }
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+                
+                // MARK: - Tarjetas de Resumen (KPIs)
+                // Punto 1: Mismo tamaño usando maxWidth: .infinity
+                HStack(spacing: 15) {
+                    kpiCard(
+                        title: "Ingresos",
+                        value: viewModel.totalIngresosMes,
+                        icon: "arrow.up.circle.fill",
+                        color: .green
+                    )
+                    
+                    kpiCard(
+                        title: "Deuda Total",
+                        value: viewModel.totalDeuda,
+                        icon: "exclamationmark.circle.fill",
+                        color: .red
+                    )
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 10)
-
-                // 1. KPIs
-                kpiSection
                 
-                // 2. Próxima Actividad (CON NAVEGACIÓN)
-                proximoTallerSection
+                // MARK: - Próxima Actividad (Clickeable)
+                VStack(alignment: .leading) {
+                    Text("Próxima Actividad")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    if let clase = viewModel.proximaClase {
+                        Button {
+                            // Punto 4: Ir al Tab de Cronograma
+                            navManager.selectedTab = .cronograma
+                            navManager.cronogramaPath.append(clase)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(clase.cursoNombre)
+                                        .font(.title3)
+                                        .bold()
+                                        .foregroundColor(.primary)
+                                    Text(clase.fecha.formatted(date: .abbreviated, time: .shortened))
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing) {
+                                    Text(clase.cursoTipo.rawValue)
+                                        .font(.caption)
+                                        .padding(5)
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(5)
+                                        .foregroundColor(.blue)
+                                    
+                                    Text("\(clase.inscriptosReales) inscriptos")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(Color(.systemBackground))
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        }
+                        .padding(.horizontal)
+                        
+                    } else {
+                        HStack {
+                            Spacer()
+                            Text("No hay actividades programadas")
+                                .foregroundColor(.secondary)
+                                .padding()
+                            Spacer()
+                        }
+                    }
+                }
                 
-                // 3. Gráfico de Torta
-                ingresosChart
+                // MARK: - Gráfico de Ingresos por Tipo
+                VStack(alignment: .leading) {
+                    Text("Ingresos por Tipo")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    if datosGraficoPorTipo.isEmpty {
+                        Text("No hay datos para mostrar")
+                            .font(.caption)
+                            .padding()
+                    } else {
+                        Chart {
+                            ForEach(datosGraficoPorTipo) { dato in
+                                BarMark(
+                                    x: .value("Monto", dato.monto),
+                                    y: .value("Tipo", dato.tipo)
+                                )
+                                .foregroundStyle(by: .value("Tipo", dato.tipo))
+                                .annotation(position: .trailing) {
+                                    Text(currencyFormatter.string(from: NSNumber(value: dato.monto)) ?? "")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .frame(height: 250)
+                        .chartForegroundStyleScale { tipoValue in
+                            colorParaTipo(tipoValue)
+                        }
+                        .chartLegend(.hidden)
+                        // CAMBIO: Ocultamos completamente el Eje X (Líneas verticales y valores numéricos abajo)
+                        .chartXAxis(.hidden)
+                        .chartYAxis(.hidden)
+                        
+                        // Estilos del contenedor
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        .padding(.horizontal)
+                    }
+                }
                 
+                Spacer(minLength: 50)
             }
             .padding(.vertical)
         }
         .navigationTitle("Inicio")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    withAnimation { isDarkMode.toggle() }
-                } label: {
-                    Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
-                        .foregroundStyle(isDarkMode ? .yellow : .primary)
-                }
-            }
-        }
-        .overlay {
-            if viewModel.isLoading {
-                ProgressView()
-            }
-        }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-            Button("OK") { viewModel.errorMessage = nil }
-        }, message: {
-            Text(viewModel.errorMessage ?? "Ocurrió un error.")
-        })
+        .background(Color(.systemGroupedBackground))
     }
     
-    // MARK: - Sub-vistas
+    // MARK: - Componentes Auxiliares
     
-    private var kpiSection: some View {
+    private func kpiCard(title: String, value: Double, icon: String, color: Color) -> some View {
         HStack {
-            KPICard(titulo: "Ingresos (neto)", valor: viewModel.totalIngresos, color: .blue)
-            KPICard(titulo: "Deuda Total", valor: viewModel.totalDeuda, color: .orange)
-        }
-        .padding(.horizontal)
-    }
-    
-    private var ingresosChart: some View {
-        VStack(alignment: .leading) {
-            Text("Ingresos por Tipo")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-            
-            if viewModel.ingresosUI.isEmpty {
-                Text("No hay ingresos en este período.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .padding()
-                    .frame(height: 150, alignment: .center)
-            } else {
-                Chart(viewModel.ingresosUI) { item in
-                    BarMark(
-                        x: .value("Monto", item.rawMonto),
-                        y: .value("Tipo", item.tipo)
-                    )
-                    .foregroundStyle(color(for: item.color))
-                    .annotation(position: .trailing, alignment: .leading, spacing: 8) {
-                        Text("\(item.montoFormateado) \(item.porcentajeFormateado)")
-                            .font(.footnote)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: icon)
+                        .foregroundColor(color)
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                .chartYScale(domain: viewModel.ingresosUI.map { $0.tipo })
-                .chartXAxis(.hidden)
-                .frame(height: CGFloat(viewModel.ingresosUI.count) * 44.0)
-                .padding(.horizontal)
-                .padding(.trailing, 100)
-            }
-        }
-    }
-    
-    private var proximoTallerSection: some View {
-        VStack(alignment: .leading) {
-            Text("Próxima Actividad")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-            
-            if let actividad = viewModel.proximaActividad {
                 
-                // --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL ---
-                // Envolvemos la CardView en un Button para disparar la navegación
-                Button {
-                    navManager.navigateToCourseDetail(actividad)
-                } label: {
-                    CardView {
-                        GenericRowView(
-                            titulo: actividad.cursoNombre,
-                            subtitulo: "Inscriptos: \(viewModel.inscripcionesProximaActividad.count)",
-                            infoSuperior: Formatters.date(actividad.fecha),
-                            iconoSuperior: "calendar",
-                            monto: nil,
-                            tags: []
-                        )
-                    }
-                }
-                .buttonStyle(.plain) // Importante para no alterar el diseño de la card
-                .padding(.horizontal)
-                // -------------------------------------
-                
-                if actividad.cursoTipo == .taller && !viewModel.ocupacionTaller.isEmpty {
-                    ocupacionChart
-                }
-            } else {
-                Text("No hay actividades próximas.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .padding()
+                // Punto 2: Sin wrapping, mismo linea
+                Text(currencyFormatter.string(from: NSNumber(value: value)) ?? "$0")
+                    .font(.title2)
+                    .bold()
+                    .lineLimit(1) // Fuerza una sola linea
+                    .minimumScaleFactor(0.5) // Se achica si no entra
             }
-        }
-    }
-    
-    private var ocupacionChart: some View {
-        VStack(alignment: .leading) {
-            Text("Ocupación del Taller")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-            
-            Chart(viewModel.ocupacionTaller) { dato in
-                BarMark(
-                    x: .value("Hora", dato.horaString),
-                    y: .value("Cantidad", dato.cantidad)
-                )
-                .foregroundStyle(Color.blue.gradient)
-            }
-            .frame(height: 150)
-            .padding()
-        }
-    }
-    
-    private func color(for tipo: TipoVenta) -> Color {
-        switch tipo {
-        case .taller: return .blue
-        case .piezas: return .green
-        case .online: return .purple
-        case .presencial: return .orange
-        case .materiales: return .cyan
-        case .joyeria: return .mint
-        case .otros: return .gray
-        }
-    }
-}
-
-// Helper View (KPICard)
-struct KPICard: View {
-    let titulo: String
-    let valor: Double
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(titulo)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(Formatters.money(valor))
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(color)
+            Spacer()
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
+        // Punto 1: Forzar expansión para igualar tamaños
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+    
+    private func colorParaTipo(_ tipo: String) -> Color {
+            // Comparamos con las descripciones del enum TipoVenta
+            switch tipo {
+            case TipoVenta.piezas.descripcion:
+                return Color.blue
+            case TipoVenta.materiales.descripcion:
+                return Color.orange
+            case TipoVenta.joyeria.descripcion:
+                return Color.purple
+            case TipoVenta.taller.descripcion:
+                return Color.green
+            case TipoVenta.online.descripcion:
+                return Color.cyan
+            case TipoVenta.presencial.descripcion:
+                return Color.indigo
+            case TipoVenta.otros.descripcion:
+                return Color.gray
+            default:
+                // Color por defecto si aparece un tipo nuevo no mapeado
+                return Color.blue.opacity(0.5)
+            }
+        }
+    
+    // MARK: - Lógica para Gráfico "Ingresos por Tipo"
+    
+    struct DatoGraficoTipo: Identifiable {
+        let id = UUID()
+        let tipo: String
+        let monto: Double
+    }
+    
+    var datosGraficoPorTipo: [DatoGraficoTipo] {
+        let pagos = viewModel.pagosDelMes
+        
+        // Agrupar por Tipo de Venta
+        // (Nota: Asegúrate de que Pago tenga 'tipo_venta'. Si usas descripción, ajusta aquí)
+        let agrupados = Dictionary(grouping: pagos) { pago in
+            // Usamos rawValue o description del enum
+            pago.tipo_venta.descripcion // o .rawValue
+        }
+        
+        // Sumar y Ordenar (De Mayor a Menor monto)
+        return agrupados.map { (tipo, pagos) in
+            DatoGraficoTipo(tipo: tipo, monto: pagos.reduce(0) { $0 + $1.monto })
+        }.sorted { $0.monto > $1.monto } // Orden descendente
     }
 }

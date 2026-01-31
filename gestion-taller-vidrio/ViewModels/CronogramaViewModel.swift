@@ -1,21 +1,20 @@
 import Foundation
 import Combine
 import SwiftUI
-import FirebaseFirestore // Necesario para ListenerRegistration
+import FirebaseFirestore
 
 @MainActor
 class CronogramaViewModel: ObservableObject {
     
     // MARK: - Estado de la Vista
-    
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // --- Lógica de Filtro (Fase 5) ---
+    // Lógica de Filtro
     @Published private var cursosProximos: [CronogramaItem] = []
     @Published private var cursosHistoricos: [CronogramaItem] = []
     
-    // --- Lógica de Formulario ---
+    // Lógica de Formulario
     @Published var cursos: [Curso] = []
     
     // Lista principal de inscripciones
@@ -26,8 +25,7 @@ class CronogramaViewModel: ObservableObject {
     
     @Published var ocupacionPorInscripcion: [String: Int] = [:]
     
-    // MARK: - Estado Bimodal (Fase 3)
-        
+    // MARK: - Estado Bimodal
     enum ModoVista: String, CaseIterable, Identifiable {
         case agenda = "Agenda"
         case online = "Cursos Online"
@@ -35,25 +33,14 @@ class CronogramaViewModel: ObservableObject {
     }
         
     @Published var modoVista: ModoVista = .agenda
-    
-    // Almacén de datos para el modo Online
     @Published var catalogoOnline: [Curso] = []
     
-    // Computed property para saber si debo mostrar el filtro de historial
-    var mostrarFiltroHistorial: Bool {
-        return modoVista == .agenda
-    }
+    var mostrarFiltroHistorial: Bool { return modoVista == .agenda }
     
-    // NUEVO: Almacén de Listeners activos
-    // Guardamos un listener por cada ID de inscripción que esté "expandida"
+    // Almacén de Listeners activos
     private var paymentListeners: [String: ListenerRegistration] = [:]
-    
-    // NUEVO: Listener para las inscripciones (para que se actualice el estado "Pagado/Debe" en tiempo real)
     private var inscripcionesListener: ListenerRegistration?
-    
-    // NUEVO: Listener para la lista principal
     private var cronogramaListener: ListenerRegistration?
-    
     private var catalogoListener: ListenerRegistration?
     
     enum FiltroCronograma: String, CaseIterable, Identifiable {
@@ -66,48 +53,44 @@ class CronogramaViewModel: ObservableObject {
     
     var cursosFiltrados: [CronogramaItem] {
         switch filtroSeleccionado {
-        case .proximos:
-            return cursosProximos
-        case .historial:
-            return cursosHistoricos
+        case .proximos: return cursosProximos
+        case .historial: return cursosHistoricos
         }
     }
     
-    // MARK: - Dependencias
+    // MARK: - Inyección de Dependencias (Híbrido)
     
-    private let repository = FirestoreTallerRepository.shared
+    private let tallerRepo: TallerRepository
+    private let finanzasRepo: FinanzasRepository
     
-    // MARK: - Inicializador
-    
-    init() {
-        // 1. IMPORTANTE: Iniciar la escucha en tiempo real de los cursos próximos
-        subscribeToCronograma()
-        fetchCronograma()
+    // Inicializador con Instanciación Perezosa (Seguro para @MainActor)
+    init(tallerRepo: TallerRepository? = nil, finanzasRepo: FinanzasRepository? = nil) {
+        // Si no nos pasan los repos, los creamos aquí dentro (contexto seguro)
+        self.tallerRepo = tallerRepo ?? TallerRepository()
+        self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         
+        // Iniciar la escucha
+        subscribeToCronograma()
+        fetchCronograma() // Carga inicial del historial
     }
     
-    // Limpieza al destruir el ViewModel (buena práctica)
     deinit {
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
-        cronogramaListener?.remove() // <--- Limpieza importante
+        cronogramaListener?.remove()
         catalogoListener?.remove()
     }
     
-    // MARK: - Lógica Reactiva (Real-Time)
+    // MARK: - Lógica Reactiva (TallerRepository)
         
     func subscribeToCronograma() {
         isLoading = true
         errorMessage = nil
         
-        // 1. Suscripción a cursos PRÓXIMOS (Donde ocurre la acción)
-        // Si ya existía, lo removemos para no duplicar
         cronogramaListener?.remove()
         
-        cronogramaListener = repository.listenToCursosProximos { [weak self] result in
+        cronogramaListener = tallerRepo.listenToCursosProximos { [weak self] result in
             guard let self = self else { return }
-            
-            // Apagamos loading tras recibir el primer snapshot
             self.isLoading = false
             
             switch result {
@@ -119,27 +102,21 @@ class CronogramaViewModel: ObservableObject {
             }
         }
         
-        // 2. Fetch de HISTORIAL (Lo mantenemos "One-Shot" por eficiencia)
-        // Rara vez cambian los inscriptos de cursos pasados.
+        // Fetch de HISTORIAL (One-Shot)
         Task {
             do {
-                self.cursosHistoricos = try await repository.fetchCursosHistoricos()
+                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
                 print("Error cargando historial: \(error)")
-                // No bloqueamos la UI por esto, es secundario
             }
         }
     }
     
-    // MARK: - Intenciones (Lógica de UI)
-    
-    // Reemplaza a tu antiguo fetchCronograma
     func fetchCronograma() {
-        // En un esquema Real-time, "fetch" suele significar "reconectar" o "forzar refresh del historial"
-        // Como el listener de próximos es automático, aquí solo recargamos el historial.
+        // Recarga manual del historial
         Task {
             do {
-                self.cursosHistoricos = try await repository.fetchCursosHistoricos()
+                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
                 self.errorMessage = "Error actualizando historial."
             }
@@ -149,64 +126,51 @@ class CronogramaViewModel: ObservableObject {
     func fetchCursos() {
         Task {
             do {
-                self.cursos = try await repository.fetchCursos()
+                self.cursos = try await tallerRepo.fetchCursos()
             } catch {
                 self.errorMessage = "Error al cargar el catálogo de cursos."
             }
         }
     }
     
-    // MARK: - Lógica Online (Evergreen)
+    // MARK: - Lógica Online (TallerRepository)
         
     func subscribeToCatalogoOnline() {
         isLoading = true
         errorMessage = nil
-        
-        // 1. Limpieza preventiva: Si ya escuchábamos, cancelamos para no duplicar.
         catalogoListener?.remove()
         
-        // 2. Iniciamos la escucha
-        catalogoListener = repository.listenToCatalogoOnline { [weak self] result in
+        catalogoListener = tallerRepo.listenToCatalogoOnline { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
             
             switch result {
             case .success(let cursos):
-                // Ordenamos aquí en memoria
                 self.catalogoOnline = cursos.sorted { $0.nombre < $1.nombre }
-                
             case .failure(let error):
                 self.errorMessage = "Error sincronizando catálogo: \(error.localizedDescription)"
             }
         }
     }
     
-    
     func saveCronogramaItem(item: CronogramaItem) {
-        // Ya no necesitamos isLoading manual para la lista, el listener reaccionará.
         Task {
             do {
-                try await repository.saveCronogramaItem(item: item)
-                // NO llamamos fetchCronograma(), el listener actualizará la UI solo.
+                try await tallerRepo.saveCronogramaItem(item: item)
             } catch {
                 self.errorMessage = "Error al guardar el curso programado."
             }
         }
     }
 
-    // MARK: - Lógica de Inscripciones (AHORA EN TIEMPO REAL)
+    // MARK: - Lógica de Inscripciones (TallerRepository)
     
-    /// Activa un listener para ver las inscripciones de un cronograma en tiempo real.
-    /// Esto asegura que si pagas y cambia el saldo, la tarjetita se pinte de verde sola.
     func fetchInscripciones(cronogramaID: String) {
         isLoading = true
         errorMessage = nil
-        
-        // 1. Cancelamos listener anterior si existía (para no superponer escuchas)
         inscripcionesListener?.remove()
         
-        // 2. Activamos el nuevo listener
-        inscripcionesListener = repository.listenToInscripciones(cronogramaID: cronogramaID) { [weak self] result in
+        inscripcionesListener = tallerRepo.listenToInscripciones(cronogramaID: cronogramaID) { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
             
@@ -220,26 +184,18 @@ class CronogramaViewModel: ObservableObject {
         }
     }
 
-    /// Activa un listener para ver las inscripciones de un curso ONLINE (Evergreen).
-    /// Aquí el ID es del PRODUCTO (Curso), no del evento.
     func fetchInscripcionesOnline(cursoID: String) {
         isLoading = true
         errorMessage = nil
-        
-        // 1. Cancelamos listener anterior para evitar fugas de memoria o datos cruzados
         inscripcionesListener?.remove()
         
-        // 2. Activamos el nuevo listener específico para Online (creado en Fase 2)
-        inscripcionesListener = repository.listenToInscripcionesOnline(cursoID: cursoID) { [weak self] result in
+        inscripcionesListener = tallerRepo.listenToInscripcionesOnline(cursoID: cursoID) { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
             
             switch result {
             case .success(let lista):
                 self.inscripciones = lista
-                // Nota: En online no solemos calcular ocupación de "asientos",
-                // pero si quisieras métricas, irían aquí.
-                // self.calcularOcupaciones(para: lista)
             case .failure(let error):
                 self.errorMessage = "Error en inscripciones online: \(error.localizedDescription)"
             }
@@ -257,10 +213,9 @@ class CronogramaViewModel: ObservableObject {
     }
     
     func saveInscripcion(inscripcion: Inscripcion) {
-        // Ya no necesitamos isLoading manual porque el listener refrescará la UI
         Task {
             do {
-                try await repository.saveInscripcion(inscripcion: inscripcion)
+                try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
             } catch {
                 self.errorMessage = "Error al guardar la inscripción: \(error.localizedDescription)"
             }
@@ -268,78 +223,48 @@ class CronogramaViewModel: ObservableObject {
     }
     
     func deleteCronogramaItem(_ item: CronogramaItem) {
-        // 1. UI OPTIMISTA: Borrar localmente INMEDIATAMENTE.
-        // Esto satisface la animación de 'swipe-to-delete' de SwiftUI y evita el crash
-        // por inconsistencia de número de filas.
-        
+        // UI Optimista
         withAnimation {
-            // Buscamos y borramos de la lista de Próximos
             if let index = cursosProximos.firstIndex(where: { $0.id == item.id }) {
                 cursosProximos.remove(at: index)
             }
-            
-            // Buscamos y borramos de la lista de Historial
             if let index = cursosHistoricos.firstIndex(where: { $0.id == item.id }) {
                 cursosHistoricos.remove(at: index)
             }
         }
         
-        // 2. OPERACIÓN DE BACKEND
-        // Hacemos la llamada real a Firestore en segundo plano.
         Task {
             do {
-                try await repository.deleteCronogramaItem(item: item)
-                // Éxito: No hacemos nada más, el listener se mantendrá sincronizado solo.
+                try await tallerRepo.deleteCronogramaItem(item: item)
             } catch {
-                // 3. ROLLBACK (Si falla el backend)
-                // Si hubo un error real (ej. sin internet), mostramos alerta.
-                // Idealmente deberíamos re-insertar el item, pero para simplificar,
-                // forzamos una recarga para que vuelva a aparecer.
                 self.errorMessage = "No se pudo borrar: \(error.localizedDescription)"
-                self.fetchCronograma() // Recarga de seguridad
+                self.fetchCronograma() // Rollback/Reload
             }
         }
     }
     
     func deleteInscripcion(_ inscripcion: Inscripcion) {
-        // isLoading gestionado por el listener
         Task {
             do {
-                try await repository.deleteInscripcion(inscripcion: inscripcion)
+                try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
             } catch {
                 self.errorMessage = error.localizedDescription
             }
         }
     }
     
-    // MARK: - Lógica de Pagos (AHORA EN TIEMPO REAL PARA ACORDEÓN)
+    // MARK: - Lógica de Pagos (FinanzasRepository)
     
-    /// Llamado cuando se expande el acordeón
     func fetchPagos(para inscripcion: Inscripcion) {
         guard let id = inscripcion.id else { return }
+        if paymentListeners[id] != nil { return } // Ya estamos escuchando
         
-        // Si ya estamos escuchando este ID, no hacemos nada
-        if paymentListeners[id] != nil { return }
-        
-        // Placeholder visual inmediato
         if pagosPorInscripcion[id] == nil {
             pagosPorInscripcion[id] = []
         }
 
-        // Activamos un listener específico para los pagos de ESTA inscripción
-        // OJO: Necesitas agregar una función `listenToPagos(origenID:)` en tu repositorio.
-        // Si no la tienes, te paso el código abajo.
-        // Por ahora, asumimos que usaremos la función de fetch normal pero en un polling o agregaremos el listener.
-        
-        // -- CORRECCIÓN: Para no obligarte a cambiar el Repo ahora mismo, simularemos el tiempo real
-        // recargando cuando sepamos que hubo un cambio, pero lo IDEAL es un listener.
-        
-        // VAMOS A USAR UN LISTENER MANUAL AQUI.
-        // Necesitamos acceso a Firestore directo o agregar la funcion al repo.
-        // Agreguemos la función al repo es lo más limpio.
-        
-        // Asumiendo que agregaremos `listenToPagos(origenID: ...)` al repo:
-        let listener = repository.listenToPagos(origenID: id) { [weak self] result in
+        // Usamos el nuevo FinanzasRepo para escuchar cambios reales en los pagos
+        let listener = finanzasRepo.listenToPagos(origenID: id) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let pagos):
@@ -349,27 +274,17 @@ class CronogramaViewModel: ObservableObject {
             }
         }
         
-        // Guardamos el token para poder cancelarlo al colapsar
         paymentListeners[id] = listener
     }
     
-    /// Llamado cuando se colapsa el acordeón (Optimización)
     func stopListeningPagos(para inscripcion: Inscripcion) {
         guard let id = inscripcion.id else { return }
-        // 1. Cancelamos la escucha en Firebase
         paymentListeners[id]?.remove()
-        // 2. Borramos el token
         paymentListeners[id] = nil
-        // Opcional: Limpiar la memoria de pagos
-        // pagosPorInscripcion[id] = nil
     }
-    
-    // MARK: - Acciones Financieras
     
     func registrarPago(pago: Pago, origen: Origen) async throws {
         errorMessage = nil
-        
-        // La actualización de la UI será automática gracias a los listeners
-        try await repository.registrarPago(pago: pago, origen: origen)
+        try await finanzasRepo.registrarPago(pago: pago, origen: origen)
     }
 }

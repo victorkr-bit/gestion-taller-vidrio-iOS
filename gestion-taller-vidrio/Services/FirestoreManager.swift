@@ -1,0 +1,57 @@
+import Foundation
+import FirebaseFirestore
+import FirebaseFunctions
+
+// Esta clase centraliza la conexión a Firebase y el manejo de errores.
+// Reemplaza la configuración interna que tenía la God Class.
+final class FirestoreManager {
+    
+    // Singleton para acceso global
+    static let shared = FirestoreManager()
+    
+    // Instancias únicas de Firebase
+    let db: Firestore
+    lazy var functions: Functions = Functions.functions(region: "southamerica-east1")
+    
+    private init() {
+        self.db = Firestore.firestore()
+        // Aquí podrías agregar configuraciones de caché si hiciera falta en el futuro
+    }
+    
+    // Lógica extraída de FirestoreTallerRepository [cite: 169]
+    func mapCloudError(_ error: Error) -> TallerError {
+        // 1. Casteamos a NSError para acceder al código y dominio
+        let nsError = error as NSError
+        
+        // 2. Verificamos si es un error de Functions
+        if nsError.domain == FunctionsErrorDomain {
+            let code = FunctionsErrorCode(rawValue: nsError.code)
+            let message = nsError.localizedDescription
+            
+            switch code {
+            case .failedPrecondition:
+              // Backend dice: "No se puede borrar: Tiene pagos asociados..." [cite: 171]
+                if message.lowercased().contains("pagos") {
+                    return .tienePagos
+                }
+               // Backend dice: "No se puede borrar el curso: Tiene alumnos inscriptos." [cite: 172]
+                if message.lowercased().contains("inscriptos") || message.lowercased().contains("alumnos") {
+                    return .tieneInscriptos
+                }
+                return .transaccionFallida(message)
+                
+            case .notFound:
+               return .origenNoEncontrado // [cite: 173]
+                
+            case .unauthenticated:
+                return .transaccionFallida("Sesión no válida. Por favor, vuelve a iniciar sesión.")
+                
+            default:
+                return .transaccionFallida(message) // [cite: 174]
+            }
+        }
+        
+        // 3. Si no es un error de Functions (ej. sin internet), lo pasamos tal cual
+        return .transaccionFallida(error.localizedDescription) // [cite: 175]
+    }
+}

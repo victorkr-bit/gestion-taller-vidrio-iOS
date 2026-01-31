@@ -1,151 +1,141 @@
 import Foundation
-import SwiftUI
 import Combine
+import SwiftUI
 import FirebaseFirestore
 
 @MainActor
 class PedidosViewModel: ObservableObject {
     
-    // MARK: - Estado de la Vista
+    // MARK: - Estado de Datos
+    @Published var pedidos: [Pedido] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Fuente de la verdad (Datos crudos de Firebase)
-    @Published private var pedidos: [Pedido] = []
+    // MARK: - Estado de UI (Buscador y Filtros)
+    @Published var searchText: String = ""
+    @Published var filtroPagoSeleccionado: FiltroEstadoPago = .todos
+    // AGREGADO: Estado para el filtro de entregas
+    @Published var filtroEntregaSeleccionado: FiltroEstadoEntrega = .todos
     
-    // Resultado Final (Lo que ve la UI tras filtrar)
-    @Published var pedidosVisibles: [Pedido] = []
-    
-    // --- ESTADO PARA ACORDEÓN ---
+    // Caché de pagos
     @Published var pagosPorPedido: [String: [Pago]] = [:]
     
     // Almacén de Listeners
+    private var pedidosListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
-    private var ordersListener: ListenerRegistration?
     
-    // --- Filtros de UI ---
+    // MARK: - Enums de Filtros
     
     enum FiltroEstadoPago: String, CaseIterable, Identifiable {
         case todos = "Todos"
         case pagados = "Pagados"
-        case noPagados = "No Pagados"
-        var id: String { self.rawValue }
+        case pendientes = "Pendientes"
+        var id: String { rawValue }
     }
     
+    // AGREGADO: Enum para filtro de entregas
     enum FiltroEstadoEntrega: String, CaseIterable, Identifiable {
         case todos = "Todos"
         case entregados = "Entregados"
         case pendientes = "Pendientes"
-        var id: String { self.rawValue }
+        var id: String { rawValue }
     }
     
-    // Observamos cambios en los filtros para recalcular la lista
-    @Published var filtroPagoSeleccionado: FiltroEstadoPago = .todos {
-        didSet { aplicarFiltros() }
-    }
-    
-    @Published var filtroEntregaSeleccionado: FiltroEstadoEntrega = .pendientes {
-        didSet { aplicarFiltros() }
-    }
-    
-    // Nuevo: Búsqueda centralizada en el VM
-    var searchText: String = "" {
-        didSet { aplicarFiltros() }
-    }
-    
-    // MARK: - Lógica Centralizada de Filtrado
-    
-    private func aplicarFiltros() {
-        var resultado = pedidos
-        
-        // 1. Filtro de Pago
-        switch filtroPagoSeleccionado {
-        case .todos:
-            break
-        case .pagados:
-            resultado = resultado.filter { $0.estado_pago == true }
-        case .noPagados:
-            resultado = resultado.filter { $0.estado_pago == false }
-        }
-        
-        // 2. Filtro de Entrega
-        switch filtroEntregaSeleccionado {
-        case .todos:
-            break
-        case .entregados:
-            resultado = resultado.filter { $0.estado_entrega == true }
-        case .pendientes:
-            resultado = resultado.filter { $0.estado_entrega == false }
-        }
-        
-        // 3. Filtro de Texto (Búsqueda)
-        if !searchText.isEmpty {
-            resultado = resultado.filter { pedido in
-                let matchNombre = pedido.cliente_nombre.localizedCaseInsensitiveContains(searchText)
-                let matchNumero = pedido.numero_pedido.localizedCaseInsensitiveContains(searchText)
-                let matchDesc = pedido.descripcion.localizedCaseInsensitiveContains(searchText)
-                let matchTipo = pedido.tipo.rawValue.localizedCaseInsensitiveContains(searchText)
-                return matchNombre || matchNumero || matchDesc || matchTipo
+    // MARK: - Propiedad Computada (Lógica de Filtrado Completa)
+    var pedidosVisibles: [Pedido] {
+        // 1. Filtrar por Texto
+        let filtradosPorTexto: [Pedido]
+        if searchText.isEmpty {
+            filtradosPorTexto = pedidos
+        } else {
+            filtradosPorTexto = pedidos.filter { pedido in
+                let textoBusqueda = searchText.lowercased()
+                return pedido.cliente_nombre.lowercased().contains(textoBusqueda) ||
+                       pedido.descripcion.lowercased().contains(textoBusqueda) ||
+                       pedido.numero_pedido.lowercased().contains(textoBusqueda)
             }
         }
         
-        // 4. Ordenamiento y Asignación Final
-        self.pedidosVisibles = resultado.sorted(by: { $0.numero_pedido > $1.numero_pedido })
+        // 2. Filtrar por Estado de Pago
+        let filtradosPorPago: [Pedido]
+        switch filtroPagoSeleccionado {
+        case .todos:
+            filtradosPorPago = filtradosPorTexto
+        case .pagados:
+            filtradosPorPago = filtradosPorTexto.filter { $0.estado_pago }
+        case .pendientes:
+            filtradosPorPago = filtradosPorTexto.filter { !$0.estado_pago }
+        }
+        
+        // 3. Filtrar por Estado de Entrega (AGREGADO)
+        switch filtroEntregaSeleccionado {
+        case .todos:
+            return filtradosPorPago
+        case .entregados:
+            return filtradosPorPago.filter { $0.estado_entrega }
+        case .pendientes:
+            return filtradosPorPago.filter { !$0.estado_entrega }
+        }
     }
     
-    // MARK: - Dependencias
-    private let repository = FirestoreTallerRepository.shared
+    // MARK: - Inyección de Dependencias
     
-    // MARK: - Init
-    init() {
+    private let ventasRepo: VentasRepository
+    private let finanzasRepo: FinanzasRepository
+    
+    // Inicializador con Instanciación Perezosa
+    init(ventasRepo: VentasRepository? = nil, finanzasRepo: FinanzasRepository? = nil) {
+        self.ventasRepo = ventasRepo ?? VentasRepository()
+        self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
+        
         startListeningOrders()
     }
     
     deinit {
-        ordersListener?.remove()
+        pedidosListener?.remove()
         paymentListeners.values.forEach { $0.remove() }
     }
     
-    // MARK: - Lógica de Firebase
+    // MARK: - Gestión de Pedidos (VentasRepository)
     
     func startListeningOrders() {
         isLoading = true
         errorMessage = nil
         
-        ordersListener?.remove()
+        pedidosListener?.remove()
         
-        ordersListener = repository.listenToPedidos { [weak self] result in
+        pedidosListener = ventasRepo.listenToPedidos { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
             
             switch result {
-            case .success(let pedidosActualizados):
-                self.pedidos = pedidosActualizados
-                // Importante: Al recibir nuevos datos, reaplicamos filtros
-                self.aplicarFiltros()
-                
+            case .success(let pedidos):
+                self.pedidos = pedidos
             case .failure(let error):
-                self.errorMessage = "Error de conexión: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando pedidos: \(error.localizedDescription)"
+                self.isLoading = false
             }
         }
     }
     
     func deletePedido(_ pedido: Pedido) {
-        isLoading = true
-        errorMessage = nil
+        if let index = pedidos.firstIndex(where: { $0.id == pedido.id }) {
+            withAnimation {
+                _ = pedidos.remove(at: index)
+            }
+        }
+        
         Task {
             do {
-                try await repository.deletePedido(pedido: pedido)
-                // No hace falta actualizar localmente, el listener lo hará
-                self.isLoading = false
+                try await ventasRepo.deletePedido(pedido: pedido)
             } catch {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
+                self.errorMessage = "No se pudo eliminar el pedido: \(error.localizedDescription)"
+                self.startListeningOrders()
             }
         }
     }
     
-    // MARK: - Lógica de Pagos en Tiempo Real (Acordeón)
+    // MARK: - Gestión de Pagos (FinanzasRepository)
     
     func fetchPagos(para pedido: Pedido) {
         guard let id = pedido.id else { return }
@@ -155,16 +145,17 @@ class PedidosViewModel: ObservableObject {
             pagosPorPedido[id] = []
         }
         
-        let listener = repository.listenToPagos(origenID: id) { [weak self] result in
+        let listener = finanzasRepo.listenToPagos(origenID: id) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let pagos):
-                self.pagosPorPedido[id] = pagos
+                withAnimation {
+                    self.pagosPorPedido[id] = pagos
+                }
             case .failure(let error):
                 print("Error escuchando pagos del pedido \(id): \(error)")
             }
         }
-        
         paymentListeners[id] = listener
     }
     
@@ -174,10 +165,18 @@ class PedidosViewModel: ObservableObject {
         paymentListeners[id] = nil
     }
     
-    // MARK: - Registro de Pagos
-    
     func registrarPago(pago: Pago, origen: Origen) async throws {
         errorMessage = nil
-        try await repository.registrarPago(pago: pago, origen: origen)
+        try await finanzasRepo.registrarPago(pago: pago, origen: origen)
+    }
+    
+    func deletePago(_ pago: Pago) {
+        Task {
+            do {
+                try await finanzasRepo.deletePago(pago: pago)
+            } catch {
+                self.errorMessage = "Error al borrar pago: \(error.localizedDescription)"
+            }
+        }
     }
 }

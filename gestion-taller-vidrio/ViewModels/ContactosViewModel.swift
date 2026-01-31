@@ -11,7 +11,7 @@ class ContactosViewModel: ObservableObject {
     // --- NUEVO: Estado para el texto del buscador ---
     @Published var searchText: String = ""
 
-    private let repository = FirestoreTallerRepository.shared
+    private let repository: VentasRepository
     
     // --- NUEVO: Lista Computada ---
     // La vista observará ESTA lista, no la original 'contactos'
@@ -27,7 +27,10 @@ class ContactosViewModel: ObservableObject {
         }
     }
     
-    init() {
+    // CAMBIO 2: Inicializador con valor por defecto
+    
+    init(repository: VentasRepository? = nil) {
+        self.repository = repository ?? VentasRepository()
         fetchContactos()
     }
     
@@ -97,3 +100,4 @@ class ContactosViewModel: ObservableObject {
         }
     }
 }
+

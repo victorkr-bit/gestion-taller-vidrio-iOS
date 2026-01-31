@@ -107,3 +107,29 @@ enum OrigenTipoPago: String, Codable {
     var id: String { self.rawValue }
 }
 
+enum TallerError: Error, LocalizedError {
+    case tienePagos
+    case tieneInscriptos
+    // Nuevo error para transacciones
+    case origenNoEncontrado
+    case pagoNoEncontrado
+    // Error para la transacción
+    case transaccionFallida(String)
+    
+    // Esto mostrará un mensaje amigable en las Alertas de la UI
+    var errorDescription: String? {
+        switch self {
+        case .tienePagos:
+            return "Operación bloqueada: El ítem tiene pagos asociados."
+        case .tieneInscriptos:
+            return "Operación bloqueada: El curso tiene alumnos inscriptos."
+        case .origenNoEncontrado:
+            return "Error de Transacción: No se encontró el pedido o inscripción original."
+        case .pagoNoEncontrado:
+            return "Error de Transacción: No se encontró el pago a modificar."
+        case .transaccionFallida(let detalle):
+            return "Error de Transacción: \(detalle)"
+        }
+    }
+}
+
