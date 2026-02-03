@@ -30,14 +30,16 @@ struct CajaView: View {
                 .cornerRadius(8)
                 
                 HStack {
-                    Spacer()
+                    //Spacer()
                     Text("Total Filtrado:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.callout)
+                        .foregroundStyle(.primary)
                     
                     Text(currencyFormatter.string(from: NSNumber(value: viewModel.totalFiltrado)) ?? "$0")
                         .font(.title3)
                         .bold()
+                        .foregroundStyle(.blue)
+                    Spacer()
                 }
             }
             .padding()

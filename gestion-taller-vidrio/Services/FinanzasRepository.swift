@@ -8,13 +8,7 @@ final class FinanzasRepository {
     private let db = FirestoreManager.shared.db
     private let functions = FirestoreManager.shared.functions
     
-    // Formateador de fecha para enviar a Cloud Functions (ISO 8601)
-    //    private let isoDateFormatter: ISO8601DateFormatter = {
-    //        let formatter = ISO8601DateFormatter()
-    //        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    //        return formatter
-    //    }()
-    
+
     // MARK: - Pagos (Lectura)
     
     /// Obtiene los pagos dentro de un rango de fechas.
