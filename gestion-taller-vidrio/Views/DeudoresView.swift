@@ -4,10 +4,7 @@ struct DeudoresView: View {
     
     @StateObject private var viewModel = DeudoresViewModel()
     
-    // Estado para el sheet de pago (Flujo 1)
     @State private var origenParaPagar: Origen?
-    
-    // Estado para el alert de condonación (Flujo 6)
     @State private var origenParaCondonar: Origen?
     @State private var showingCondonarAlert = false
     
@@ -29,7 +26,6 @@ struct DeudoresView: View {
                     }
                     .listRowSeparator(.hidden)
                     
-                    // --- Swipe Action 1: Registrar Pago (Flujo 1) ---
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             self.origenParaPagar = deudor.origen
@@ -39,7 +35,6 @@ struct DeudoresView: View {
                         .tint(.green)
                     }
                     
-                    // --- Swipe Action 2: Condonar Deuda (Flujo 6) ---
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button {
                             self.origenParaCondonar = deudor.origen
@@ -73,14 +68,8 @@ struct DeudoresView: View {
         .refreshable {
             viewModel.fetchDeudores()
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-            Button("OK") { viewModel.errorMessage = nil }
-        }, message: {
-            Text(viewModel.errorMessage ?? "Ocurrió un error.")
-        })
+        .errorAlert($viewModel.errorMessage)
         
-        // --- Sheet para Flujo 1: Registrar Pago ---
-        // Esto ahora funciona porque 'Origen' es Identifiable desde Helpers.swift
         .sheet(item: $origenParaPagar) { origen in
             NavigationStack {
                 RegistrarPagoView(
@@ -92,7 +81,6 @@ struct DeudoresView: View {
             }
         }
         
-        // --- Alert para Flujo 6: Condonar Deuda ---
         .alert("¿Condonar Deuda?", isPresented: $showingCondonarAlert, presenting: origenParaCondonar) { origen in
             Button("Condonar Deuda", role: .destructive) {
                 viewModel.condonarDeuda(origen: origen)
@@ -103,16 +91,4 @@ struct DeudoresView: View {
         }
     }
 }
-
-
-
-// --- INICIO DE LA CORRECCIÓN ---
-// La extensión 'Origen: Identifiable' que estaba aquí se ELIMINÓ.
-// (Esto soluciona los errores de "redeclaration")
-/*
-extension Origen: Identifiable {
-    ... (ELIMINADO)
-}
-*/
-// --- FIN DE LA CORRECCIÓN ---
 

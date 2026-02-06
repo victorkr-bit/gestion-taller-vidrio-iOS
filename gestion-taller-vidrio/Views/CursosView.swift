@@ -4,10 +4,7 @@ struct CursosView: View {
     
     @StateObject private var viewModel = CursosViewModel()
     
-    // --- CAMBIO 1: Estados separados ---
-    // 'cursoToEdit' activa el sheet de EDICIÓN
     @State private var cursoToEdit: Curso?
-    // 'isCreatingNew' activa el sheet de CREACIÓN
     @State private var isCreatingNew = false
     
     var body: some View {
@@ -18,10 +15,7 @@ struct CursosView: View {
                 } else {
                     List {
                         ForEach(viewModel.cursos) { curso in
-                            // Usamos un Button para la acción explícita
                             Button {
-                                // --- CAMBIO 2: Lógica de EDICIÓN ---
-                                // Esto activa el sheet(item: $cursoToEdit)
                                 self.cursoToEdit = curso
                             } label: {
                                 CardView {
@@ -64,8 +58,6 @@ struct CursosView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        // --- CAMBIO 3: Lógica de CREACIÓN ---
-                        // Esto activa el sheet(isPresented: $isCreatingNew)
                         self.isCreatingNew = true
                     } label: {
                         Image(systemName: "plus")
@@ -73,12 +65,8 @@ struct CursosView: View {
                 }
             }
             
-            // --- CAMBIO 4: Dos Modificadores .sheet ---
-
-            // Sheet 1: Para CREAR (se activa con el Bool)
             .sheet(isPresented: $isCreatingNew) {
                 NavigationStack {
-                    // Pasamos nil explícitamente
                     CursoFormView(
                         viewModel: viewModel,
                         cursoToEdit: nil
@@ -86,10 +74,8 @@ struct CursosView: View {
                 }
             }
             
-            // Sheet 2: Para EDITAR (se activa cuando 'cursoToEdit' NO es nil)
             .sheet(item: $cursoToEdit) { curso in
                 NavigationStack {
-                    // Pasamos el curso que se clickeó
                     CursoFormView(
                         viewModel: viewModel,
                         cursoToEdit: curso
@@ -97,12 +83,7 @@ struct CursosView: View {
                 }
             }
             
-            // Manejo de errores
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-                Button("OK") { viewModel.errorMessage = nil }
-            }, message: {
-                Text(viewModel.errorMessage ?? "Ocurrió un error desconocido.")
-            })
+            .errorAlert($viewModel.errorMessage)
         }
     }
 }

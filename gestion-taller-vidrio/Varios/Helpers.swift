@@ -1,9 +1,22 @@
 import SwiftUI
 import FirebaseFirestore
 
+// MARK: - Error Alert Reutilizable
+extension View {
+    func errorAlert(_ errorMessage: Binding<String?>) -> some View {
+        self.alert("Error", isPresented: Binding<Bool>(
+            get: { errorMessage.wrappedValue != nil },
+            set: { if !$0 { errorMessage.wrappedValue = nil } }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage.wrappedValue ?? "Ocurrió un error desconocido.")
+        }
+    }
+}
 
-// --- Vista de Fila de Pago ---
-// (Extraída de CronogramaDetailView para ser usada también en CajaView)
+
+// MARK: - Vista de Fila de Pago
 struct PagoRowView: View {
     let pago: Pago
 
@@ -27,15 +40,11 @@ struct PagoRowView: View {
     }
 }
 
-// --- Helper para Tarea 4.1 ---
-// Este enum nos permite pasar de forma segura el Pedido o la Inscripcion
-// a la función registrarPago() del repositorio.
+// MARK: - Origen (Pedido o Inscripcion)
 enum Origen: Identifiable {
     case pedido(Pedido)
     case inscripcion(Inscripcion)
     
-    // 2. Esta es la nueva propiedad 'id' (NO opcional)
-    //    Requerida por Identifiable y usada por el .sheet()
     var id: String {
         switch self {
         case .pedido(let p): return p.id ?? UUID().uuidString
@@ -43,7 +52,6 @@ enum Origen: Identifiable {
         }
     }
 
-    // 3. Renombramos la 'id' original (opcional) a 'documentID'
     var documentID: String? {
         switch self {
         case .pedido(let p): return p.id
@@ -52,8 +60,6 @@ enum Origen: Identifiable {
     }
       
     var ref: DocumentReference? {
-        // 4. Actualizamos 'ref' para que use 'documentID'
-        //    Esto soluciona el error: "must have Optional type"
         guard let id = self.documentID else { return nil }
          
         switch self {
@@ -85,7 +91,6 @@ enum Origen: Identifiable {
         }
     }
       
-    // --- AQUÍ ESTÁ EL CAMBIO SOLICITADO ---
     var descripcionOrigen: String {
         switch self {
         case .pedido(let p):
@@ -130,8 +135,6 @@ extension CronogramaItem {
         return URL(string: "https://taller-glass-v2.web.app/inscribir/\(docID)")
     }
 
-    // Genera el mensaje para WhatsApp
-    // CAMBIO: Ya no interpolamos la URL aquí adentro.
     var mensajeCompartir: String {
         // Usamos formato abreviado seguro
         let fechaFormateada = fecha.formatted(date: .abbreviated, time: .shortened)
@@ -149,7 +152,6 @@ extension CronogramaItem {
 struct SelectorContactoView: View {
     @Environment(\.dismiss) var dismiss
     
-    // Almacenamos la lista YA ordenada para no reordenar en cada render
     private let contactos: [Contacto]
     
     // Bindings
@@ -159,28 +161,19 @@ struct SelectorContactoView: View {
     // Estado de búsqueda
     @State private var searchText = ""
     
-    // MARK: - Init Optimizado
     init(contactos: [Contacto], selectedID: Binding<String>, selectedNombre: Binding<String>) {
-        // 1. OPTIMIZACIÓN: Ordenamos la lista UNA sola vez al inyectarla.
-        // Esto evita que la app ordene cientos de contactos cada vez que la vista se redibuja.
         self.contactos = contactos.sorted {
             $0.nombreCompleto.localizedCaseInsensitiveCompare($1.nombreCompleto) == .orderedAscending
         }
         
-        // Inicializamos los bindings
         self._selectedID = selectedID
         self._selectedNombre = selectedNombre
     }
     
-    // MARK: - Lógica de Filtrado Ligera
     var contactosFiltrados: [Contacto] {
         if searchText.isEmpty {
-            // Retornamos la lista que ya ordenamos en el init
             return contactos
         } else {
-            // El filtro respeta el orden original.
-            // Como 'contactos' ya está ordenado alfabéticamente, el resultado filtrado también lo estará.
-            // No hace falta volver a llamar a .sorted().
             return contactos.filter {
                 $0.nombreCompleto.localizedCaseInsensitiveContains(searchText)
             }

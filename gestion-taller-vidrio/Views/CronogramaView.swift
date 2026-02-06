@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct CronogramaView: View {
-    // RECIBIMOS el VM (Inyección de dependencias), NO lo creamos aquí
     @ObservedObject var viewModel: CronogramaViewModel
     
     // Acceso al NavigationManager global
@@ -11,7 +10,6 @@ struct CronogramaView: View {
     @State private var isCreatingAgendaEvent = false
     
     var body: some View {
-        // VINCULAMOS EL PATH DEL MANAGER AQUÍ
         NavigationStack(path: $navManager.cronogramaPath) {
             VStack(spacing: 0) {
                 
@@ -27,8 +25,7 @@ struct CronogramaView: View {
                 // --- Contenido dinámico según el modo ---
                 if viewModel.modoVista == .agenda {
                     
-                    // --- MODO AGENDA ---
-                    // Filtro Próximos / Historial
+                        // Filtro Próximos / Historial
                     Picker("Filtro Cronograma", selection: $viewModel.filtroSeleccionado.animation()) {
                         ForEach(CronogramaViewModel.FiltroCronograma.allCases) { filtro in
                             Text(filtro.rawValue).tag(filtro)
@@ -42,7 +39,6 @@ struct CronogramaView: View {
                     
                 } else {
                     
-                    // --- MODO ONLINE ---
                     onlineListView
                 }
             }
@@ -61,12 +57,7 @@ struct CronogramaView: View {
             .sheet(isPresented: $isCreatingAgendaEvent) {
                 NavigationStack { CronogramaFormView(viewModel: viewModel) }
             }
-            // Alertas de error
-            .alert("Atención", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-                Button("OK") { viewModel.errorMessage = nil }
-            }, message: {
-                Text(viewModel.errorMessage ?? "Error desconocido")
-            })
+            .errorAlert($viewModel.errorMessage)
             // Recarga al cambiar pestaña
             .onChange(of: viewModel.modoVista) { _, newMode in
                 if newMode == .online {
@@ -75,9 +66,6 @@ struct CronogramaView: View {
                     viewModel.fetchCronograma()
                 }
             }
-            // --- AQUÍ OCURRE LA MAGIA DE LA NAVEGACIÓN ---
-            // Cuando el NavigationManager añade un 'CronogramaItem' al path,
-            // esta función lo atrapa y empuja la vista de detalle.
             .navigationDestination(for: CronogramaItem.self) { item in
                 CronogramaDetailView(viewModel: viewModel, cronogramaItem: item)
             }
@@ -94,14 +82,9 @@ struct CronogramaView: View {
             } else if viewModel.cursosFiltrados.isEmpty {
                 ContentUnavailableView("No hay eventos", systemImage: "calendar.badge.exclamationmark")
             } else {
-                // En CronogramaView.swift -> agendaListView
-
                 List {
                     ForEach(viewModel.cursosFiltrados) { item in
-                        
-                        // --- CAMBIO: Reemplazamos NavigationLink por Button ---
                         Button {
-                            // Acción imperativa: Añadimos manual al path global
                             navManager.cronogramaPath.append(item)
                         } label: {
                             CardView {
@@ -121,11 +104,8 @@ struct CronogramaView: View {
                                 )
                             }
                         }
-                        // Estilos necesarios para que el botón en la lista se vea bien
                         .listRowSeparator(.hidden)
-                        .buttonStyle(.plain) // Evita que se ilumine toda la celda azul feo
-                        
-                        // --- FIN DEL CAMBIO ---
+                        .buttonStyle(.plain)
                     }
                     .onDelete { indexSet in
                         if let index = indexSet.first {

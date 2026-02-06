@@ -151,15 +151,7 @@ struct PedidoFormView: View {
                 Button("Cancelar") { dismiss() }
             }
         }
-        // Manejo de errores y cierre
-        .alert("Error", isPresented: Binding<Bool>(
-            get: { viewModel.errorMessage != nil },
-            set: { _ in viewModel.errorMessage = nil }
-        )) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
+        .errorAlert($viewModel.errorMessage)
         .onChange(of: viewModel.shouldDismiss) {
             if viewModel.shouldDismiss { dismiss() }
         }

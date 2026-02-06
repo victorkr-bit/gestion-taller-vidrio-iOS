@@ -13,12 +13,6 @@ struct CronogramaDetailView: View {
     // Control de expansión
     @State private var expandedInscripcionID: String?
     
-    // Estado de alerta de error
-    @State private var showErrorAlert = false
-    
-    // --- LEAD DEV FEATURE: Ordenamiento Dinámico ---
-    // Ordenamos las inscripciones por horario si es un Taller.
-    // Si no tienen fecha, las mandamos al final.
     var inscripcionesOrdenadas: [Inscripcion] {
         let lista = viewModel.inscripciones
         
@@ -56,7 +50,6 @@ struct CronogramaDetailView: View {
                     
                     // --- Sección 2: Lista de Inscriptos ---
                     Section(header: Text("Inscriptos (\(viewModel.inscripciones.count))")) {
-                        // CAMBIO: Usamos la lista ordenada
                         ForEach(inscripcionesOrdenadas) { inscripcion in
                             InscripcionRowView(
                                 inscripcion: inscripcion,
@@ -82,14 +75,13 @@ struct CronogramaDetailView: View {
                 }
             }
         }
-        // --- SHEETS Y ALERTAS ---
         .sheet(isPresented: $isCreatingNew) {
             NavigationStack {
                 InscripcionFormView(
                     viewModel: viewModel,
                     inscripcionToEdit: nil,
-                    cronogramaItem: cronogramaItem, // Pasamos el Item de Agenda
-                    curso: nil                      // Explicito: No es un curso online
+                    cronogramaItem: cronogramaItem,
+                    curso: nil
                 )
             }
         }
@@ -98,7 +90,7 @@ struct CronogramaDetailView: View {
                 InscripcionFormView(
                     viewModel: viewModel,
                     inscripcionToEdit: inscripcion,
-                    cronogramaItem: cronogramaItem, // Pasamos el contexto de fecha
+                    cronogramaItem: cronogramaItem,
                     curso: nil
                 )
             }
@@ -118,18 +110,11 @@ struct CronogramaDetailView: View {
                 viewModel.fetchInscripciones(cronogramaID: id)
             }
         }
-        .onChange(of: viewModel.errorMessage) { oldValue, newValue in
-            if newValue != nil { showErrorAlert = true }
-        }
-        .alert("Atención", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) { viewModel.errorMessage = nil }
-        } message: {
-            Text(viewModel.errorMessage ?? "Ha ocurrido un error.")
-        }
+        .errorAlert($viewModel.errorMessage)
     }
 }
 
-// MARK: - Subvista para la Fila (Row) - DEFINITIVA
+// MARK: - Subvista para la Fila (Row)
 struct InscripcionRowView: View {
     let inscripcion: Inscripcion
     @ObservedObject var viewModel: CronogramaViewModel
@@ -142,7 +127,6 @@ struct InscripcionRowView: View {
         VStack(spacing: 0) {
             CardView {
                 HStack {
-                    // 1. Recuperamos la ocupación del diccionario de forma segura
                     let ocupacion = viewModel.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
                     
                     GenericRowView(
@@ -154,11 +138,7 @@ struct InscripcionRowView: View {
                         tags: [
                             TagConfig(text: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? "Pagado" : "Debe \(Formatters.money(inscripcion.monto_adeudado))",
                                       color: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? .green : .orange),
-                            // Lógica condicional para mostrar turno si existe
                             inscripcion.turnos ?? 0 > 1 ? TagConfig(text: "\(inscripcion.turnos!) turnos", color: .mint) : nil,
-                            // --- NUEVO: Tag de Ocupación ---
-                            // Solo mostramos esto si es tipo Taller y la ocupación es relevante (>0)
-                            // Puedes ajustar el umbral de color según tu criterio de "taller lleno"
                             (inscripcion.cursoTipo == .taller && ocupacion > 0) ?
                                 TagConfig(text: "Ocup: \(ocupacion)", color: ocupacion >= 4 ? .red : .blue) : nil
                         ].compactMap { $0 } // Esto elimina los 'nil' de la lista
@@ -173,28 +153,18 @@ struct InscripcionRowView: View {
             }
         }
         .listRowSeparator(.hidden)
-        // IMPORTANTE: Hace que toda el área (incluyendo espacios vacíos) sea 'tappable'
         .contentShape(Rectangle())
         .onTapGesture {
-            // Lógica de expansión (Acordeón)
             withAnimation {
                 if expandedInscripcionID == inscripcion.id {
-                    // COLAPSAR
-                    // 1. Dejar de escuchar cambios para ahorrar datos
-                    viewModel.stopListeningPagos(para: inscripcion) // <--- AGREGAR ESTO EN EL VIEWMODEL
+                    viewModel.stopListeningPagos(para: inscripcion)
                     expandedInscripcionID = nil
                 } else {
-                    // EXPANDIR
-                    // 1. Cerrar el anterior si había uno abierto (opcional, pero recomendado)
-                    // ... lógica para cerrar el anterior ...
-                    
                     expandedInscripcionID = inscripcion.id
-                    // 2. Empezar a escuchar
                     viewModel.fetchPagos(para: inscripcion)
                 }
             }
         }
-        // SWIPE ACTIONS (Ahora funcionan fluido porque no hay botón interfiriendo)
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button {
                 self.inscripcionParaPagar = inscripcion
@@ -239,8 +209,6 @@ struct InscripcionRowView: View {
             }
         }
         
-        // Mostrar lista de pagos si está expandido
-        // Nota: Esto está fuera del área "tappeable" principal para no colapsar al tocar un pago
         if expandedInscripcionID == inscripcion.id {
             PagosListView(inscripcion: inscripcion, viewModel: viewModel)
         }

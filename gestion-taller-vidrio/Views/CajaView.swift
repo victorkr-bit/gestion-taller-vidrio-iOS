@@ -5,16 +5,7 @@ struct CajaView: View {
     
     @State private var showVentaDirecta = false
     @State private var pagoAEditar: Pago? = nil
-    
-    // Formateador para el total
-    private let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.locale = Locale(identifier: "es_AR")
-        formatter.maximumFractionDigits = 0
-        return formatter
-    }()
-    
+
     var body: some View {
         VStack(spacing: 0) {
             
@@ -35,7 +26,7 @@ struct CajaView: View {
                         .font(.callout)
                         .foregroundStyle(.primary)
                     
-                    Text(currencyFormatter.string(from: NSNumber(value: viewModel.totalFiltrado)) ?? "$0")
+                    Text(Formatters.money(viewModel.totalFiltrado))
                         .font(.title3)
                         .bold()
                         .foregroundStyle(.blue)
@@ -63,13 +54,11 @@ struct CajaView: View {
             } else {
                 List {
                     ForEach(viewModel.pagosFiltrados) { pago in
-                        // Usamos la Row personalizada
                         CajaPagoRow(
                             pago: pago,
                             viewModel: viewModel,
                             pagoToEdit: $pagoAEditar
                         )
-                        // Ajustes visuales para que la Card se vea bien en una lista
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
@@ -96,10 +85,11 @@ struct CajaView: View {
                  PagoFormView(viewModel: viewModel, pagoToEdit: pago)
              }
         }
+        .errorAlert($viewModel.errorMessage)
     }
 }
 
-// MARK: - Subvista de Fila (Restaurada)
+// MARK: - Subvista de Fila
 private struct CajaPagoRow: View {
     let pago: Pago
     @ObservedObject var viewModel: CajaViewModel
@@ -110,7 +100,6 @@ private struct CajaPagoRow: View {
             GenericRowView(
                 titulo: pago.cliente_nombre,
                 subtitulo: pago.descripcion_origen,
-                // Usamos el formateador nativo si no tienes tu clase Formatters a mano
                 infoSuperior: pago.fecha.formatted(date: .numeric, time: .shortened),
                 iconoSuperior: nil,
                 monto: pago.monto,

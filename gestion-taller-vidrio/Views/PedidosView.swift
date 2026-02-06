@@ -66,16 +66,13 @@ struct PedidosView: View {
                 }
             }
         }
-        // Sheets con Inyección de Dependencias Correcta
         .sheet(isPresented: $isCreatingNew) {
             NavigationStack {
-                // INYECCIÓN: VM Nuevo y vacío
                 PedidoFormView(viewModel: PedidoFormViewModel())
             }
         }
         .sheet(item: $pedidoParaEditar) { pedido in
             NavigationStack {
-                // INYECCIÓN: VM inicializado con el pedido a editar
                 PedidoFormView(viewModel: PedidoFormViewModel(pedido: pedido))
             }
         }
@@ -89,22 +86,14 @@ struct PedidosView: View {
                 )
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-            Button("OK") { viewModel.errorMessage = nil }
-        }, message: {
-            Text(viewModel.errorMessage ?? "Ocurrió un error desconocido.")
-        })
+        .errorAlert($viewModel.errorMessage)
         .refreshable {
             viewModel.startListeningOrders()
         }
     }
 }
 
-// (Mantén tus submódulos PedidoRowView, PedidoCardContentView, etc., tal como estaban, funcionan perfecto)
-// MARK: - NUEVO: Row View Unificada (Acordeón + Swipes)
-
-// MARK: - NUEVO: Row View Unificada (Acordeón + Swipes + ContextMenu)
-
+// MARK: - Row View (Acordeón + Swipes + ContextMenu)
 struct PedidoRowView: View {
     let pedido: Pedido
     @ObservedObject var viewModel: PedidosViewModel
@@ -142,9 +131,7 @@ struct PedidoRowView: View {
             }
         }
         .listRowSeparator(.hidden)
-        .contentShape(Rectangle()) // Hace toda el área tappeable
-        
-        // 1. Gesto de Toque Simple: EXPANDIR / COLAPSAR
+        .contentShape(Rectangle())
         .onTapGesture {
             withAnimation {
                 if expandedPedidoID == pedido.id {
@@ -159,9 +146,7 @@ struct PedidoRowView: View {
             }
         }
         
-        // 2. Menú Contextual (Mantener Presionado): CLON DE SWIPES
         .contextMenu {
-            // Sección de Acciones Positivas
             Button {
                 self.pedidoParaPagar = pedido
             } label: {
@@ -176,7 +161,6 @@ struct PedidoRowView: View {
             
             Divider()
             
-            // Sección Destructiva
             Button(role: .destructive) {
                 viewModel.deletePedido(pedido)
             } label: {
@@ -184,7 +168,6 @@ struct PedidoRowView: View {
             }
         }
         
-        // 3. Swipe Actions (Deslizar)
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button {
                 self.pedidoParaPagar = pedido
@@ -208,7 +191,6 @@ struct PedidoRowView: View {
             .tint(.blue)
         }
         
-        // --- DETALLE EXPANDIBLE (LISTA DE PAGOS) ---
         if expandedPedidoID == pedido.id {
             PagosPedidoListView(pedido: pedido, viewModel: viewModel)
         }
@@ -251,12 +233,7 @@ struct PagosPedidoListView: View {
     }
 }
 
-//
-//  PEGAR ESTO AL FINAL DE PedidosView.swift
-//  FUERA de la struct PedidosView
-//
-
-// MARK: - 1. Vista de Filtros
+// MARK: - Vista de Filtros
 struct PedidosFiltersView: View {
     @ObservedObject var viewModel: PedidosViewModel
     
@@ -308,7 +285,7 @@ struct PedidosFiltersView: View {
     }
 }
 
-// MARK: - 2. Etiqueta de Filtro (Helper Visual)
+// MARK: - Etiqueta de Filtro
 struct FilterLabel: View {
     let title: String
     

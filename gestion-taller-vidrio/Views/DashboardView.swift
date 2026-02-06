@@ -165,6 +165,7 @@ struct DashboardView: View {
         }
         .navigationTitle("Inicio")
         .background(Color(.systemGroupedBackground))
+        .errorAlert($viewModel.errorMessage)
     }
     
     // MARK: - Subvista del Gráfico de Ocupación

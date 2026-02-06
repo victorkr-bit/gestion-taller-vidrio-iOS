@@ -15,7 +15,6 @@ struct ContactosView: View {
                     ProgressView("Cargando contactos...")
                 } else {
                     List {
-                        // --- CAMBIO CLAVE: Iteramos sobre la lista filtrada ---
                         ForEach(viewModel.contactosFiltrados) { contacto in
                             Button {
                                 self.contactToEdit = contacto
@@ -59,14 +58,11 @@ struct ContactosView: View {
                     .refreshable {
                         viewModel.fetchContactos()
                     }
-                    // --- NUEVO: Modificador de búsqueda ---
-                    // Esto inyecta la barra nativa de iOS arriba de todo
                     .searchable(
                         text: $viewModel.searchText,
                         placement: .navigationBarDrawer(displayMode: .always), // Opcional: para que siempre se vea
                         prompt: "Buscar contacto"
                     )
-                    // Opcional: Mostrar mensaje si no hay resultados en la búsqueda
                     .overlay {
                         if viewModel.contactosFiltrados.isEmpty && !viewModel.searchText.isEmpty {
                             ContentUnavailableView(
@@ -104,11 +100,7 @@ struct ContactosView: View {
                     )
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-                Button("OK") { viewModel.errorMessage = nil }
-            }, message: {
-                Text(viewModel.errorMessage ?? "Ocurrió un error desconocido.")
-            })
+            .errorAlert($viewModel.errorMessage)
         }
     }
 }
