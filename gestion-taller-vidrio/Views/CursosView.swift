@@ -6,6 +6,7 @@ struct CursosView: View {
     
     @State private var cursoToEdit: Curso?
     @State private var isCreatingNew = false
+    @State private var cursoToDelete: Curso?
     
     var body: some View {
         NavigationStack {
@@ -46,7 +47,11 @@ struct CursosView: View {
                             .listRowSeparator(.hidden)
                             .buttonStyle(.plain) // Mantiene el estilo de la card
                         }
-                        .onDelete(perform: viewModel.deleteCurso)
+                        .onDelete { offsets in
+                        if let index = offsets.first {
+                            cursoToDelete = viewModel.cursos[index]
+                        }
+                    }
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -84,6 +89,22 @@ struct CursosView: View {
             }
             
             .errorAlert($viewModel.errorMessage)
+            .alert("Eliminar Curso", isPresented: Binding<Bool>(
+                get: { cursoToDelete != nil },
+                set: { if !$0 { cursoToDelete = nil } }
+            )) {
+                Button("Eliminar", role: .destructive) {
+                    if let curso = cursoToDelete, let index = viewModel.cursos.firstIndex(where: { $0.id == curso.id }) {
+                        viewModel.deleteCurso(at: IndexSet(integer: index))
+                    }
+                    cursoToDelete = nil
+                }
+                Button("Cancelar", role: .cancel) {
+                    cursoToDelete = nil
+                }
+            } message: {
+                Text("¿Eliminar \"\(cursoToDelete?.nombre ?? "")\"? Esta acción no se puede deshacer.")
+            }
         }
     }
 }

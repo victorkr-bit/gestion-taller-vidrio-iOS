@@ -94,7 +94,9 @@ private struct CajaPagoRow: View {
     let pago: Pago
     @ObservedObject var viewModel: CajaViewModel
     @Binding var pagoToEdit: Pago?
-    
+
+    @State private var showDeleteAlert = false
+
     var body: some View {
         CardView {
             GenericRowView(
@@ -110,18 +112,27 @@ private struct CajaPagoRow: View {
             )
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                viewModel.deletePago(pago)
+            Button {
+                showDeleteAlert = true
             } label: {
                 Label("Borrar", systemImage: "trash.fill")
             }
-            
+            .tint(.red)
+
             Button {
                 self.pagoToEdit = pago
             } label: {
                 Label("Editar", systemImage: "pencil")
             }
             .tint(.blue)
+        }
+        .alert("Eliminar Pago", isPresented: $showDeleteAlert) {
+            Button("Eliminar", role: .destructive) {
+                viewModel.deletePago(pago)
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("¿Eliminar el pago de \(Formatters.money(pago.monto)) de \(pago.cliente_nombre)? Esta acción no se puede deshacer.")
         }
     }
 }

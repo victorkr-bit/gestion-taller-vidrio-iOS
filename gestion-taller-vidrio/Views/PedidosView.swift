@@ -101,7 +101,9 @@ struct PedidoRowView: View {
     @Binding var expandedPedidoID: String?
     @Binding var pedidoParaPagar: Pedido?
     @Binding var pedidoParaEditar: Pedido?
-    
+
+    @State private var showDeleteAlert = false
+
     var body: some View {
         VStack(spacing: 0) {
             CardView {
@@ -162,12 +164,12 @@ struct PedidoRowView: View {
             Divider()
             
             Button(role: .destructive) {
-                viewModel.deletePedido(pedido)
+                showDeleteAlert = true
             } label: {
                 Label("Eliminar Pedido", systemImage: "trash")
             }
         }
-        
+
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button {
                 self.pedidoParaPagar = pedido
@@ -177,12 +179,13 @@ struct PedidoRowView: View {
             .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                viewModel.deletePedido(pedido)
+            Button {
+                showDeleteAlert = true
             } label: {
                 Label("Borrar", systemImage: "trash.fill")
             }
-            
+            .tint(.red)
+
             Button {
                 self.pedidoParaEditar = pedido
             } label: {
@@ -190,7 +193,15 @@ struct PedidoRowView: View {
             }
             .tint(.blue)
         }
-        
+        .alert("Eliminar Pedido", isPresented: $showDeleteAlert) {
+            Button("Eliminar", role: .destructive) {
+                viewModel.deletePedido(pedido)
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("¿Eliminar el pedido de \(pedido.cliente_nombre)? Esta acción no se puede deshacer.")
+        }
+
         if expandedPedidoID == pedido.id {
             PagosPedidoListView(pedido: pedido, viewModel: viewModel)
         }

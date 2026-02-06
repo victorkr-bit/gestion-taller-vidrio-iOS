@@ -8,6 +8,7 @@ struct CronogramaView: View {
     
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
+    @State private var itemToDelete: CronogramaItem?
     
     var body: some View {
         NavigationStack(path: $navManager.cronogramaPath) {
@@ -58,6 +59,22 @@ struct CronogramaView: View {
                 NavigationStack { CronogramaFormView(viewModel: viewModel) }
             }
             .errorAlert($viewModel.errorMessage)
+            .alert("Eliminar Evento", isPresented: Binding<Bool>(
+                get: { itemToDelete != nil },
+                set: { if !$0 { itemToDelete = nil } }
+            )) {
+                Button("Eliminar", role: .destructive) {
+                    if let item = itemToDelete {
+                        viewModel.deleteCronogramaItem(item)
+                    }
+                    itemToDelete = nil
+                }
+                Button("Cancelar", role: .cancel) {
+                    itemToDelete = nil
+                }
+            } message: {
+                Text("¿Eliminar \"\(itemToDelete?.cursoNombre ?? "")\"? Esta acción no se puede deshacer.")
+            }
             // Recarga al cambiar pestaña
             .onChange(of: viewModel.modoVista) { _, newMode in
                 if newMode == .online {
@@ -109,7 +126,7 @@ struct CronogramaView: View {
                     }
                     .onDelete { indexSet in
                         if let index = indexSet.first {
-                            viewModel.deleteCronogramaItem(viewModel.cursosFiltrados[index])
+                            itemToDelete = viewModel.cursosFiltrados[index]
                         }
                     }
                 }

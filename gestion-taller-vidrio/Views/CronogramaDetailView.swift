@@ -122,7 +122,9 @@ struct InscripcionRowView: View {
     @Binding var expandedInscripcionID: String?
     @Binding var inscripcionParaPagar: Inscripcion?
     @Binding var inscripcionToEdit: Inscripcion?
-    
+
+    @State private var showDeleteAlert = false
+
     var body: some View {
         VStack(spacing: 0) {
             CardView {
@@ -174,12 +176,13 @@ struct InscripcionRowView: View {
             .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                viewModel.deleteInscripcion(inscripcion)
+            Button {
+                showDeleteAlert = true
             } label: {
                 Label("Borrar", systemImage: "trash.fill")
             }
-            
+            .tint(.red)
+
             Button {
                 self.inscripcionToEdit = inscripcion
             } label: {
@@ -203,12 +206,20 @@ struct InscripcionRowView: View {
             Divider()
             
             Button(role: .destructive) {
-                viewModel.deleteInscripcion(inscripcion)
+                showDeleteAlert = true
             } label: {
                 Label("Eliminar Inscripción", systemImage: "trash")
             }
         }
-        
+        .alert("Eliminar Inscripción", isPresented: $showDeleteAlert) {
+            Button("Eliminar", role: .destructive) {
+                viewModel.deleteInscripcion(inscripcion)
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("¿Eliminar la inscripción de \(inscripcion.alumno_nombre)? Esta acción no se puede deshacer.")
+        }
+
         if expandedInscripcionID == inscripcion.id {
             PagosListView(inscripcion: inscripcion, viewModel: viewModel)
         }

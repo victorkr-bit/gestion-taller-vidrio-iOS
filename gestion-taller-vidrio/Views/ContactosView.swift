@@ -6,6 +6,7 @@ struct ContactosView: View {
     
     @State private var contactToEdit: Contacto?
     @State private var isCreatingNew = false
+    @State private var contactoToDelete: Contacto?
     
     var body: some View {
         NavigationStack {
@@ -52,7 +53,11 @@ struct ContactosView: View {
                             .listRowSeparator(.hidden)
                             .buttonStyle(.plain)
                         }
-                        .onDelete(perform: viewModel.deleteContacto)
+                        .onDelete { offsets in
+                            if let index = offsets.first {
+                                contactoToDelete = viewModel.contactosFiltrados[index]
+                            }
+                        }
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -101,6 +106,22 @@ struct ContactosView: View {
                 }
             }
             .errorAlert($viewModel.errorMessage)
+            .alert("Eliminar Contacto", isPresented: Binding<Bool>(
+                get: { contactoToDelete != nil },
+                set: { if !$0 { contactoToDelete = nil } }
+            )) {
+                Button("Eliminar", role: .destructive) {
+                    if let contacto = contactoToDelete, let index = viewModel.contactosFiltrados.firstIndex(where: { $0.id == contacto.id }) {
+                        viewModel.deleteContacto(at: IndexSet(integer: index))
+                    }
+                    contactoToDelete = nil
+                }
+                Button("Cancelar", role: .cancel) {
+                    contactoToDelete = nil
+                }
+            } message: {
+                Text("¿Eliminar a \"\(contactoToDelete?.nombreCompleto ?? "")\"? Esta acción no se puede deshacer.")
+            }
         }
     }
 }
