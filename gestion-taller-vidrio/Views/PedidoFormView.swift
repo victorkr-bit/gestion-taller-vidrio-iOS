@@ -162,7 +162,7 @@ struct PedidoFormView: View {
                 do {
                     contactos = try await TallerRepository().fetchContactos()
                 } catch {
-                    print("Error cargando contactos: \(error)")
+                    viewModel.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
                 }
             }
         }

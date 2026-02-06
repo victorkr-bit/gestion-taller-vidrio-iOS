@@ -8,7 +8,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
-        print("Firebase Configurado desde AppDelegate!")
         return true
     }
 }
@@ -32,8 +31,8 @@ class AuthViewModel: ObservableObject {
     func signOut() {
         do {
             try Auth.auth().signOut()
-        } catch let signOutError as NSError {
-            print("Error al cerrar sesión: %@", signOutError)
+        } catch {
+            // signOut failures are extremely rare with Firebase
         }
     }
 }

@@ -62,7 +62,7 @@ struct CronogramaFormView: View {
     private func saveCronogramaItem() {
         // 1. Encontrar el curso seleccionado del catálogo
         guard let selectedCurso = viewModel.cursos.first(where: { $0.id == selectedCursoID }) else {
-            print("Error: No se pudo encontrar el curso seleccionado.")
+            viewModel.errorMessage = "No se pudo encontrar el curso seleccionado."
             return
         }
         

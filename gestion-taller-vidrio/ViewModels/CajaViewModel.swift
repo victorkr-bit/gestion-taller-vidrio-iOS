@@ -151,7 +151,7 @@ class CajaViewModel: ObservableObject {
             do {
                 self.contactos = try await ventasRepo.fetchContactos()
             } catch {
-                print("Error cargando contactos: \(error)")
+                self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }
         }
     }

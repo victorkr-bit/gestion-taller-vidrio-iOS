@@ -107,7 +107,7 @@ class CronogramaViewModel: ObservableObject {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
-                print("Error cargando historial: \(error)")
+                self.errorMessage = "Error cargando historial: \(error.localizedDescription)"
             }
         }
     }
@@ -270,7 +270,7 @@ class CronogramaViewModel: ObservableObject {
             case .success(let pagos):
                 self.pagosPorInscripcion[id] = pagos
             case .failure(let error):
-                print("Error escuchando pagos: \(error)")
+                self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
             }
         }
         

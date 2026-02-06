@@ -152,7 +152,7 @@ class PedidosViewModel: ObservableObject {
                     self.pagosPorPedido[id] = pagos
                 }
             case .failure(let error):
-                print("Error escuchando pagos del pedido \(id): \(error)")
+                self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
             }
         }
         paymentListeners[id] = listener

@@ -63,19 +63,6 @@ struct InscripcionFormView: View {
         !alumnoId.isEmpty && precioTotal >= 0
     }
     
-    // Formateador
-    var currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.locale = Locale(identifier: "es_AR")
-        formatter.maximumFractionDigits = 0
-        return formatter
-    }()
-    
-    func formatCurrency(_ value: Double) -> String {
-        return currencyFormatter.string(from: NSNumber(value: value)) ?? "$0"
-    }
-    
     private func recalcularTotal() {
         self.precioTotal = self.valorUnitario * Double(self.turnos)
     }
@@ -145,7 +132,7 @@ struct InscripcionFormView: View {
                         Text("Total del Curso")
                             .font(.subheadline)
                         Spacer()
-                        Text(formatCurrency(precioTotal))
+                        Text(Formatters.money(precioTotal))
                             .font(.subheadline)
                             .fontWeight(.semibold)
                     }
@@ -153,7 +140,7 @@ struct InscripcionFormView: View {
                         Text("Total Abonado")
                             .font(.subheadline)
                         Spacer()
-                        Text(formatCurrency(inscripcion.monto_abonado))
+                        Text(Formatters.money(inscripcion.monto_abonado))
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.blue)
@@ -164,7 +151,7 @@ struct InscripcionFormView: View {
                         Text("Saldo Pendiente")
                             .font(.subheadline)
                         Spacer()
-                        Text(formatCurrency(deudaProyectada))
+                        Text(Formatters.money(deudaProyectada))
                             .font(.subheadline)
                             .fontWeight(.bold)
                             .foregroundStyle(deudaProyectada > 0 ? .orange : .green)
@@ -211,11 +198,11 @@ struct InscripcionFormView: View {
                         .fontWeight(.semibold)
                     Spacer()
                     if turnos > 1 {
-                        Text("(\(turnos) x \(formatCurrency(valorUnitario)))")
+                        Text("(\(turnos) x \(Formatters.money(valorUnitario)))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Text(formatCurrency(precioTotal))
+                    Text(Formatters.money(precioTotal))
                         .font(.headline)
                         .foregroundStyle(.blue)
                         .bold()
@@ -333,7 +320,7 @@ struct InscripcionFormView: View {
                 let repo = VentasRepository()
                 self.contactos = try await repo.fetchContactos()
             } catch {
-                print("Error: \(error)")
+                viewModel.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }
         }
     }

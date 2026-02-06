@@ -86,7 +86,7 @@ class DashboardViewModel: ObservableObject {
             case .success(let metricas):
                 self.totalDeuda = metricas.total_deuda_pedidos + metricas.total_deuda_inscripciones
             case .failure(let error):
-                print("Error metricas: \(error)")
+                self.errorMessage = "Error cargando métricas: \(error.localizedDescription)"
             }
         }
         
@@ -148,7 +148,7 @@ class DashboardViewModel: ObservableObject {
             let datosGrafico = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
             self.ocupacionTaller = datosGrafico
         } catch {
-            print("Error calculando ocupación: \(error)")
+            self.errorMessage = "Error calculando ocupación: \(error.localizedDescription)"
             self.ocupacionTaller = []
         }
     }
