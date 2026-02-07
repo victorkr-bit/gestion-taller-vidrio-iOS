@@ -38,6 +38,7 @@ class DeudoresViewModel: ObservableObject {
             try await repository.registrarPago(pago: pago, origen: origen)
             fetchDeudores()
         } catch {
+            errorMessage = "Error al registrar pago: \(error.localizedDescription)"
             throw error
         }
     }

@@ -1,5 +1,5 @@
 import SwiftUI
-import Combine // <--- ESTO SOLUCIONA LOS ERRORES
+import Combine
 
 // Definimos los Tabs
 enum AppTab: Int {

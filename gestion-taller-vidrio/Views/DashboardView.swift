@@ -146,7 +146,7 @@ struct DashboardView: View {
                             }
                         }
                         // Aumentamos altura para dar espacio a las etiquetas superiores
-                        .frame(height: 250)
+                        .frame(height: max(120, CGFloat(datosGraficoPorTipo.count) * 55))
                         .chartForegroundStyleScale { tipoValue in colorParaTipo(tipoValue) }
                         .chartLegend(.hidden)
                         .chartXAxis(.hidden)
