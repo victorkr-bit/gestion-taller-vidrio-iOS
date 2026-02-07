@@ -223,7 +223,13 @@ class CronogramaViewModel: ObservableObject {
     }
     
     func deleteCronogramaItem(_ item: CronogramaItem) {
-        // UI Optimista
+        // 1. Validación client-side: evita el round-trip al servidor
+        if item.inscriptosReales > 0 {
+            self.errorMessage = "No se puede eliminar un curso con alumnos inscriptos. Eliminá las inscripciones primero."
+            return
+        }
+
+        // 2. UI Optimista
         withAnimation {
             if let index = cursosProximos.firstIndex(where: { $0.id == item.id }) {
                 cursosProximos.remove(at: index)
@@ -232,13 +238,15 @@ class CronogramaViewModel: ObservableObject {
                 cursosHistoricos.remove(at: index)
             }
         }
-        
+
+        // 3. Borrado real
         Task {
             do {
                 try await tallerRepo.deleteCronogramaItem(item: item)
             } catch {
-                self.errorMessage = "No se pudo borrar: \(error.localizedDescription)"
-                self.fetchCronograma() // Rollback/Reload
+                // Rollback: re-suscribir restaura ambas listas desde el servidor
+                self.subscribeToCronograma()
+                self.errorMessage = error.localizedDescription
             }
         }
     }
