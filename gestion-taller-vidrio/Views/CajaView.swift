@@ -111,6 +111,21 @@ private struct CajaPagoRow: View {
                 ]
             )
         }
+        .contextMenu {
+            Button {
+                self.pagoToEdit = pago
+            } label: {
+                Label("Editar", systemImage: "pencil")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                showDeleteAlert = true
+            } label: {
+                Label("Eliminar", systemImage: "trash")
+            }
+        }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {
                 showDeleteAlert = true
