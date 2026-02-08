@@ -9,6 +9,7 @@ struct CronogramaView: View {
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
     @State private var itemToDelete: CronogramaItem?
+    @State private var itemToEdit: CronogramaItem?
     
     var body: some View {
         NavigationStack(path: $navManager.cronogramaPath) {
@@ -57,6 +58,11 @@ struct CronogramaView: View {
             // Sheet para crear evento
             .sheet(isPresented: $isCreatingAgendaEvent) {
                 NavigationStack { CronogramaFormView(viewModel: viewModel) }
+            }
+            .sheet(item: $itemToEdit) { item in
+                NavigationStack {
+                    EditarCronogramaView(viewModel: viewModel, cronogramaItem: item)
+                }
             }
             .errorAlert($viewModel.errorMessage)
             .alert("Eliminar Evento", isPresented: Binding<Bool>(
@@ -123,10 +129,18 @@ struct CronogramaView: View {
                         }
                         .listRowSeparator(.hidden)
                         .buttonStyle(.plain)
-                    }
-                    .onDelete { indexSet in
-                        if let index = indexSet.first {
-                            itemToDelete = viewModel.cursosFiltrados[index]
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                itemToDelete = item
+                            } label: {
+                                Label("Borrar", systemImage: "trash.fill")
+                            }
+                            Button {
+                                itemToEdit = item
+                            } label: {
+                                Label("Editar", systemImage: "pencil")
+                            }
+                            .tint(.blue)
                         }
                     }
                 }

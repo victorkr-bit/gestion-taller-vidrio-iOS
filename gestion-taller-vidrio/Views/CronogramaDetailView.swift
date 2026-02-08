@@ -9,7 +9,8 @@ struct CronogramaDetailView: View {
     @State private var inscripcionToEdit: Inscripcion?
     @State private var isCreatingNew = false
     @State private var inscripcionParaPagar: Inscripcion?
-    
+    @State private var isEditingCronograma = false
+
     // Control de expansión
     @State private var expandedInscripcionID: String?
     
@@ -68,11 +69,23 @@ struct CronogramaDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    self.isCreatingNew = true
-                } label: {
-                    Image(systemName: "plus")
+                HStack(spacing: 16) {
+                    Button {
+                        self.isEditingCronograma = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    Button {
+                        self.isCreatingNew = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
+            }
+        }
+        .sheet(isPresented: $isEditingCronograma) {
+            NavigationStack {
+                EditarCronogramaView(viewModel: viewModel, cronogramaItem: cronogramaItem)
             }
         }
         .sheet(isPresented: $isCreatingNew) {

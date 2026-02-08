@@ -140,6 +140,28 @@ final class TallerRepository {
         }
     }
     
+    /// Actualiza precio y/o fecha de un cronograma y propaga a inscripciones vía Cloud Function.
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?) async throws {
+        var nuevosDatos: [String: Any] = [:]
+        if let precio = nuevoPrecio {
+            nuevosDatos["precio"] = precio
+        }
+        if let fecha = nuevaFecha {
+            nuevosDatos["fecha"] = Formatters.iso8601.string(from: fecha)
+        }
+
+        let data: [String: Any] = [
+            "id": id,
+            "nuevosDatos": nuevosDatos
+        ]
+
+        do {
+            _ = try await functions.httpsCallable("actualizarCronograma").call(data)
+        } catch {
+            throw FirestoreManager.shared.mapCloudError(error)
+        }
+    }
+
     /// Borra un ítem del cronograma validando inscripciones.
     func deleteCronogramaItem(item: CronogramaItem) async throws {
         guard let id = item.id else { throw URLError(.cannotRemoveFile) }

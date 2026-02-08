@@ -163,6 +163,11 @@ class CronogramaViewModel: ObservableObject {
         }
     }
 
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?) async throws {
+        errorMessage = nil
+        try await tallerRepo.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha)
+    }
+
     // MARK: - Lógica de Inscripciones (TallerRepository)
     
     func fetchInscripciones(cronogramaID: String) {
