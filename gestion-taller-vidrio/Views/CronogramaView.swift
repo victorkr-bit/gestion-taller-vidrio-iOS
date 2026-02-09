@@ -129,6 +129,21 @@ struct CronogramaView: View {
                         }
                         .listRowSeparator(.hidden)
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            Button {
+                                itemToEdit = item
+                            } label: {
+                                Label("Editar Curso", systemImage: "pencil")
+                            }
+
+                            Divider()
+
+                            Button(role: .destructive) {
+                                itemToDelete = item
+                            } label: {
+                                Label("Eliminar Curso", systemImage: "trash")
+                            }
+                        }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 itemToDelete = item
