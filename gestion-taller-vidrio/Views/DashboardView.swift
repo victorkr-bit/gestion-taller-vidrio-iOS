@@ -159,6 +159,58 @@ struct DashboardView: View {
                     }
                 }
                 
+                // MARK: - Gráfico de Ingresos por Medio de Pago
+                VStack(alignment: .leading) {
+                    Text("Ingresos por Medio de Pago")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal)
+
+                    if datosGraficoPorMedio.isEmpty {
+                        Text("No hay datos para mostrar")
+                            .font(.caption)
+                            .padding()
+                    } else {
+                        Chart(datosGraficoPorMedio) { dato in
+                            SectorMark(
+                                angle: .value("Monto", dato.monto),
+                                innerRadius: .ratio(0.5),
+                                angularInset: 1.5
+                            )
+                            .foregroundStyle(by: .value("Medio", dato.medio))
+                            .cornerRadius(4)
+                        }
+                        .frame(height: 220)
+                        .chartForegroundStyleScale { medio in colorParaMedio(medio) }
+                        .chartLegend(.hidden)
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        .padding(.horizontal)
+
+                        // Leyenda personalizada
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(datosGraficoPorMedio) { dato in
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(colorParaMedio(dato.medio))
+                                        .frame(width: 10, height: 10)
+                                    Text(dato.medio)
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Text("\(Formatters.money(dato.monto)) (\(dato.porcentaje)%)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 4)
+                    }
+                }
+
                 Spacer(minLength: 50)
             }
             .padding(.vertical)
@@ -236,6 +288,42 @@ struct DashboardView: View {
         }
     }
     
+    // MARK: - Lógica para Gráfico por Medio de Pago
+
+    private func colorParaMedio(_ medio: String) -> Color {
+        switch medio {
+        case MedioDePago.efectivo.rawValue: return .green
+        case MedioDePago.transferencia.rawValue: return .blue
+        case MedioDePago.mercadoPago.rawValue: return .cyan
+        case MedioDePago.tarjeta.rawValue: return .purple
+        case MedioDePago.paypal.rawValue: return .indigo
+        case MedioDePago.otros.rawValue: return .gray
+        default: return .blue.opacity(0.5)
+        }
+    }
+
+    struct DatoGraficoMedio: Identifiable {
+        let id = UUID()
+        let medio: String
+        let monto: Double
+        let porcentaje: Int
+    }
+
+    var datosGraficoPorMedio: [DatoGraficoMedio] {
+        let pagos = viewModel.pagosDelMes
+        let totalGlobal = pagos.reduce(0) { $0 + $1.monto }
+
+        let agrupados = Dictionary(grouping: pagos) { pago in
+            pago.medio_de_pago.rawValue
+        }
+
+        return agrupados.map { (medio, pagosGrupo) in
+            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
+            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
+            return DatoGraficoMedio(medio: medio, monto: montoGrupo, porcentaje: porcentaje)
+        }.sorted { $0.monto > $1.monto }
+    }
+
     // Struct auxiliar mejorada con porcentaje
     struct DatoGraficoTipo: Identifiable {
         let id = UUID()
