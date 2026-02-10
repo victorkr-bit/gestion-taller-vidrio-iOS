@@ -39,19 +39,29 @@ struct DashboardView: View {
                 
                 // MARK: - Tarjetas de Resumen (KPIs)
                 HStack(spacing: 15) {
-                    KpiCardView(
-                        titulo: "Ingresos",
-                        valor: viewModel.totalIngresosMes,
-                        icon: "arrow.up.circle.fill",
-                        color: .blue
-                    )
-                    
-                    KpiCardView(
-                        titulo: "Deuda Total",
-                        valor: viewModel.totalDeuda,
-                        icon: "exclamationmark.circle.fill",
-                        color: .red
-                    )
+                    Button {
+                        navManager.selectedTab = .caja
+                    } label: {
+                        KpiCardView(
+                            titulo: "Ingresos",
+                            valor: viewModel.totalIngresosMes,
+                            icon: "arrow.up.circle.fill",
+                            color: .blue
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        DeudoresView()
+                    } label: {
+                        KpiCardView(
+                            titulo: "Deuda Total",
+                            valor: viewModel.totalDeuda,
+                            icon: "exclamationmark.circle.fill",
+                            color: .red
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal)
                 
