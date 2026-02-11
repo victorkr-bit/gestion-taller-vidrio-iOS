@@ -1,0 +1,56 @@
+import SwiftUI
+import Combine
+
+@MainActor
+final class AppContainer: ObservableObject {
+
+    // MARK: - Repositorios (compartidos)
+    let finanzasRepo: FinanzasRepository
+    let tallerRepo: TallerRepository
+    let ventasRepo: VentasRepository
+
+    // MARK: - ViewModels
+    let dashboardVM: DashboardViewModel
+    let cajaVM: CajaViewModel
+    let cronogramaVM: CronogramaViewModel
+    let pedidosVM: PedidosViewModel
+
+    init() {
+        // 1. CREACIÓN DE LA INFRAESTRUCTURA (REPOSITORIOS COMPARTIDOS)
+        let finanzasRepo = FinanzasRepository()
+        let tallerRepo = TallerRepository()
+        let ventasRepo = VentasRepository()
+
+        self.finanzasRepo = finanzasRepo
+        self.tallerRepo = tallerRepo
+        self.ventasRepo = ventasRepo
+
+        // 2. INYECCIÓN EN DASHBOARD
+        let dashboardVM = DashboardViewModel(
+            finanzasRepo: finanzasRepo,
+            tallerRepo: tallerRepo
+        )
+        self.dashboardVM = dashboardVM
+
+        // 3. INYECCIÓN EN CAJA (Repos + Conexión de Fechas)
+        self.cajaVM = CajaViewModel(
+            finanzasRepo: finanzasRepo,
+            ventasRepo: ventasRepo,
+            fechaInicioPublisher: dashboardVM.$fechaInicio.eraseToAnyPublisher(),
+            fechaFinPublisher: dashboardVM.$fechaFin.eraseToAnyPublisher()
+        )
+
+        // 4. INYECCIÓN EN CRONOGRAMA
+        self.cronogramaVM = CronogramaViewModel(
+            tallerRepo: tallerRepo,
+            finanzasRepo: finanzasRepo,
+            ventasRepo: ventasRepo
+        )
+
+        // 5. INYECCIÓN EN PEDIDOS
+        self.pedidosVM = PedidosViewModel(
+            ventasRepo: ventasRepo,
+            finanzasRepo: finanzasRepo
+        )
+    }
+}
