@@ -16,6 +16,7 @@ class PedidoFormViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var shouldDismiss: Bool = false
+    @Published var contactos: [Contacto] = []
     
     // CAMBIO 1: Repo de Ventas
     private let repository: VentasRepository
@@ -48,6 +49,16 @@ class PedidoFormViewModel: ObservableObject {
         !clienteId.isEmpty && !descripcion.trimmingCharacters(in: .whitespaces).isEmpty && presupuesto >= 0
     }
     var isEditing: Bool { editingPedidoID != nil }
+
+    func fetchContactos() {
+        Task {
+            do {
+                self.contactos = try await repository.fetchContactos()
+            } catch {
+                self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
+            }
+        }
+    }
 
     func guardar() {
         guard isValid else { return }

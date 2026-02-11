@@ -4,46 +4,57 @@ import Combine
 struct MainView: View {
     
     // StateObjects (Dueños de los datos)
-    // NOTA: Ya no los inicializamos aquí con "= ViewModel()", lo haremos en el init
     @StateObject private var dashboardViewModel: DashboardViewModel
     @StateObject private var cajaViewModel: CajaViewModel
     @StateObject private var cronogramaViewModel: CronogramaViewModel
-    
-    // El Manager de Navegación sí puede inicializarse aquí porque no tiene dependencias complejas
+    @StateObject private var pedidosViewModel: PedidosViewModel
     @StateObject private var navManager = NavigationManager()
+
+    // Repositorios compartidos (para inyectar en vistas de Gestión)
+    private let ventasRepo: VentasRepository
+    private let tallerRepo: TallerRepository
+    private let finanzasRepo: FinanzasRepository
 
     init() {
         // 1. CREACIÓN DE LA INFRAESTRUCTURA (REPOSITORIOS COMPARTIDOS)
-        // Creamos las instancias UNA sola vez para pasarlas a todos los ViewModels.
-        // Esto asegura que si el Dashboard actualiza algo en "Finanzas", la Caja lo sepa.
         let finanzasRepo = FinanzasRepository()
         let tallerRepo = TallerRepository()
         let ventasRepo = VentasRepository()
-        
+
+        self.finanzasRepo = finanzasRepo
+        self.tallerRepo = tallerRepo
+        self.ventasRepo = ventasRepo
+
         // 2. INYECCIÓN EN DASHBOARD
         let dashboardVM = DashboardViewModel(
             finanzasRepo: finanzasRepo,
             tallerRepo: tallerRepo
         )
-        // Asignamos al StateObject subyacente (la variable con guión bajo)
         _dashboardViewModel = StateObject(wrappedValue: dashboardVM)
-        
+
         // 3. INYECCIÓN EN CAJA (Repos + Conexión de Fechas)
         let cajaVM = CajaViewModel(
             finanzasRepo: finanzasRepo,
             ventasRepo: ventasRepo,
-            // Aquí pasamos los cables para que el filtro del Dashboard controle la Caja
             fechaInicioPublisher: dashboardVM.$fechaInicio.eraseToAnyPublisher(),
             fechaFinPublisher: dashboardVM.$fechaFin.eraseToAnyPublisher()
         )
         _cajaViewModel = StateObject(wrappedValue: cajaVM)
-        
+
         // 4. INYECCIÓN EN CRONOGRAMA
         let cronogramaVM = CronogramaViewModel(
             tallerRepo: tallerRepo,
-            finanzasRepo: finanzasRepo
+            finanzasRepo: finanzasRepo,
+            ventasRepo: ventasRepo
         )
         _cronogramaViewModel = StateObject(wrappedValue: cronogramaVM)
+
+        // 5. INYECCIÓN EN PEDIDOS
+        let pedidosVM = PedidosViewModel(
+            ventasRepo: ventasRepo,
+            finanzasRepo: finanzasRepo
+        )
+        _pedidosViewModel = StateObject(wrappedValue: pedidosVM)
     }
     
     var body: some View {
@@ -52,7 +63,7 @@ struct MainView: View {
             
             // Pestaña 1: Inicio
             NavigationStack {
-                DashboardView(viewModel: dashboardViewModel)
+                DashboardView(viewModel: dashboardViewModel, finanzasRepo: finanzasRepo)
             }
             .tabItem { Label("Inicio", systemImage: "house") }
             .tag(AppTab.inicio)
@@ -65,9 +76,7 @@ struct MainView: View {
 
             // Pestaña 3: Pedidos
             NavigationStack {
-                // NOTA: Idealmente PedidosView debería recibir 'ventasRepo' también,
-                // pero si usa su propio StateObject interno funcionará (aunque tendrá su propia instancia de repo)
-                PedidosView()
+                PedidosView(viewModel: pedidosViewModel)
             }
             .tabItem { Label("Pedidos", systemImage: "tray.and.arrow.down.fill") }
             .tag(AppTab.pedidos)
@@ -81,7 +90,7 @@ struct MainView: View {
 
             // Pestaña 5: Gestión
             NavigationStack {
-                GestionView()
+                GestionView(ventasRepo: ventasRepo, tallerRepo: tallerRepo, finanzasRepo: finanzasRepo)
             }
             .tabItem { Label("Gestión", systemImage: "gearshape") }
             .tag(AppTab.gestion)

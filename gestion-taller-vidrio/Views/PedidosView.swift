@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct PedidosView: View {
-    
-    @StateObject private var viewModel = PedidosViewModel()
+
+    @ObservedObject var viewModel: PedidosViewModel
     
     // Estados de UI
     @State private var isCreatingNew = false

@@ -44,13 +44,8 @@ class CajaViewModel: ObservableObject {
     }
     
     // MARK: - Filtros de Fecha
-    @Published var fechaInicio: Date = Date() {
-        didSet { restartListener() }
-    }
-    
-    @Published var fechaFin: Date = Date() {
-        didSet { restartListener() }
-    }
+    @Published var fechaInicio: Date = Date()
+    @Published var fechaFin: Date = Date()
     
     private var cancellables = Set<AnyCancellable>()
     private var listener: ListenerRegistration?
@@ -79,8 +74,10 @@ class CajaViewModel: ObservableObject {
                 .receive(on: RunLoop.main)
                 .sink { [weak self] (inicio, fin) in
                     guard let self = self else { return }
-                    if self.fechaInicio != inicio { self.fechaInicio = inicio }
-                    if self.fechaFin != fin { self.fechaFin = fin }
+                    let changed = self.fechaInicio != inicio || self.fechaFin != fin
+                    self.fechaInicio = inicio
+                    self.fechaFin = fin
+                    if changed { self.restartListener() }
                 }
                 .store(in: &cancellables)
         }
@@ -156,15 +153,14 @@ class CajaViewModel: ObservableObject {
         }
     }
     
-    // Opción 1: Manual (Objeto completo)
     func saveVentaDirecta(pago: Pago) {
         Task {
-            do {
-                try await finanzasRepo.saveVentaDirecta(pago: pago)
-            } catch {
-                self.errorMessage = "Error guardando venta: \(error.localizedDescription)"
-            }
+            try? await saveVentaDirectaAsync(pago: pago)
         }
+    }
+
+    func saveVentaDirectaAsync(pago: Pago) async throws {
+        try await finanzasRepo.saveVentaDirecta(pago: pago)
     }
     
     // Opción 2: Automática (Argumentos sueltos)

@@ -97,18 +97,17 @@ enum Origen: Identifiable {
             return "Pago Pedido #\(p.numero_pedido)"
             
         case .inscripcion(let i):
-            // Creamos el formateador para obtener día/mes
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "es_AR")
-            formatter.dateFormat = "dd/MM" // Ejemplo: 12/10
-            
-            let fechaTexto = formatter.string(from: i.fecha_curso)
-            
-            // Retornamos el formato: "Nombre del Curso (Fecha)"
-            return "\(i.cursoNombre) (\(fechaTexto))"
+            return "\(i.cursoNombre) (\(Formatters.dateDayMonth(i.fecha_curso)))"
         }
     }
       
+    var montoAdeudado: Double {
+        switch self {
+        case .pedido(let p): return p.monto_adeudado
+        case .inscripcion(let i): return i.monto_adeudado
+        }
+    }
+
     var tipoVenta: TipoVenta {
         switch self {
         case .pedido(let p):

@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct DeudoresView: View {
-    
-    @StateObject private var viewModel = DeudoresViewModel()
+
+    @StateObject private var viewModel: DeudoresViewModel
+
+    init(finanzasRepo: FinanzasRepository) {
+        _viewModel = StateObject(wrappedValue: DeudoresViewModel(repository: finanzasRepo))
+    }
     
     @State private var origenParaPagar: Origen?
     @State private var origenParaCondonar: Origen?

@@ -3,7 +3,8 @@ import Charts
 
 struct DashboardView: View {
     @ObservedObject var viewModel: DashboardViewModel
-    
+    let finanzasRepo: FinanzasRepository
+
     // Inyectamos el Manager para poder cambiar de pestaña al hacer click
     @EnvironmentObject var navManager: NavigationManager
     
@@ -52,7 +53,7 @@ struct DashboardView: View {
                     .buttonStyle(.plain)
 
                     NavigationLink {
-                        DeudoresView()
+                        DeudoresView(finanzasRepo: finanzasRepo)
                     } label: {
                         KpiCardView(
                             titulo: "Deuda Total",
@@ -127,13 +128,13 @@ struct DashboardView: View {
                         .fontWeight(.semibold)
                         .padding(.horizontal)
                     
-                    if datosGraficoPorTipo.isEmpty {
+                    if viewModel.datosGraficoPorTipo.isEmpty {
                         Text("No hay datos para mostrar")
                             .font(.caption)
                             .padding()
                     } else {
                         Chart {
-                            ForEach(datosGraficoPorTipo) { dato in
+                            ForEach(viewModel.datosGraficoPorTipo) { dato in
                                 BarMark(
                                     x: .value("Monto", dato.monto),
                                     y: .value("Tipo", dato.tipo),
@@ -156,7 +157,7 @@ struct DashboardView: View {
                             }
                         }
                         // Aumentamos altura para dar espacio a las etiquetas superiores
-                        .frame(height: max(120, CGFloat(datosGraficoPorTipo.count) * 55))
+                        .frame(height: max(120, CGFloat(viewModel.datosGraficoPorTipo.count) * 55))
                         .chartForegroundStyleScale { tipoValue in colorParaTipo(tipoValue) }
                         .chartLegend(.hidden)
                         .chartXAxis(.hidden)
@@ -176,12 +177,12 @@ struct DashboardView: View {
                         .fontWeight(.semibold)
                         .padding(.horizontal)
 
-                    if datosGraficoPorMedio.isEmpty {
+                    if viewModel.datosGraficoPorMedio.isEmpty {
                         Text("No hay datos para mostrar")
                             .font(.caption)
                             .padding()
                     } else {
-                        Chart(datosGraficoPorMedio) { dato in
+                        Chart(viewModel.datosGraficoPorMedio) { dato in
                             SectorMark(
                                 angle: .value("Monto", dato.monto),
                                 innerRadius: .ratio(0.5),
@@ -201,7 +202,7 @@ struct DashboardView: View {
 
                         // Leyenda personalizada
                         VStack(alignment: .leading, spacing: 6) {
-                            ForEach(datosGraficoPorMedio) { dato in
+                            ForEach(viewModel.datosGraficoPorMedio) { dato in
                                 HStack(spacing: 8) {
                                     Circle()
                                         .fill(colorParaMedio(dato.medio))
@@ -312,62 +313,6 @@ struct DashboardView: View {
         }
     }
 
-    struct DatoGraficoMedio: Identifiable {
-        let id = UUID()
-        let medio: String
-        let monto: Double
-        let porcentaje: Int
-    }
-
-    var datosGraficoPorMedio: [DatoGraficoMedio] {
-        let pagos = viewModel.pagosDelMes
-        let totalGlobal = pagos.reduce(0) { $0 + $1.monto }
-
-        let agrupados = Dictionary(grouping: pagos) { pago in
-            pago.medio_de_pago.rawValue
-        }
-
-        return agrupados.map { (medio, pagosGrupo) in
-            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
-            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
-            return DatoGraficoMedio(medio: medio, monto: montoGrupo, porcentaje: porcentaje)
-        }.sorted { $0.monto > $1.monto }
-    }
-
-    // Struct auxiliar mejorada con porcentaje
-    struct DatoGraficoTipo: Identifiable {
-        let id = UUID()
-        let tipo: String
-        let monto: Double
-        let porcentaje: Int
-    }
-    
-    // Propiedad computada con cálculo de porcentaje
-    var datosGraficoPorTipo: [DatoGraficoTipo] {
-        let pagos = viewModel.pagosDelMes
-        
-        // 1. Calcular total global para sacar porcentajes
-        let totalGlobal = pagos.reduce(0) { $0 + $1.monto }
-        
-        // 2. Agrupar
-        let agrupados = Dictionary(grouping: pagos) { pago in
-            pago.tipo_venta.descripcion
-        }
-        
-        // 3. Mapear y calcular %
-        return agrupados.map { (tipo, pagosGrupo) in
-            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
-            
-            // Cálculo seguro del porcentaje (evitar división por cero)
-            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
-            
-            return DatoGraficoTipo(
-                tipo: tipo,
-                monto: montoGrupo,
-                porcentaje: porcentaje
-            )
-        }.sorted { $0.monto > $1.monto }
-    }
 }
 
 // MARK: - Componentes Visuales (KPI)

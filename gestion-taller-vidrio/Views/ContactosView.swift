@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct ContactosView: View {
-    
-    @StateObject private var viewModel = ContactosViewModel()
+
+    @StateObject private var viewModel: ContactosViewModel
+
+    init(ventasRepo: VentasRepository) {
+        _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: ventasRepo))
+    }
     
     @State private var contactToEdit: Contacto?
     @State private var isCreatingNew = false

@@ -25,12 +25,16 @@ struct VentaDirectaFormView: View {
     @State private var cliente_id: String = ""
     @State private var cliente_nombre: String = "Cliente Ocasional"
     @State private var tipo_venta: TipoVenta = .otros
-    
+
     // Estado para mostrar el modal
     @State private var showNuevoClienteSheet = false
-    
+
+    // Estados de control
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
     var isFormValid: Bool {
-        monto > 0
+        monto > 0 && !isSaving
     }
     
 
@@ -113,19 +117,33 @@ struct VentaDirectaFormView: View {
                 Button(action: guardarVenta) {
                     HStack {
                         Spacer()
-                        Text("Registrar Venta")
-                            .fontWeight(.bold)
+                        if isSaving {
+                            ProgressView()
+                        } else {
+                            Text("Registrar Venta")
+                                .fontWeight(.bold)
+                        }
                         Spacer()
                     }
                 }
                 .disabled(!isFormValid)
             }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .font(.callout)
+                }
+            }
         }
         .navigationTitle("Nueva Venta Directa")
         .navigationBarTitleDisplayMode(.inline)
+        .interactiveDismissDisabled(isSaving)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancelar") { dismiss() }
+                    .disabled(isSaving)
             }
         }
         // MODAL DE CREACIÓN DE CLIENTE
@@ -156,9 +174,7 @@ struct VentaDirectaFormView: View {
         }
     }
     
-    // MARK: - LOGICA DE GUARDADO
     private func guardarVenta() {
-        // Creamos el Pago directamente (Flujo POS)
         let pago = Pago(
             fecha: fecha,
             monto: monto,
@@ -171,8 +187,18 @@ struct VentaDirectaFormView: View {
             descripcion_origen: "Venta Directa: \(tipo_venta.rawValue)",
             origen_id: nil
         )
-        
-        viewModel.saveVentaDirecta(pago: pago)
-        dismiss()
+
+        isSaving = true
+        errorMessage = nil
+
+        Task {
+            do {
+                try await viewModel.saveVentaDirectaAsync(pago: pago)
+                dismiss()
+            } catch {
+                self.errorMessage = "Error guardando venta: \(error.localizedDescription)"
+                self.isSaving = false
+            }
+        }
     }
 }

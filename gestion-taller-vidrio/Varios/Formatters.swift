@@ -52,13 +52,41 @@ struct Formatters {
         return timeFormatter.string(from: date)
     }
     
+    // Fecha día/mes (Ej: 12/10)
+    private static let dateDayMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "es_AR")
+        formatter.dateFormat = "dd/MM"
+        return formatter
+    }()
+
+    static func dateDayMonth(_ date: Date) -> String {
+        return dateDayMonthFormatter.string(from: date)
+    }
+
     static let uiLocale = Locale(identifier: "es")
-    
+
     // Configurada para manejar milisegundos (estándar común en backends)
     static let iso8601: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
-        // Incluimos milisegundos para máxima precisión al sincronizar
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+}
+
+// MARK: - Binding de texto numérico
+
+import SwiftUI
+
+extension Binding where Value == String {
+    /// Retorna un Binding que solo permite dígitos numéricos.
+    func numericOnly() -> Binding<String> {
+        Binding(
+            get: { self.wrappedValue },
+            set: { newValue in
+                let filtered = newValue.filter { "0123456789".contains($0) }
+                self.wrappedValue = filtered
+            }
+        )
+    }
 }

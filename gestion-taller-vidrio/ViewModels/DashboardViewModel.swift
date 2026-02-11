@@ -23,7 +23,11 @@ class DashboardViewModel: ObservableObject {
     @Published var totalIngresosMes: Double = 0.0
     @Published var totalDeuda: Double = 0.0
     @Published var pagosDelMes: [Pago] = []
-    
+
+    // MARK: - Datos de Gráficos (pre-calculados)
+    @Published var datosGraficoPorTipo: [DatoGraficoTipo] = []
+    @Published var datosGraficoPorMedio: [DatoGraficoMedio] = []
+
     // MARK: - KPIs Operativos
     @Published var proximaClase: CronogramaItem? = nil
     @Published var ocupacionTaller: [OcupacionHoraDato] = []
@@ -100,6 +104,7 @@ class DashboardViewModel: ObservableObject {
             case .success(let pagos):
                 self.pagosDelMes = pagos
                 self.totalIngresosMes = pagos.reduce(0) { $0 + $1.monto }
+                self.recalcularDatosGraficos(pagos)
             case .failure(let error):
                 self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
             }
@@ -156,4 +161,42 @@ class DashboardViewModel: ObservableObject {
     func refreshData() {
         setupListeners()
     }
+
+    // MARK: - Cálculo de Datos para Gráficos
+
+    private func recalcularDatosGraficos(_ pagos: [Pago]) {
+        let totalGlobal = pagos.reduce(0) { $0 + $1.monto }
+
+        // Por Tipo de Venta
+        let agrupadosPorTipo = Dictionary(grouping: pagos) { $0.tipo_venta.descripcion }
+        self.datosGraficoPorTipo = agrupadosPorTipo.map { (tipo, pagosGrupo) in
+            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
+            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
+            return DatoGraficoTipo(tipo: tipo, monto: montoGrupo, porcentaje: porcentaje)
+        }.sorted { $0.monto > $1.monto }
+
+        // Por Medio de Pago
+        let agrupadosPorMedio = Dictionary(grouping: pagos) { $0.medio_de_pago.rawValue }
+        self.datosGraficoPorMedio = agrupadosPorMedio.map { (medio, pagosGrupo) in
+            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
+            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
+            return DatoGraficoMedio(medio: medio, monto: montoGrupo, porcentaje: porcentaje)
+        }.sorted { $0.monto > $1.monto }
+    }
+}
+
+// MARK: - Structs de datos para gráficos
+
+struct DatoGraficoTipo: Identifiable {
+    let id = UUID()
+    let tipo: String
+    let monto: Double
+    let porcentaje: Int
+}
+
+struct DatoGraficoMedio: Identifiable {
+    let id = UUID()
+    let medio: String
+    let monto: Double
+    let porcentaje: Int
 }

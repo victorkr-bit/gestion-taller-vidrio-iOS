@@ -52,14 +52,10 @@ struct EditarCronogramaView: View {
                     Text("Nuevo precio")
                     Spacer()
                     Text("$").foregroundStyle(.secondary)
-                    TextField("0", text: $precioInput)
+                    TextField("0", text: $precioInput.numericOnly())
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 100)
-                        .onChange(of: precioInput) { _, newValue in
-                            let filtered = newValue.filter { "0123456789".contains($0) }
-                            if filtered != newValue { precioInput = filtered }
-                        }
                 }
                 if cronogramaItem.inscriptosReales > 0 {
                     Text("Se actualizará la deuda de \(cronogramaItem.inscriptosReales) inscripto(s).")

@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct CursosView: View {
-    
-    @StateObject private var viewModel = CursosViewModel()
+
+    @StateObject private var viewModel: CursosViewModel
+
+    init(tallerRepo: TallerRepository) {
+        _viewModel = StateObject(wrappedValue: CursosViewModel(repository: tallerRepo))
+    }
     
     @State private var cursoToEdit: Curso?
     @State private var isCreatingNew = false
@@ -110,5 +114,5 @@ struct CursosView: View {
 }
 
 #Preview {
-    CursosView()
+    CursosView(tallerRepo: TallerRepository())
 }

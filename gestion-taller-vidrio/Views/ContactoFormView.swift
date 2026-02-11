@@ -25,10 +25,14 @@ struct ContactoFormView: View {
     @State private var redes_sociales: String = ""
     @State private var cuit: String = ""
     @State private var notas: String = ""
-    
+
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
     var isFormValid: Bool {
         !nombre.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !apellido.trimmingCharacters(in: .whitespaces).isEmpty
+        !apellido.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !isSaving
     }
     
     var body: some View {
@@ -60,16 +64,30 @@ struct ContactoFormView: View {
             
             Section {
                 Button(action: guardarContacto) {
-                    Text("Guardar Contacto")
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Text("Guardar Contacto")
+                    }
                 }
                 .disabled(!isFormValid)
+            }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .font(.callout)
+                }
             }
         }
         .navigationTitle(contactoToEdit == nil ? "Nuevo Contacto" : "Editar Contacto")
         .navigationBarTitleDisplayMode(.inline)
+        .interactiveDismissDisabled(isSaving)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancelar") { dismiss() }
+                    .disabled(isSaving)
             }
         }
         .onAppear {
@@ -87,19 +105,9 @@ struct ContactoFormView: View {
     }
    
     private func guardarContacto() {
-        // 1. DETERMINAR EL ID (ESTRATEGIA UI OPTIMISTA)
-        // Si editamos, usamos el existente. Si es nuevo, generamos uno ahora mismo.
         let targetID = contactoToEdit?.id ?? UUID().uuidString
-        
-        // 2. CREAR EL OBJETO DE DATOS (PARA FIRESTORE)
-        // IMPORTANTE: Pasamos 'id: nil' aquí. Esto ELIMINA el warning de Firestore.
-        var contactoData = Contacto(
-            id: nil, // <--- La clave del éxito. Firestore no verá un ID forzado dentro del objeto.
-            nombre: "",
-            apellido: ""
-        )
-        
-        // Llenamos los datos
+
+        var contactoData = Contacto(id: nil, nombre: "", apellido: "")
         contactoData.nombre = nombre.trimmingCharacters(in: .whitespaces)
         contactoData.apellido = apellido.trimmingCharacters(in: .whitespaces)
         contactoData.email = email.isEmpty ? nil : email
@@ -108,21 +116,23 @@ struct ContactoFormView: View {
         contactoData.redes_sociales = redes_sociales.isEmpty ? nil : redes_sociales
         contactoData.cuit = cuit.isEmpty ? nil : cuit
         contactoData.notas = notas.isEmpty ? nil : notas
-        
-        // 3. GUARDAR EN FIRESTORE
-        // Pasamos el objeto limpio y el ID por separado
-        viewModel.saveContacto(datos: contactoData, id: targetID)
-        
-        // 4. PREPARAR OBJETO PARA LA UI (CALLBACK)
-        // Como contactoData tiene id: nil, creamos una copia o lo asignamos manualmente
-        // solo para devolverlo a la vista padre (VentaDirecta o Inscripcion).
-        var contactoParaUI = contactoData
-        contactoParaUI.id = targetID // Aquí sí asignamos el ID para que la lista lo reconozca
-        
-        // Avisamos al padre con el objeto completo
-        onSaveSuccess?(contactoParaUI)
-        
-        dismiss()
+
+        isSaving = true
+        errorMessage = nil
+
+        Task {
+            do {
+                try await viewModel.saveContactoAsync(datos: contactoData, id: targetID)
+
+                var contactoParaUI = contactoData
+                contactoParaUI.id = targetID
+                onSaveSuccess?(contactoParaUI)
+                dismiss()
+            } catch {
+                self.errorMessage = "Error al guardar: \(error.localizedDescription)"
+                self.isSaving = false
+            }
+        }
     }
    
 }

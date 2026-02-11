@@ -4,14 +4,19 @@ import Combine
 struct InscripcionFormView: View {
     
     @ObservedObject var viewModel: CronogramaViewModel
-    
-    // --- NUEVO: ViewModel dedicado para crear contactos (igual que en VentaDirecta) ---
-    @StateObject private var contactosViewModel = ContactosViewModel()
-    
-    // --- ENTRADAS (MODO HÍBRIDO) ---
+    @StateObject private var contactosViewModel: ContactosViewModel
+
     var inscripcionToEdit: Inscripcion?
     var cronogramaItem: CronogramaItem?
     var curso: Curso?
+
+    init(viewModel: CronogramaViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil) {
+        self.viewModel = viewModel
+        self.inscripcionToEdit = inscripcionToEdit
+        self.cronogramaItem = cronogramaItem
+        self.curso = curso
+        _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: viewModel.ventasRepo))
+    }
     
     @Environment(\.dismiss) var dismiss
     
@@ -176,14 +181,12 @@ struct InscripcionFormView: View {
                     Text(esTaller ? "Valor por Turno" : "Valor del Curso")
                     Spacer()
                     Text("$").foregroundStyle(.secondary)
-                    TextField("0", text: $valorUnitarioInput)
+                    TextField("0", text: $valorUnitarioInput.numericOnly())
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 100)
                         .onChange(of: valorUnitarioInput) { _, newValue in
-                            let filtered = newValue.filter { "0123456789".contains($0) }
-                            if filtered != newValue { valorUnitarioInput = filtered }
-                            self.valorUnitario = Double(valorUnitarioInput) ?? 0.0
+                            self.valorUnitario = Double(newValue) ?? 0.0
                             recalcularTotal()
                         }
                 }
@@ -317,8 +320,7 @@ struct InscripcionFormView: View {
         if inscripcionToEdit != nil { return }
         if contactos.isEmpty {
             do {
-                let repo = VentasRepository()
-                self.contactos = try await repo.fetchContactos()
+                self.contactos = try await viewModel.ventasRepo.fetchContactos()
             } catch {
                 viewModel.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }

@@ -4,27 +4,27 @@ import SwiftUI
 /// "Datos Maestros" (Contactos y Cursos), como se define
 /// en la arquitectura.
 struct GestionView: View {
-    
+
     @EnvironmentObject var authViewModel: AuthViewModel
-    
-    
+
+    let ventasRepo: VentasRepository
+    let tallerRepo: TallerRepository
+    let finanzasRepo: FinanzasRepository
+
     var body: some View {
         List {
             Section("Datos Maestros") {
-                // Tarea 2.1: Enlace a la vista de Contactos
-                NavigationLink(destination: ContactosView()) {
+                NavigationLink(destination: ContactosView(ventasRepo: ventasRepo)) {
                     Label("Contactos", systemImage: "person.2.fill")
                 }
-                 
-                // Tarea 2.2: Enlace a la vista de Cursos
-                NavigationLink(destination: CursosView()) {
+
+                NavigationLink(destination: CursosView(tallerRepo: tallerRepo)) {
                     Label("Catálogo de Cursos", systemImage: "books.vertical.fill")
                 }
             }
-            
-            // --- INICIO DE LA MODIFICACIÓN (Fase 5B) ---
+
             Section("Finanzas") {
-                NavigationLink(destination: DeudoresView()) {
+                NavigationLink(destination: DeudoresView(finanzasRepo: finanzasRepo)) {
                     Label("Panel de Deudores", systemImage: "person.crop.circle.badge.xmark")
                 }
             }
@@ -50,6 +50,6 @@ struct GestionView: View {
 
 #Preview {
     NavigationStack {
-        GestionView()
+        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), finanzasRepo: FinanzasRepository())
     }
 }

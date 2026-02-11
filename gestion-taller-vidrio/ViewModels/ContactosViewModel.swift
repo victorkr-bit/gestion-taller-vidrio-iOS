@@ -52,22 +52,14 @@ class ContactosViewModel: ObservableObject {
     }
     
     func saveContacto(datos: Contacto, id: String) {
-        isLoading = true
-        errorMessage = nil
-        
         Task {
-            do {
-                // Pasamos los datos y el ID por separado
-                try await repository.saveContacto(datos, uid: id)
-                
-                // Si tienes lógica de recarga, va aquí
-                self.fetchContactos()
-                self.isLoading = false
-            } catch {
-                self.errorMessage = "Error al guardar contacto: \(error.localizedDescription)"
-                self.isLoading = false
-            }
+            try? await saveContactoAsync(datos: datos, id: id)
         }
+    }
+
+    func saveContactoAsync(datos: Contacto, id: String) async throws {
+        try await repository.saveContacto(datos, uid: id)
+        fetchContactos()
     }
     
     // --- MODIFICADO: Borrado Seguro con Filtros ---

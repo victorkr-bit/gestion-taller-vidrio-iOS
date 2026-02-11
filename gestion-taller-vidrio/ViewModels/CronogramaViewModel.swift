@@ -62,12 +62,12 @@ class CronogramaViewModel: ObservableObject {
     
     private let tallerRepo: TallerRepository
     private let finanzasRepo: FinanzasRepository
-    
-    // Inicializador con Instanciación Perezosa (Seguro para @MainActor)
-    init(tallerRepo: TallerRepository? = nil, finanzasRepo: FinanzasRepository? = nil) {
-        // Si no nos pasan los repos, los creamos aquí dentro (contexto seguro)
+    let ventasRepo: VentasRepository
+
+    init(tallerRepo: TallerRepository? = nil, finanzasRepo: FinanzasRepository? = nil, ventasRepo: VentasRepository? = nil) {
         self.tallerRepo = tallerRepo ?? TallerRepository()
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
+        self.ventasRepo = ventasRepo ?? VentasRepository()
         
         // Iniciar la escucha
         subscribeToCronograma()

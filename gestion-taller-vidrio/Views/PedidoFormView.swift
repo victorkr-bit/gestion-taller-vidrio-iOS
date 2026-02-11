@@ -5,10 +5,7 @@ struct PedidoFormView: View {
     @StateObject var viewModel: PedidoFormViewModel
     
     @Environment(\.dismiss) var dismiss
-    
-    // Estado local para búsqueda de contactos
-    @State private var contactos: [Contacto] = []
-    
+
     // Estado intermedio para el input manual del presupuesto (Sanitización UI)
     @State private var presupuestoInput: String = ""
     
@@ -23,7 +20,7 @@ struct PedidoFormView: View {
                     // MODO NUEVO: Selector navegable
                     NavigationLink {
                         SelectorContactoView(
-                            contactos: contactos,
+                            contactos: viewModel.contactos,
                             selectedID: $viewModel.clienteId,
                             selectedNombre: $viewModel.clienteNombre
                         )
@@ -81,16 +78,12 @@ struct PedidoFormView: View {
                     Spacer()
                     Text("$").foregroundStyle(.secondary)
                     
-                    TextField("0", text: $presupuestoInput)
+                    TextField("0", text: $presupuestoInput.numericOnly())
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 120)
                         .onChange(of: presupuestoInput) { _, newValue in
-                            let filtered = newValue.filter { "0123456789".contains($0) }
-                            if filtered != newValue {
-                                presupuestoInput = filtered
-                            }
-                            viewModel.presupuesto = Double(presupuestoInput) ?? 0.0
+                            viewModel.presupuesto = Double(newValue) ?? 0.0
                         }
                 }
                 
@@ -155,19 +148,10 @@ struct PedidoFormView: View {
         .onChange(of: viewModel.shouldDismiss) {
             if viewModel.shouldDismiss { dismiss() }
         }
-        // Carga inicial
-        .task {
-            // Cargamos contactos solo si es nuevo
-            if !viewModel.isEditing && contactos.isEmpty {
-                do {
-                    contactos = try await TallerRepository().fetchContactos()
-                } catch {
-                    viewModel.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
-                }
-            }
-        }
         .onAppear {
-            // Sincronizar el input de texto con el valor del VM al abrir
+            if !viewModel.isEditing && viewModel.contactos.isEmpty {
+                viewModel.fetchContactos()
+            }
             if viewModel.presupuesto > 0 {
                 presupuestoInput = String(Int(viewModel.presupuesto))
             }

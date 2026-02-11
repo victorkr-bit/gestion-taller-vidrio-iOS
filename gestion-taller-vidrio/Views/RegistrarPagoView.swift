@@ -23,9 +23,12 @@ struct RegistrarPagoView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    // Validación: Debe haber monto y NO estar guardando actualmente
     var isFormValid: Bool {
-        monto > 0 && !isSaving
+        monto > 0 && !isSaving && monto <= origen.montoAdeudado
+    }
+
+    private var excedeDeuda: Bool {
+        monto > origen.montoAdeudado && origen.montoAdeudado > 0
     }
     
     var body: some View {
@@ -43,23 +46,24 @@ struct RegistrarPagoView: View {
                         .foregroundStyle(.secondary)
                         .font(.headline)
                     
-                    TextField("0", text: $montoInput)
+                    TextField("0", text: $montoInput.numericOnly())
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .font(.headline)
                         .foregroundStyle(.blue)
                         .frame(width: 140)
-                        // Deshabilitamos edición mientras guarda
                         .disabled(isSaving)
                         .onChange(of: montoInput) { _, newValue in
-                            let filtered = newValue.filter { "0123456789".contains($0) }
-                            if filtered != newValue {
-                                montoInput = filtered
-                            }
-                            self.monto = Double(montoInput) ?? 0.0
+                            self.monto = Double(newValue) ?? 0.0
                         }
                 }
                 
+                if excedeDeuda {
+                    Text("El monto no puede superar la deuda de \(Formatters.money(origen.montoAdeudado))")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
                 Picker("Medio de Pago", selection: $medio_de_pago) {
                     ForEach(MedioDePago.allCases) { medio in
                         Text(medio.rawValue).tag(medio)
@@ -85,15 +89,7 @@ struct RegistrarPagoView: View {
                 }
                 .padding(.vertical, 4)
                 
-                // Feedback visual de la deuda
-                Group {
-                    if case .inscripcion(let ins) = origen {
-                        infoDeudaRow(monto: ins.monto_adeudado)
-                    }
-                    if case .pedido(let ped) = origen {
-                        infoDeudaRow(monto: ped.monto_adeudado)
-                    }
-                }
+                infoDeudaRow(monto: origen.montoAdeudado)
             }
             
             // SECCIÓN DE ERROR (Si falla la nube)
