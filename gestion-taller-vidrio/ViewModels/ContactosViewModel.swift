@@ -53,7 +53,11 @@ class ContactosViewModel: ObservableObject {
     
     func saveContacto(datos: Contacto, id: String) {
         Task {
-            try? await saveContactoAsync(datos: datos, id: id)
+            do {
+                try await saveContactoAsync(datos: datos, id: id)
+            } catch {
+                self.errorMessage = "Error al guardar contacto: \(error.localizedDescription)"
+            }
         }
     }
 

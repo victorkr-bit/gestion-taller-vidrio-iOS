@@ -155,7 +155,11 @@ class CajaViewModel: ObservableObject {
     
     func saveVentaDirecta(pago: Pago) {
         Task {
-            try? await saveVentaDirectaAsync(pago: pago)
+            do {
+                try await saveVentaDirectaAsync(pago: pago)
+            } catch {
+                self.errorMessage = "Error al guardar venta directa: \(error.localizedDescription)"
+            }
         }
     }
 

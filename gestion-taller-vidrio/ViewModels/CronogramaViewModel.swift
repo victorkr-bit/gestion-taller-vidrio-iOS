@@ -108,6 +108,7 @@ class CronogramaViewModel: ObservableObject {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
                 self.errorMessage = "Error cargando historial: \(error.localizedDescription)"
+                self.isLoading = false
             }
         }
     }
@@ -118,7 +119,7 @@ class CronogramaViewModel: ObservableObject {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
-                self.errorMessage = "Error actualizando historial."
+                self.errorMessage = "Error actualizando historial: \(error.localizedDescription)"
             }
         }
     }
@@ -128,7 +129,7 @@ class CronogramaViewModel: ObservableObject {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
             } catch {
-                self.errorMessage = "Error al cargar el catálogo de cursos."
+                self.errorMessage = "Error al cargar el catálogo de cursos: \(error.localizedDescription)"
             }
         }
     }
@@ -158,7 +159,7 @@ class CronogramaViewModel: ObservableObject {
             do {
                 try await tallerRepo.saveCronogramaItem(item: item)
             } catch {
-                self.errorMessage = "Error al guardar el curso programado."
+                self.errorMessage = "Error al guardar el curso programado: \(error.localizedDescription)"
             }
         }
     }
@@ -261,7 +262,7 @@ class CronogramaViewModel: ObservableObject {
             do {
                 try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
             } catch {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = "Error al eliminar inscripción: \(error.localizedDescription)"
             }
         }
     }
