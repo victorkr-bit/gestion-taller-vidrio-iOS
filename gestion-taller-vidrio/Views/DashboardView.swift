@@ -3,7 +3,7 @@ import Charts
 
 struct DashboardView: View {
     @ObservedObject var viewModel: DashboardViewModel
-    let finanzasRepo: FinanzasRepository
+    @ObservedObject var deudoresVM: DeudoresViewModel
 
     // Inyectamos el Manager para poder cambiar de pestaña al hacer click
     @EnvironmentObject var navManager: NavigationManager
@@ -53,7 +53,7 @@ struct DashboardView: View {
                     .buttonStyle(.plain)
 
                     NavigationLink {
-                        DeudoresView(finanzasRepo: finanzasRepo)
+                        DeudoresView(viewModel: deudoresVM)
                     } label: {
                         KpiCardView(
                             titulo: "Deuda Total",
@@ -158,7 +158,7 @@ struct DashboardView: View {
                         }
                         // Aumentamos altura para dar espacio a las etiquetas superiores
                         .frame(height: max(120, CGFloat(viewModel.datosGraficoPorTipo.count) * 55))
-                        .chartForegroundStyleScale { tipoValue in colorParaTipo(tipoValue) }
+                        .chartForegroundStyleScale { TipoVenta.color(forDescripcion: $0) }
                         .chartLegend(.hidden)
                         .chartXAxis(.hidden)
                         .chartYAxis(.hidden) // Ocultamos eje Y porque la etiqueta ya está arriba
@@ -192,7 +192,7 @@ struct DashboardView: View {
                             .cornerRadius(4)
                         }
                         .frame(height: 220)
-                        .chartForegroundStyleScale { medio in colorParaMedio(medio) }
+                        .chartForegroundStyleScale { MedioDePago.color(forRawValue: $0) }
                         .chartLegend(.hidden)
                         .padding()
                         .background(Color(.systemBackground))
@@ -205,7 +205,7 @@ struct DashboardView: View {
                             ForEach(viewModel.datosGraficoPorMedio) { dato in
                                 HStack(spacing: 8) {
                                     Circle()
-                                        .fill(colorParaMedio(dato.medio))
+                                        .fill(MedioDePago.color(forRawValue:dato.medio))
                                         .frame(width: 10, height: 10)
                                     Text(dato.medio)
                                         .font(.caption)
@@ -284,35 +284,6 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Lógica para Gráfico de Ingresos
-    
-    private func colorParaTipo(_ tipo: String) -> Color {
-        switch tipo {
-        case TipoVenta.piezas.descripcion: return Color.mint
-        case TipoVenta.materiales.descripcion: return Color.orange
-        case TipoVenta.joyeria.descripcion: return Color.purple
-        case TipoVenta.taller.descripcion: return Color.green
-        case TipoVenta.online.descripcion: return Color.cyan
-        case TipoVenta.presencial.descripcion: return Color.indigo
-        case TipoVenta.otros.descripcion: return Color.gray
-        default: return Color.blue.opacity(0.5)
-        }
-    }
-    
-    // MARK: - Lógica para Gráfico por Medio de Pago
-
-    private func colorParaMedio(_ medio: String) -> Color {
-        switch medio {
-        case MedioDePago.efectivo.rawValue: return .green
-        case MedioDePago.transferencia.rawValue: return .blue
-        case MedioDePago.mercadoPago.rawValue: return .cyan
-        case MedioDePago.tarjeta.rawValue: return .purple
-        case MedioDePago.paypal.rawValue: return .indigo
-        case MedioDePago.otros.rawValue: return .gray
-        default: return .blue.opacity(0.5)
-        }
-    }
-
 }
 
 // MARK: - Componentes Visuales (KPI)

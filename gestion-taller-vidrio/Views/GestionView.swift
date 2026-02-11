@@ -9,7 +9,7 @@ struct GestionView: View {
 
     let ventasRepo: VentasRepository
     let tallerRepo: TallerRepository
-    let finanzasRepo: FinanzasRepository
+    let deudoresVM: DeudoresViewModel
 
     var body: some View {
         List {
@@ -24,7 +24,7 @@ struct GestionView: View {
             }
 
             Section("Finanzas") {
-                NavigationLink(destination: DeudoresView(finanzasRepo: finanzasRepo)) {
+                NavigationLink(destination: DeudoresView(viewModel: deudoresVM)) {
                     Label("Panel de Deudores", systemImage: "person.crop.circle.badge.xmark")
                 }
             }
@@ -50,6 +50,6 @@ struct GestionView: View {
 
 #Preview {
     NavigationStack {
-        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), finanzasRepo: FinanzasRepository())
+        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel())
     }
 }

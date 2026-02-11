@@ -10,7 +10,7 @@ struct MainView: View {
 
             // Pestaña 1: Inicio
             NavigationStack {
-                DashboardView(viewModel: container.dashboardVM, finanzasRepo: container.finanzasRepo)
+                DashboardView(viewModel: container.dashboardVM, deudoresVM: container.deudoresVM)
             }
             .tabItem { Label("Inicio", systemImage: "house") }
             .tag(AppTab.inicio)
@@ -36,7 +36,7 @@ struct MainView: View {
 
             // Pestaña 5: Gestión
             NavigationStack {
-                GestionView(ventasRepo: container.ventasRepo, tallerRepo: container.tallerRepo, finanzasRepo: container.finanzasRepo)
+                GestionView(ventasRepo: container.ventasRepo, tallerRepo: container.tallerRepo, deudoresVM: container.deudoresVM)
             }
             .tabItem { Label("Gestión", systemImage: "gearshape") }
             .tag(AppTab.gestion)

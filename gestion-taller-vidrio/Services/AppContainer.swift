@@ -16,6 +16,7 @@ final class AppContainer: ObservableObject {
     let inscripcionesVM: InscripcionesViewModel
     let catalogoOnlineVM: CatalogoOnlineViewModel
     let pedidosVM: PedidosViewModel
+    let deudoresVM: DeudoresViewModel
 
     init() {
         // 1. CREACIÓN DE LA INFRAESTRUCTURA (REPOSITORIOS COMPARTIDOS)
@@ -56,5 +57,8 @@ final class AppContainer: ObservableObject {
             ventasRepo: ventasRepo,
             finanzasRepo: finanzasRepo
         )
+
+        // 6. INYECCIÓN EN DEUDORES
+        self.deudoresVM = DeudoresViewModel(repository: finanzasRepo)
     }
 }

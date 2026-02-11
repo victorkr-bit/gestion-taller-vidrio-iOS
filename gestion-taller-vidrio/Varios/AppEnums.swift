@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Enum para el tipo de curso [cite: 169]
 enum TipoCurso: String, Codable, CaseIterable, Identifiable {
@@ -84,6 +85,22 @@ enum TipoVenta: String, Codable, CaseIterable, Identifiable {
             return self.rawValue
         }
     }
+
+    var color: Color {
+        switch self {
+        case .piezas: return .mint
+        case .materiales: return .orange
+        case .joyeria: return .purple
+        case .taller: return .green
+        case .online: return .cyan
+        case .presencial: return .indigo
+        case .otros: return .gray
+        }
+    }
+
+    static func color(forDescripcion descripcion: String) -> Color {
+        allCases.first { $0.descripcion == descripcion }?.color ?? .blue.opacity(0.5)
+    }
 }
 
 // Enum para el medio de pago [cite: 215]
@@ -94,8 +111,23 @@ enum MedioDePago: String, Codable, CaseIterable, Identifiable {
     case tarjeta = "Tarjeta"
     case paypal = "Paypal"
     case otros = "Otros"
-    
+
     var id: String { self.rawValue }
+
+    var color: Color {
+        switch self {
+        case .efectivo: return .green
+        case .transferencia: return .blue
+        case .mercadoPago: return .cyan
+        case .tarjeta: return .purple
+        case .paypal: return .indigo
+        case .otros: return .gray
+        }
+    }
+
+    static func color(forRawValue rawValue: String) -> Color {
+        Self(rawValue: rawValue)?.color ?? .blue.opacity(0.5)
+    }
 }
 
 // Enum para el origen del pago [cite: 221]
