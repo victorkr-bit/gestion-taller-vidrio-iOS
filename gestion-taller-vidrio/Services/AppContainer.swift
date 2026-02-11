@@ -12,7 +12,9 @@ final class AppContainer: ObservableObject {
     // MARK: - ViewModels
     let dashboardVM: DashboardViewModel
     let cajaVM: CajaViewModel
-    let cronogramaVM: CronogramaViewModel
+    let agendaVM: AgendaViewModel
+    let inscripcionesVM: InscripcionesViewModel
+    let catalogoOnlineVM: CatalogoOnlineViewModel
     let pedidosVM: PedidosViewModel
 
     init() {
@@ -40,8 +42,10 @@ final class AppContainer: ObservableObject {
             fechaFinPublisher: dashboardVM.$fechaFin.eraseToAnyPublisher()
         )
 
-        // 4. INYECCIÓN EN CRONOGRAMA
-        self.cronogramaVM = CronogramaViewModel(
+        // 4. INYECCIÓN EN CRONOGRAMA (3 VMs)
+        self.agendaVM = AgendaViewModel(tallerRepo: tallerRepo)
+        self.catalogoOnlineVM = CatalogoOnlineViewModel(tallerRepo: tallerRepo)
+        self.inscripcionesVM = InscripcionesViewModel(
             tallerRepo: tallerRepo,
             finanzasRepo: finanzasRepo,
             ventasRepo: ventasRepo

@@ -10,7 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Xcode project:** `gestion-taller-vidrio.xcodeproj` (no workspace needed)
 - **Scheme:** `gestion-taller-vidrio`
-- **Build from CLI:** `xcodebuild -project gestion-taller-vidrio.xcodeproj -scheme gestion-taller-vidrio -destination 'platform=iOS Simulator,name=iPhone 16' build`
+- **Simulator:** iPhone 17 Pro (always use this, no need to list available simulators)
+- **Build from CLI:** `xcodebuild -project gestion-taller-vidrio.xcodeproj -scheme gestion-taller-vidrio -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`
 - **Dependencies:** Swift Package Manager only (Firebase iOS SDK v12.6.0+: Auth, Core, Firestore, Functions). Packages resolve automatically on first build.
 - **No tests exist.** No test targets are configured.
 

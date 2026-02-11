@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct CronogramaDetailView: View {
-    
-    @ObservedObject var viewModel: CronogramaViewModel
+
+    @ObservedObject var agendaVM: AgendaViewModel
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
     let cronogramaItem: CronogramaItem
-    
+
     // Estados para navegación y modales
     @State private var inscripcionToEdit: Inscripcion?
     @State private var isCreatingNew = false
@@ -13,10 +14,10 @@ struct CronogramaDetailView: View {
 
     // Control de expansión
     @State private var expandedInscripcionID: String?
-    
+
     var inscripcionesOrdenadas: [Inscripcion] {
-        let lista = viewModel.inscripciones
-        
+        let lista = inscripcionesVM.inscripciones
+
         if cronogramaItem.cursoTipo == .taller {
                  return lista.sorted { (insc1, insc2) -> Bool in
                      // Usamos una comparación numérica real, no lexicográfica
@@ -28,10 +29,10 @@ struct CronogramaDetailView: View {
                 return lista
             }
     }
-    
+
     var body: some View {
         ZStack {
-            if viewModel.isLoading && viewModel.inscripciones.isEmpty {
+            if inscripcionesVM.isLoading && inscripcionesVM.inscripciones.isEmpty {
                 ProgressView("Cargando inscripciones...")
             } else {
                 List {
@@ -48,13 +49,13 @@ struct CronogramaDetailView: View {
                         }
                     }
                     .listRowSeparator(.hidden)
-                    
+
                     // --- Sección 2: Lista de Inscriptos ---
-                    Section(header: Text("Inscriptos (\(viewModel.inscripciones.count))")) {
+                    Section(header: Text("Inscriptos (\(inscripcionesVM.inscripciones.count))")) {
                         ForEach(inscripcionesOrdenadas) { inscripcion in
                             InscripcionRowView(
                                 inscripcion: inscripcion,
-                                viewModel: viewModel,
+                                inscripcionesVM: inscripcionesVM,
                                 expandedInscripcionID: $expandedInscripcionID,
                                 inscripcionParaPagar: $inscripcionParaPagar,
                                 inscripcionToEdit: $inscripcionToEdit
@@ -85,13 +86,13 @@ struct CronogramaDetailView: View {
         }
         .sheet(isPresented: $isEditingCronograma) {
             NavigationStack {
-                EditarCronogramaView(viewModel: viewModel, cronogramaItem: cronogramaItem)
+                EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: cronogramaItem)
             }
         }
         .sheet(isPresented: $isCreatingNew) {
             NavigationStack {
                 InscripcionFormView(
-                    viewModel: viewModel,
+                    inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: nil,
                     cronogramaItem: cronogramaItem,
                     curso: nil
@@ -101,7 +102,7 @@ struct CronogramaDetailView: View {
         .sheet(item: $inscripcionToEdit) { inscripcion in
             NavigationStack {
                 InscripcionFormView(
-                    viewModel: viewModel,
+                    inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: inscripcion,
                     cronogramaItem: cronogramaItem,
                     curso: nil
@@ -113,25 +114,25 @@ struct CronogramaDetailView: View {
                 RegistrarPagoView(
                     origen: .inscripcion(inscripcion),
                     onSave: { (pago, origen) in
-                        try await viewModel.registrarPago(pago: pago, origen: origen)
+                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen)
                     }
                 )
             }
         }
         .onAppear {
             if let id = cronogramaItem.id {
-                viewModel.fetchInscripciones(cronogramaID: id)
+                inscripcionesVM.fetchInscripciones(cronogramaID: id)
             }
         }
-        .errorAlert($viewModel.errorMessage)
+        .errorAlert($inscripcionesVM.errorMessage)
     }
 }
 
 // MARK: - Subvista para la Fila (Row)
 struct InscripcionRowView: View {
     let inscripcion: Inscripcion
-    @ObservedObject var viewModel: CronogramaViewModel
-    
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
+
     @Binding var expandedInscripcionID: String?
     @Binding var inscripcionParaPagar: Inscripcion?
     @Binding var inscripcionToEdit: Inscripcion?
@@ -142,8 +143,8 @@ struct InscripcionRowView: View {
         VStack(spacing: 0) {
             CardView {
                 HStack {
-                    let ocupacion = viewModel.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
-                    
+                    let ocupacion = inscripcionesVM.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
+
                     GenericRowView(
                         titulo: inscripcion.alumno_nombre,
                         subtitulo: nil, // No mostramos descripción aquí
@@ -158,9 +159,9 @@ struct InscripcionRowView: View {
                                 TagConfig(text: "Ocup: \(ocupacion)", color: ocupacion >= 4 ? .red : .blue) : nil
                         ].compactMap { $0 } // Esto elimina los 'nil' de la lista
                     )
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.right")
                         .rotationEffect(.degrees(expandedInscripcionID == inscripcion.id ? 90 : 0))
                         .foregroundStyle(.gray.opacity(0.5))
@@ -172,11 +173,11 @@ struct InscripcionRowView: View {
         .onTapGesture {
             withAnimation {
                 if expandedInscripcionID == inscripcion.id {
-                    viewModel.stopListeningPagos(para: inscripcion)
+                    inscripcionesVM.stopListeningPagos(para: inscripcion)
                     expandedInscripcionID = nil
                 } else {
                     expandedInscripcionID = inscripcion.id
-                    viewModel.fetchPagos(para: inscripcion)
+                    inscripcionesVM.fetchPagos(para: inscripcion)
                 }
             }
         }
@@ -209,15 +210,15 @@ struct InscripcionRowView: View {
             } label: {
                 Label("Registrar Pago", systemImage: "dollarsign.circle")
             }
-            
+
             Button {
                 self.inscripcionToEdit = inscripcion
             } label: {
                 Label("Editar Inscripción", systemImage: "pencil")
             }
-            
+
             Divider()
-            
+
             Button(role: .destructive) {
                 showDeleteAlert = true
             } label: {
@@ -226,7 +227,7 @@ struct InscripcionRowView: View {
         }
         .alert("Eliminar Inscripción", isPresented: $showDeleteAlert) {
             Button("Eliminar", role: .destructive) {
-                viewModel.deleteInscripcion(inscripcion)
+                inscripcionesVM.deleteInscripcion(inscripcion)
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
@@ -234,7 +235,7 @@ struct InscripcionRowView: View {
         }
 
         if expandedInscripcionID == inscripcion.id {
-            PagosListView(inscripcion: inscripcion, viewModel: viewModel)
+            PagosListView(inscripcion: inscripcion, inscripcionesVM: inscripcionesVM)
         }
     }
 }
@@ -242,10 +243,10 @@ struct InscripcionRowView: View {
 // MARK: - Subvista para lista de pagos (Helper)
 struct PagosListView: View {
     let inscripcion: Inscripcion
-    @ObservedObject var viewModel: CronogramaViewModel
-    
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
+
     var body: some View {
-        if let id = inscripcion.id, let pagos = viewModel.pagosPorInscripcion[id] {
+        if let id = inscripcion.id, let pagos = inscripcionesVM.pagosPorInscripcion[id] {
             if pagos.isEmpty {
                 Text("No hay pagos registrados.")
                     .font(.caption)
@@ -271,5 +272,3 @@ struct PagosListView: View {
         }
     }
 }
-
-

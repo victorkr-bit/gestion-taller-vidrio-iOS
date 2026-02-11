@@ -3,19 +3,19 @@ import Combine
 
 struct InscripcionFormView: View {
     
-    @ObservedObject var viewModel: CronogramaViewModel
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
     @StateObject private var contactosViewModel: ContactosViewModel
 
     var inscripcionToEdit: Inscripcion?
     var cronogramaItem: CronogramaItem?
     var curso: Curso?
 
-    init(viewModel: CronogramaViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil) {
-        self.viewModel = viewModel
+    init(inscripcionesVM: InscripcionesViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil) {
+        self.inscripcionesVM = inscripcionesVM
         self.inscripcionToEdit = inscripcionToEdit
         self.cronogramaItem = cronogramaItem
         self.curso = curso
-        _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: viewModel.ventasRepo))
+        _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: inscripcionesVM.ventasRepo))
     }
     
     @Environment(\.dismiss) var dismiss
@@ -320,9 +320,9 @@ struct InscripcionFormView: View {
         if inscripcionToEdit != nil { return }
         if contactos.isEmpty {
             do {
-                self.contactos = try await viewModel.ventasRepo.fetchContactos()
+                self.contactos = try await inscripcionesVM.ventasRepo.fetchContactos()
             } catch {
-                viewModel.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
+                inscripcionesVM.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }
         }
     }
@@ -368,7 +368,7 @@ struct InscripcionFormView: View {
             inscripcion.turnos = nil
         }
         
-        viewModel.saveInscripcion(inscripcion: inscripcion)
+        inscripcionesVM.saveInscripcion(inscripcion: inscripcion)
         dismiss()
     }
 }

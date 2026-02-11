@@ -2,7 +2,7 @@ import SwiftUI
 
 struct EditarCronogramaView: View {
 
-    @ObservedObject var viewModel: CronogramaViewModel
+    @ObservedObject var agendaVM: AgendaViewModel
     let cronogramaItem: CronogramaItem
 
     @Environment(\.dismiss) var dismiss
@@ -115,10 +115,10 @@ struct EditarCronogramaView: View {
 
         Task {
             do {
-                try await viewModel.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha)
+                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha)
                 dismiss()
             } catch {
-                viewModel.errorMessage = error.localizedDescription
+                agendaVM.errorMessage = error.localizedDescription
                 isSaving = false
             }
         }

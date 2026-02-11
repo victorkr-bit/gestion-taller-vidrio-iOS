@@ -3,7 +3,7 @@ import SwiftUI
 struct CronogramaFormView: View {
     
     // Inyectamos el VM para guardar y para leer el catálogo de cursos
-    @ObservedObject var viewModel: CronogramaViewModel
+    @ObservedObject var agendaVM: AgendaViewModel
     
     @Environment(\.dismiss) var dismiss
     
@@ -24,7 +24,7 @@ struct CronogramaFormView: View {
                     Picker("Curso a Programar*", selection: $selectedCursoID) {
                         Text("Seleccionar un curso...").tag("")
                         // Leemos el catálogo de cursos desde el ViewModel
-                        ForEach(viewModel.cursos) { curso in
+                        ForEach(agendaVM.cursos) { curso in
                             Text(curso.nombre).tag(curso.id ?? "")
                         }
                     }
@@ -53,7 +53,7 @@ struct CronogramaFormView: View {
             }
             .onAppear {
                 // Nos aseguramos de tener el catálogo de cursos cargado
-                viewModel.fetchCursos()
+                agendaVM.fetchCursos()
             }
         }
     }
@@ -61,8 +61,8 @@ struct CronogramaFormView: View {
     /// Prepara el objeto CronogramaItem y lo manda al ViewModel
     private func saveCronogramaItem() {
         // 1. Encontrar el curso seleccionado del catálogo
-        guard let selectedCurso = viewModel.cursos.first(where: { $0.id == selectedCursoID }) else {
-            viewModel.errorMessage = "No se pudo encontrar el curso seleccionado."
+        guard let selectedCurso = agendaVM.cursos.first(where: { $0.id == selectedCursoID }) else {
+            agendaVM.errorMessage = "No se pudo encontrar el curso seleccionado."
             return
         }
         
@@ -89,7 +89,7 @@ struct CronogramaFormView: View {
         )
         
         // 3. Llamar al ViewModel para guardar
-        viewModel.saveCronogramaItem(item: newItem)
+        agendaVM.saveCronogramaItem(item: newItem)
         
         // 4. Cerrar el formulario
         dismiss()

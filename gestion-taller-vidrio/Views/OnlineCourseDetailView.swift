@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct OnlineCourseDetailView: View {
-    @ObservedObject var viewModel: CronogramaViewModel
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
     let curso: Curso
-    
+
     // Control de expansión para el acordeón de pagos
     @State private var expandedInscripcionID: String?
     @State private var inscripcionParaPagar: Inscripcion?
     @State private var inscripcionToEdit: Inscripcion?
     @State private var isSelling = false
-    
+
     var body: some View {
         List {
             // Sección 1: Info del Producto
@@ -18,7 +18,7 @@ struct OnlineCourseDetailView: View {
                     Text(curso.nombre)
                         .font(.title)
                         .fontWeight(.bold)
-                    
+
                     HStack {
                         Text("Producto Evergreen (Online)")
                             .font(.subheadline)
@@ -30,19 +30,19 @@ struct OnlineCourseDetailView: View {
                 }
                 .padding(.vertical, 8)
             }
-            
+
             // Sección 2: Lista de Alumnos (Histórico Global)
             Section(header: Text("Alumnos Inscriptos")) {
-                if viewModel.isLoading {
+                if inscripcionesVM.isLoading {
                     ProgressView()
-                } else if viewModel.inscripciones.isEmpty {
+                } else if inscripcionesVM.inscripciones.isEmpty {
                     Text("No hay ventas registradas aún.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(viewModel.inscripciones) { inscripcion in
+                    ForEach(inscripcionesVM.inscripciones) { inscripcion in
                         InscripcionRowView(
                             inscripcion: inscripcion,
-                            viewModel: viewModel,
+                            inscripcionesVM: inscripcionesVM,
                             expandedInscripcionID: $expandedInscripcionID,
                             inscripcionParaPagar: $inscripcionParaPagar,
                             inscripcionToEdit: $inscripcionToEdit
@@ -56,7 +56,7 @@ struct OnlineCourseDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if let id = curso.id {
-                viewModel.fetchInscripcionesOnline(cursoID: id)
+                inscripcionesVM.fetchInscripcionesOnline(cursoID: id)
             }
         }
         .toolbar {
@@ -68,11 +68,11 @@ struct OnlineCourseDetailView: View {
                 }
             }
         }
-        
+
         .sheet(isPresented: $isSelling) {
             NavigationStack {
                 InscripcionFormView(
-                    viewModel: viewModel,
+                    inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: nil,
                     cronogramaItem: nil,
                     curso: curso
@@ -84,11 +84,11 @@ struct OnlineCourseDetailView: View {
                 RegistrarPagoView(
                     origen: .inscripcion(inscripcion),
                     onSave: { (pago, origen) in
-                        try await viewModel.registrarPago(pago: pago, origen: origen)
+                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen)
                     }
                 )
             }
         }
-        .errorAlert($viewModel.errorMessage)
+        .errorAlert($inscripcionesVM.errorMessage)
     }
 }

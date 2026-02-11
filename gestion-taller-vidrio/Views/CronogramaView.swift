@@ -1,53 +1,68 @@
 import SwiftUI
 
+enum ModoVista: String, CaseIterable, Identifiable {
+    case agenda = "Agenda"
+    case online = "Cursos Online"
+    var id: String { self.rawValue }
+}
+
 struct CronogramaView: View {
-    @ObservedObject var viewModel: CronogramaViewModel
-    
+    @ObservedObject var agendaVM: AgendaViewModel
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
+    @ObservedObject var catalogoOnlineVM: CatalogoOnlineViewModel
+
     // Acceso al NavigationManager global
     @EnvironmentObject var navManager: NavigationManager
-    
+
+    // Estado bimodal (agenda vs online) — puramente de presentación
+    @State private var modoVista: ModoVista = .agenda
+
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
     @State private var itemToDelete: CronogramaItem?
     @State private var itemToEdit: CronogramaItem?
-    
+
+    private var activeErrorMessage: Binding<String?> {
+        modoVista == .agenda ? $agendaVM.errorMessage : $catalogoOnlineVM.errorMessage
+    }
+
     var body: some View {
         NavigationStack(path: $navManager.cronogramaPath) {
             VStack(spacing: 0) {
-                
+
                 // --- Selector de Modo (Agenda vs Online) ---
-                Picker("Modo de Vista", selection: $viewModel.modoVista.animation()) {
-                    ForEach(CronogramaViewModel.ModoVista.allCases) { modo in
+                Picker("Modo de Vista", selection: $modoVista.animation()) {
+                    ForEach(ModoVista.allCases) { modo in
                         Text(modo.rawValue).tag(modo)
                     }
                 }
                 .pickerStyle(.segmented)
                 .padding()
-                
+
                 // --- Contenido dinámico según el modo ---
-                if viewModel.modoVista == .agenda {
-                    
+                if modoVista == .agenda {
+
                         // Filtro Próximos / Historial
-                    Picker("Filtro Cronograma", selection: $viewModel.filtroSeleccionado.animation()) {
-                        ForEach(CronogramaViewModel.FiltroCronograma.allCases) { filtro in
+                    Picker("Filtro Cronograma", selection: $agendaVM.filtroSeleccionado.animation()) {
+                        ForEach(AgendaViewModel.FiltroCronograma.allCases) { filtro in
                             Text(filtro.rawValue).tag(filtro)
                         }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    
+
                     agendaListView
-                    
+
                 } else {
-                    
+
                     onlineListView
                 }
             }
             .navigationTitle("Gestión Taller")
             .toolbar {
                 // Toolbar solo si estamos en modo Agenda
-                if viewModel.modoVista == .agenda {
+                if modoVista == .agenda {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button { self.isCreatingAgendaEvent = true } label: {
                             Image(systemName: "plus")
@@ -57,21 +72,21 @@ struct CronogramaView: View {
             }
             // Sheet para crear evento
             .sheet(isPresented: $isCreatingAgendaEvent) {
-                NavigationStack { CronogramaFormView(viewModel: viewModel) }
+                NavigationStack { CronogramaFormView(agendaVM: agendaVM) }
             }
             .sheet(item: $itemToEdit) { item in
                 NavigationStack {
-                    EditarCronogramaView(viewModel: viewModel, cronogramaItem: item)
+                    EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: item)
                 }
             }
-            .errorAlert($viewModel.errorMessage)
+            .errorAlert(activeErrorMessage)
             .alert("Eliminar Evento", isPresented: Binding<Bool>(
                 get: { itemToDelete != nil },
                 set: { if !$0 { itemToDelete = nil } }
             )) {
                 Button("Eliminar", role: .destructive) {
                     if let item = itemToDelete {
-                        viewModel.deleteCronogramaItem(item)
+                        agendaVM.deleteCronogramaItem(item)
                     }
                     itemToDelete = nil
                 }
@@ -82,31 +97,31 @@ struct CronogramaView: View {
                 Text("¿Eliminar \"\(itemToDelete?.cursoNombre ?? "")\"? Esta acción no se puede deshacer.")
             }
             // Recarga al cambiar pestaña
-            .onChange(of: viewModel.modoVista) { _, newMode in
+            .onChange(of: modoVista) { _, newMode in
                 if newMode == .online {
-                    viewModel.subscribeToCatalogoOnline()
+                    catalogoOnlineVM.subscribeToCatalogoOnline()
                 } else {
-                    viewModel.fetchCronograma()
+                    agendaVM.fetchCronograma()
                 }
             }
             .navigationDestination(for: CronogramaItem.self) { item in
-                CronogramaDetailView(viewModel: viewModel, cronogramaItem: item)
+                CronogramaDetailView(agendaVM: agendaVM, inscripcionesVM: inscripcionesVM, cronogramaItem: item)
             }
         }
     }
-    
+
     // MARK: - Subvistas de Listas
-    
+
     /// Vista de la lista para la Agenda (Talleres y Cursos con Fecha)
     private var agendaListView: some View {
         ZStack {
-            if viewModel.isLoading && viewModel.cursosFiltrados.isEmpty {
+            if agendaVM.isLoading && agendaVM.cursosFiltrados.isEmpty {
                 ProgressView("Cargando agenda...")
-            } else if viewModel.cursosFiltrados.isEmpty {
+            } else if agendaVM.cursosFiltrados.isEmpty {
                 ContentUnavailableView("No hay eventos", systemImage: "calendar.badge.exclamationmark")
             } else {
                 List {
-                    ForEach(viewModel.cursosFiltrados) { item in
+                    ForEach(agendaVM.cursosFiltrados) { item in
                         Button {
                             navManager.cronogramaPath.append(item)
                         } label: {
@@ -160,23 +175,23 @@ struct CronogramaView: View {
                     }
                 }
                 .listStyle(.plain)
-                .refreshable { viewModel.fetchCronograma() }
+                .refreshable { agendaVM.fetchCronograma() }
             }
         }
     }
-    
+
     /// Vista de la lista para Cursos Online (Productos Evergreen)
     private var onlineListView: some View {
         ZStack {
-            if viewModel.catalogoOnline.isEmpty && viewModel.isLoading {
+            if catalogoOnlineVM.catalogoOnline.isEmpty && catalogoOnlineVM.isLoading {
                 ProgressView()
-            } else if viewModel.catalogoOnline.isEmpty {
+            } else if catalogoOnlineVM.catalogoOnline.isEmpty {
                 ContentUnavailableView("Sin catálogo", systemImage: "globe")
             } else {
                 List {
-                    ForEach(viewModel.catalogoOnline) { curso in
+                    ForEach(catalogoOnlineVM.catalogoOnline) { curso in
                         NavigationLink {
-                            OnlineCourseDetailView(viewModel: viewModel, curso: curso)
+                            OnlineCourseDetailView(inscripcionesVM: inscripcionesVM, curso: curso)
                         } label: {
                             CardView {
                                 GenericRowView(
@@ -196,7 +211,7 @@ struct CronogramaView: View {
                     }
                 }
                 .listStyle(.plain)
-                .refreshable { viewModel.subscribeToCatalogoOnline() }
+                .refreshable { catalogoOnlineVM.subscribeToCatalogoOnline() }
             }
         }
     }
