@@ -102,7 +102,8 @@ private struct CajaPagoRow: View {
             GenericRowView(
                 titulo: pago.cliente_nombre,
                 subtitulo: pago.descripcion_origen,
-                infoSuperior: pago.fecha.formatted(date: .numeric, time: .shortened),
+                infoSuperior: Formatters.date(pago.fecha),
+                infoSuperiorSecundaria: Formatters.time(pago.fecha),
                 iconoSuperior: nil,
                 monto: pago.monto,
                 tags: [

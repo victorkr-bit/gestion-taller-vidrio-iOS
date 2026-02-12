@@ -136,11 +136,11 @@ extension CronogramaItem {
 
     var mensajeCompartir: String {
         // Usamos formato abreviado seguro
-        let fechaFormateada = fecha.formatted(date: .abbreviated, time: .shortened)
-        
+        let fechaFormateada = "\(Formatters.date(fecha)) \(Formatters.time(fecha))"
+
         return """
         ¡Hola! Te invito a inscribirte al curso de *\(cursoNombre)*.
-        
+
         📅 Fecha: \(fechaFormateada)
         
         👇 Inscribite en el siguiente enlace:
