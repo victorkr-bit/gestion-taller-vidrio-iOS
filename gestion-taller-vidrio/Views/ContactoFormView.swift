@@ -73,17 +73,11 @@ struct ContactoFormView: View {
                 .disabled(!isFormValid)
             }
 
-            if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.callout)
-                }
-            }
         }
         .navigationTitle(contactoToEdit == nil ? "Nuevo Contacto" : "Editar Contacto")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(isSaving)
+        .errorAlert($errorMessage)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancelar") { dismiss() }

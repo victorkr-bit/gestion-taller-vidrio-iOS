@@ -92,19 +92,11 @@ struct RegistrarPagoView: View {
                 infoDeudaRow(monto: origen.montoAdeudado)
             }
             
-            // SECCIÓN DE ERROR (Si falla la nube)
-            if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.callout)
-                }
-            }
         }
         .navigationTitle("Registrar Pago")
         .navigationBarTitleDisplayMode(.inline)
-        // Deshabilitar gestos interactivos al guardar evita cierres accidentales
         .interactiveDismissDisabled(isSaving)
+        .errorAlert($errorMessage)
         .toolbar {
             // Botón Cancelar
             ToolbarItem(placement: .cancellationAction) {

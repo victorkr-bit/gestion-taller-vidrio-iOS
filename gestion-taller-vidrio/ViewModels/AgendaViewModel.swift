@@ -34,6 +34,7 @@ class AgendaViewModel: ObservableObject {
 
     // Listener
     private var cronogramaListener: ListenerRegistration?
+    private var activeTasks: [Task<Void, Never>] = []
 
     // MARK: - Dependencia
     private let tallerRepo: TallerRepository
@@ -44,6 +45,7 @@ class AgendaViewModel: ObservableObject {
     }
 
     deinit {
+        activeTasks.forEach { $0.cancel() }
         cronogramaListener?.remove()
     }
 
@@ -69,47 +71,47 @@ class AgendaViewModel: ObservableObject {
         }
 
         // Fetch de HISTORIAL (One-Shot)
-        Task {
+        activeTasks.append(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
                 self.errorMessage = "Error cargando historial: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
 
     func fetchCronograma() {
         // Recarga manual del historial
-        Task {
+        activeTasks.append(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
                 self.errorMessage = "Error actualizando historial: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func fetchCursos() {
-        Task {
+        activeTasks.append(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
             } catch {
                 self.errorMessage = "Error al cargar el catálogo de cursos: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     // MARK: - CRUD Cronograma
 
     func saveCronogramaItem(item: CronogramaItem) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await tallerRepo.saveCronogramaItem(item: item)
             } catch {
                 self.errorMessage = "Error al guardar el curso programado: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?) async throws {
@@ -135,7 +137,7 @@ class AgendaViewModel: ObservableObject {
         }
 
         // 3. Borrado real
-        Task {
+        activeTasks.append(Task {
             do {
                 try await tallerRepo.deleteCronogramaItem(item: item)
             } catch {
@@ -143,6 +145,6 @@ class AgendaViewModel: ObservableObject {
                 self.subscribeToCronograma()
                 self.errorMessage = error.localizedDescription
             }
-        }
+        })
     }
 }

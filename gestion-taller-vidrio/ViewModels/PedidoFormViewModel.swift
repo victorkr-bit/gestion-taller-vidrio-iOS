@@ -18,6 +18,12 @@ class PedidoFormViewModel: ObservableObject {
     @Published var shouldDismiss: Bool = false
     @Published var contactos: [Contacto] = []
     
+    private var activeTasks: [Task<Void, Never>] = []
+
+    deinit {
+        activeTasks.forEach { $0.cancel() }
+    }
+
     // CAMBIO 1: Repo de Ventas
     private let repository: VentasRepository
     private let editingPedidoID: String?
@@ -51,20 +57,20 @@ class PedidoFormViewModel: ObservableObject {
     var isEditing: Bool { editingPedidoID != nil }
 
     func fetchContactos() {
-        Task {
+        activeTasks.append(Task {
             do {
                 self.contactos = try await repository.fetchContactos()
             } catch {
                 self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func guardar() {
         guard isValid else { return }
         self.isLoading = true
         
-        Task {
+        activeTasks.append(Task {
             do {
                 let pedido = Pedido(
                     id: nil,
@@ -80,16 +86,16 @@ class PedidoFormViewModel: ObservableObject {
                     tipo: self.tipo,
                     estado_entrega: self.estadoEntrega
                 )
-                
+
                 // Aquí llamamos al nuevo repo
                 try await repository.savePedido(pedido: pedido, existingID: self.editingPedidoID)
-                
+
                 self.shouldDismiss = true
                 self.isLoading = false
             } catch {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
-        }
+        })
     }
 }

@@ -9,6 +9,8 @@ class DeudoresViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var deudores: [DeudorItem] = []
     
+    private var activeTasks: [Task<Void, Never>] = []
+
     // CAMBIO 1: Repo de Finanzas
     private let repository: FinanzasRepository
     
@@ -17,11 +19,15 @@ class DeudoresViewModel: ObservableObject {
         self.repository = repository ?? FinanzasRepository()
         fetchDeudores()
     }
-    
+
+    deinit {
+        activeTasks.forEach { $0.cancel() }
+    }
+
     func fetchDeudores() {
         isLoading = true
         errorMessage = nil
-        Task {
+        activeTasks.append(Task {
             do {
                 self.deudores = try await repository.fetchDeudores()
                 self.isLoading = false
@@ -29,9 +35,9 @@ class DeudoresViewModel: ObservableObject {
                 self.errorMessage = "Error al cargar deudores: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
-    
+
     func registrarPago(pago: Pago, origen: Origen) async throws {
         errorMessage = nil
         do {
@@ -46,7 +52,7 @@ class DeudoresViewModel: ObservableObject {
     func condonarDeuda(origen: Origen) {
         isLoading = true
         errorMessage = nil
-        Task {
+        activeTasks.append(Task {
             do {
                 try await repository.condonarDeuda(origen: origen)
                 fetchDeudores()
@@ -54,6 +60,6 @@ class DeudoresViewModel: ObservableObject {
                 self.errorMessage = "Error al condonar la deuda: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
 }

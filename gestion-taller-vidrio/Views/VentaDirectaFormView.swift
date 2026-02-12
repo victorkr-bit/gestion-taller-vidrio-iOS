@@ -129,17 +129,11 @@ struct VentaDirectaFormView: View {
                 .disabled(!isFormValid)
             }
 
-            if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.callout)
-                }
-            }
         }
         .navigationTitle("Nueva Venta Directa")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(isSaving)
+        .errorAlert($errorMessage)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancelar") { dismiss() }

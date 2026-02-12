@@ -29,3 +29,24 @@ struct CronogramaItem: Codable, Identifiable, Hashable {
         return lhs.id == rhs.id && lhs.cursoId == rhs.cursoId
     }
 }
+
+// MARK: - Compartir inscripción
+
+extension CronogramaItem {
+    var inscripcionURL: URL? {
+        guard let docID = id else { return nil }
+        return URL(string: "https://taller-glass-v2.web.app/inscribir/\(docID)")
+    }
+
+    var mensajeCompartir: String {
+        let fechaFormateada = "\(Formatters.date(fecha)) \(Formatters.time(fecha))"
+
+        return """
+        ¡Hola! Te invito a inscribirte al curso de *\(cursoNombre)*.
+
+        📅 Fecha: \(fechaFormateada)
+
+        👇 Inscribite en el siguiente enlace:
+        """
+    }
+}

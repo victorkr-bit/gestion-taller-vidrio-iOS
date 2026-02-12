@@ -20,6 +20,7 @@ class InscripcionesViewModel: ObservableObject {
     // Listeners
     private var inscripcionesListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
+    private var activeTasks: [Task<Void, Never>] = []
 
     // MARK: - Dependencias
     private let tallerRepo: TallerRepository
@@ -33,6 +34,7 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     deinit {
+        activeTasks.forEach { $0.cancel() }
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
     }
@@ -77,23 +79,23 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     func saveInscripcion(inscripcion: Inscripcion) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
             } catch {
                 self.errorMessage = "Error al guardar la inscripción: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func deleteInscripcion(_ inscripcion: Inscripcion) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
             } catch {
                 self.errorMessage = "Error al eliminar inscripción: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     private func calcularOcupaciones(para lista: [Inscripcion]) {

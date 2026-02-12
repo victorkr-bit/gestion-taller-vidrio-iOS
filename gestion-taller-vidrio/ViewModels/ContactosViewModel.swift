@@ -11,6 +11,7 @@ class ContactosViewModel: ObservableObject {
     // --- NUEVO: Estado para el texto del buscador ---
     @Published var searchText: String = ""
 
+    private var activeTasks: [Task<Void, Never>] = []
     private let repository: VentasRepository
     
     // --- NUEVO: Lista Computada ---
@@ -33,12 +34,16 @@ class ContactosViewModel: ObservableObject {
         self.repository = repository ?? VentasRepository()
         fetchContactos()
     }
-    
+
+    deinit {
+        activeTasks.forEach { $0.cancel() }
+    }
+
     func fetchContactos() {
         isLoading = true
         errorMessage = nil
         
-        Task {
+        activeTasks.append(Task {
             do {
                 let fetchedContactos = try await repository.fetchContactos()
                 // Ordenamos
@@ -48,17 +53,17 @@ class ContactosViewModel: ObservableObject {
                 self.errorMessage = "Error al cargar contactos: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
-    
+
     func saveContacto(datos: Contacto, id: String) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await saveContactoAsync(datos: datos, id: id)
             } catch {
                 self.errorMessage = "Error al guardar contacto: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func saveContactoAsync(datos: Contacto, id: String) async throws {
@@ -75,7 +80,7 @@ class ContactosViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        Task {
+        activeTasks.append(Task {
             do {
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for contacto in contactosABorrar {
@@ -93,7 +98,7 @@ class ContactosViewModel: ObservableObject {
                 self.errorMessage = "Error al borrar el contacto: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
 }
 

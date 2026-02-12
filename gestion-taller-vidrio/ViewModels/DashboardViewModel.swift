@@ -37,6 +37,7 @@ class DashboardViewModel: ObservableObject {
     private var pagosListener: ListenerRegistration?
     // NUEVO: Listener para que la agenda se actualice sola
     private var cronogramaListener: ListenerRegistration?
+    private var activeTasks: [Task<Void, Never>] = []
     
     // MARK: - Inyección de Dependencias
     
@@ -74,9 +75,10 @@ class DashboardViewModel: ObservableObject {
     }
     
     deinit {
+        activeTasks.forEach { $0.cancel() }
         metricasListener?.remove()
         pagosListener?.remove()
-        cronogramaListener?.remove() // Limpieza del nuevo listener
+        cronogramaListener?.remove()
     }
     
     func setupListeners() {
@@ -130,7 +132,7 @@ class DashboardViewModel: ObservableObject {
                     // Si la próxima clase cambió, recalculamos la ocupación
                     if primera.cursoTipo == .taller, let id = primera.id {
                         // Como estamos dentro de un closure no-async, lanzamos una Task
-                        Task { await self.loadOcupacion(cronogramaId: id) }
+                        self.activeTasks.append(Task { await self.loadOcupacion(cronogramaId: id) })
                     } else {
                         self.ocupacionTaller = []
                     }

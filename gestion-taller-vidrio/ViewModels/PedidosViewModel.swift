@@ -22,6 +22,7 @@ class PedidosViewModel: ObservableObject {
     // Almacén de Listeners
     private var pedidosListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
+    private var activeTasks: [Task<Void, Never>] = []
     
     // MARK: - Enums de Filtros
     
@@ -91,6 +92,7 @@ class PedidosViewModel: ObservableObject {
     }
     
     deinit {
+        activeTasks.forEach { $0.cancel() }
         pedidosListener?.remove()
         paymentListeners.values.forEach { $0.remove() }
     }
@@ -124,14 +126,14 @@ class PedidosViewModel: ObservableObject {
             }
         }
         
-        Task {
+        activeTasks.append(Task {
             do {
                 try await ventasRepo.deletePedido(pedido: pedido)
             } catch {
                 self.errorMessage = "No se pudo eliminar el pedido: \(error.localizedDescription)"
                 self.startListeningOrders()
             }
-        }
+        })
     }
     
     // MARK: - Gestión de Pagos (FinanzasRepository)
@@ -170,12 +172,12 @@ class PedidosViewModel: ObservableObject {
     }
     
     func deletePago(_ pago: Pago) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {
                 self.errorMessage = "Error al borrar pago: \(error.localizedDescription)"
             }
-        }
+        })
     }
 }

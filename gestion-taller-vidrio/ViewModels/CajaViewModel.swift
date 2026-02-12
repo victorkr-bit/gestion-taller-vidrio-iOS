@@ -49,6 +49,7 @@ class CajaViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var listener: ListenerRegistration?
+    private var activeTasks: [Task<Void, Never>] = []
     
     // MARK: - Inyección de Dependencias
     private let finanzasRepo: FinanzasRepository
@@ -87,6 +88,7 @@ class CajaViewModel: ObservableObject {
     }
     
     deinit {
+        activeTasks.forEach { $0.cancel() }
         listener?.remove()
         cancellables.removeAll()
     }
@@ -114,19 +116,19 @@ class CajaViewModel: ObservableObject {
     }
     
     func deletePago(_ pago: Pago) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {
                 self.errorMessage = "No se pudo borrar el pago: \(error.localizedDescription)"
             }
-        }
+        })
     }
     
     // Edición
     func savePagoEditado(pago: Pago, montoAntiguo: Double) {
         isLoading = true
-        Task {
+        activeTasks.append(Task {
             do {
                 try await finanzasRepo.editPago(pagoActualizado: pago, montoAntiguo: montoAntiguo)
                 self.isLoading = false
@@ -134,7 +136,7 @@ class CajaViewModel: ObservableObject {
                 self.errorMessage = "Error al editar pago: \(error.localizedDescription)"
                 self.isLoading = false
             }
-        }
+        })
     }
     
     func registrarPago(pago: Pago, origen: Origen) async throws {
@@ -144,23 +146,23 @@ class CajaViewModel: ObservableObject {
     // MARK: - Venta Directa
     
     func fetchContactos() {
-        Task {
+        activeTasks.append(Task {
             do {
                 self.contactos = try await ventasRepo.fetchContactos()
             } catch {
                 self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
             }
-        }
+        })
     }
-    
+
     func saveVentaDirecta(pago: Pago) {
-        Task {
+        activeTasks.append(Task {
             do {
                 try await saveVentaDirectaAsync(pago: pago)
             } catch {
                 self.errorMessage = "Error al guardar venta directa: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     func saveVentaDirectaAsync(pago: Pago) async throws {
