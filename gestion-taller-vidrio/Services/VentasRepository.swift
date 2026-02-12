@@ -19,7 +19,7 @@ final class VentasRepository {
             .getDocuments()
             
         return snapshot.documents.compactMap { document in
-            try? document.data(as: Contacto.self)
+            document.decodeSafely(as: Contacto.self)
         }
     }
     
@@ -53,7 +53,7 @@ final class VentasRepository {
             .getDocuments()
             
         return snapshot.documents.compactMap { document in
-            try? document.data(as: Pedido.self)
+            document.decodeSafely(as: Pedido.self)
         }
     }
     
@@ -73,7 +73,7 @@ final class VentasRepository {
                 return
             }
             
-            let pedidos = documents.compactMap { try? $0.data(as: Pedido.self) }
+            let pedidos = documents.compactMap { $0.decodeSafely(as: Pedido.self) }
             completion(.success(pedidos))
         }
     }

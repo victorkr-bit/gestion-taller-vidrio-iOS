@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseFirestore
 import FirebaseFunctions
+import os
 
 // Esta clase centraliza la conexión a Firebase y el manejo de errores.
 // Reemplaza la configuración interna que tenía la God Class.
@@ -53,5 +54,21 @@ final class FirestoreManager {
         
         // 3. Si no es un error de Functions (ej. sin internet), lo pasamos tal cual
         return .transaccionFallida(error.localizedDescription) // [cite: 175]
+    }
+}
+
+// MARK: - Decodificación segura con logging
+
+private let firestoreLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "taller-cris", category: "Firestore")
+
+extension QueryDocumentSnapshot {
+    /// Decodifica el documento al tipo indicado. Si falla, loguea el error y retorna nil.
+    func decodeSafely<T: Decodable>(as type: T.Type) -> T? {
+        do {
+            return try data(as: type)
+        } catch {
+            firestoreLogger.warning("Error decodificando \(String(describing: type)) [doc: \(self.documentID)]: \(error.localizedDescription)")
+            return nil
+        }
     }
 }

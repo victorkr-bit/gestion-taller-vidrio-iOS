@@ -26,16 +26,16 @@ final class FinanzasRepository {
         
         let snapshot = try await query.getDocuments()
         
-        return snapshot.documents.compactMap { try? $0.data(as: Pago.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Pago.self) }
     }
-    
+
     /// Obtiene los pagos asociados a un origen_id específico (Pedido o Inscripcion).
     func fetchPagos(origenID: String) async throws -> [Pago] {
         let snapshot = try await db.collection("pagos")
             .whereField("origen_id", isEqualTo: origenID)
             .getDocuments()
-            
-        let pagos = snapshot.documents.compactMap { try? $0.data(as: Pago.self) }
+
+        let pagos = snapshot.documents.compactMap { $0.decodeSafely(as: Pago.self) }
         
         return pagos.sorted(by: { $0.fecha > $1.fecha }) // Los más recientes primero
     }
@@ -64,11 +64,11 @@ final class FinanzasRepository {
                 completion(.success([]))
                 return
             }
-            let pagos = documents.compactMap { try? $0.data(as: Pago.self) }
+            let pagos = documents.compactMap { $0.decodeSafely(as: Pago.self) }
             completion(.success(pagos))
         }
     }
-    
+
     /// Escucha en tiempo real los pagos de una inscripción o pedido específico (Acordeón).
     func listenToPagos(origenID: String, completion: @escaping (Result<[Pago], Error>) -> Void) -> ListenerRegistration {
         let query = db.collection("pagos")
@@ -84,7 +84,7 @@ final class FinanzasRepository {
                 return
             }
             
-            let pagos = documents.compactMap { try? $0.data(as: Pago.self) }
+            let pagos = documents.compactMap { $0.decodeSafely(as: Pago.self) }
             // Ordenar por fecha descendente en memoria
             let pagosOrdenados = pagos.sorted(by: { $0.fecha > $1.fecha })
             
@@ -210,12 +210,12 @@ final class FinanzasRepository {
         
         // Mapeo
         let pedidosDeudores = pedidosSnapshot.documents.compactMap { doc -> DeudorItem? in
-            guard let pedido = try? doc.data(as: Pedido.self) else { return nil }
+            guard let pedido = doc.decodeSafely(as: Pedido.self) else { return nil }
             return DeudorItem(pedido: pedido)
         }
-        
+
         let inscripcionesDeudoras = inscripcionesSnapshot.documents.compactMap { doc -> DeudorItem? in
-            guard let inscripcion = try? doc.data(as: Inscripcion.self) else { return nil }
+            guard let inscripcion = doc.decodeSafely(as: Inscripcion.self) else { return nil }
             return DeudorItem(inscripcion: inscripcion)
         }
         

@@ -41,7 +41,6 @@ class AgendaViewModel: ObservableObject {
     init(tallerRepo: TallerRepository) {
         self.tallerRepo = tallerRepo
         subscribeToCronograma()
-        fetchCronograma()
     }
 
     deinit {

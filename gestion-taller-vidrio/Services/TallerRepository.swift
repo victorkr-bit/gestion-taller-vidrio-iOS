@@ -15,7 +15,7 @@ final class TallerRepository {
         let snapshot = try await db.collection("cursos").getDocuments()
         
         return snapshot.documents.compactMap { document in
-            try? document.data(as: Curso.self)
+            document.decodeSafely(as: Curso.self)
         }
     }
     
@@ -57,7 +57,7 @@ final class TallerRepository {
             .whereField("tipo", isEqualTo: TipoCurso.online.rawValue)
             .getDocuments()
             
-        return snapshot.documents.compactMap { try? $0.data(as: Curso.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Curso.self) }
     }
     
     /// Escucha en tiempo real cambios en el catálogo Online.
@@ -74,7 +74,7 @@ final class TallerRepository {
                 completion(.success([]))
                 return
             }
-            let cursos = documents.compactMap { try? $0.data(as: Curso.self) }
+            let cursos = documents.compactMap { $0.decodeSafely(as: Curso.self) }
             completion(.success(cursos))
         }
     }
@@ -90,7 +90,7 @@ final class TallerRepository {
             .order(by: "fecha", descending: false)
             .getDocuments()
             
-        return snapshot.documents.compactMap { try? $0.data(as: CronogramaItem.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
     }
     
     /// Escucha en tiempo real los cursos PRÓXIMOS.
@@ -111,7 +111,7 @@ final class TallerRepository {
                 completion(.success([]))
                 return
             }
-            let items = documents.compactMap { try? $0.data(as: CronogramaItem.self) }
+            let items = documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
             completion(.success(items))
         }
     }
@@ -126,7 +126,7 @@ final class TallerRepository {
             .limit(to: limit)
             .getDocuments()
             
-        return snapshot.documents.compactMap { try? $0.data(as: CronogramaItem.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
     }
     
     /// Guarda (crea o actualiza) un documento de CronogramaItem.
@@ -186,13 +186,13 @@ final class TallerRepository {
             .whereField("cronogramaId", isEqualTo: cronogramaID)
             .getDocuments()
             
-        return snapshot.documents.compactMap { try? $0.data(as: Inscripcion.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
     }
     
     /// Obtiene todos los contactos desde la colección 'contactos'.
     func fetchContactos() async throws -> [Contacto] {
         let snapshot = try await db.collection("contactos").getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: Contacto.self) }
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Contacto.self) }
     }
     
     /// Escucha en tiempo real las inscripciones de un cronograma específico.
@@ -212,7 +212,7 @@ final class TallerRepository {
             
             var inscripciones: [Inscripcion] = []
             for doc in documents {
-                if let inscripcion = try? doc.data(as: Inscripcion.self) {
+                if let inscripcion = doc.decodeSafely(as: Inscripcion.self) {
                     inscripciones.append(inscripcion)
                 }
             }
@@ -239,7 +239,7 @@ final class TallerRepository {
             var inscripciones: [Inscripcion] = []
             for doc in documents {
                 // Usamos try? para ser resilientes a datos corruptos en producción
-                if let inscripcion = try? doc.data(as: Inscripcion.self) {
+                if let inscripcion = doc.decodeSafely(as: Inscripcion.self) {
                     inscripciones.append(inscripcion)
                 }
             }

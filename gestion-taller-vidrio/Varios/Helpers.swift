@@ -61,12 +61,12 @@ enum Origen: Identifiable {
       
     var ref: DocumentReference? {
         guard let id = self.documentID else { return nil }
-         
+        let db = FirestoreManager.shared.db
         switch self {
         case .pedido:
-            return Firestore.firestore().collection("pedidos").document(id)
+            return db.collection("pedidos").document(id)
         case .inscripcion:
-            return Firestore.firestore().collection("inscripciones").document(id)
+            return db.collection("inscripciones").document(id)
         }
     }
     
