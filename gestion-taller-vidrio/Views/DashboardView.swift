@@ -129,8 +129,9 @@ struct DashboardView: View {
                         .padding(.horizontal)
                     
                     if viewModel.datosGraficoPorTipo.isEmpty {
-                        Text("No hay datos para mostrar")
+                        Text("No hay ingresos en el período seleccionado")
                             .font(.caption)
+                            .foregroundStyle(.secondary)
                             .padding()
                     } else {
                         Chart {
@@ -178,8 +179,9 @@ struct DashboardView: View {
                         .padding(.horizontal)
 
                     if viewModel.datosGraficoPorMedio.isEmpty {
-                        Text("No hay datos para mostrar")
+                        Text("No hay ingresos en el período seleccionado")
                             .font(.caption)
+                            .foregroundStyle(.secondary)
                             .padding()
                     } else {
                         Chart(viewModel.datosGraficoPorMedio) { dato in

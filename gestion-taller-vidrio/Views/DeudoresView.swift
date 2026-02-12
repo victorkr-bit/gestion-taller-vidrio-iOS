@@ -51,9 +51,14 @@ struct DeudoresView: View {
                 if viewModel.isLoading && viewModel.deudores.isEmpty {
                     ProgressView("Cargando deudores...")
                 } else if !viewModel.isLoading && viewModel.deudores.isEmpty {
-                    Text("¡No hay deudas pendientes!")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                    VStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.largeTitle)
+                            .foregroundStyle(.green)
+                        Text("¡No hay deudas pendientes!")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             

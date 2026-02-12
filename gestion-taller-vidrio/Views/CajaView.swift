@@ -47,8 +47,12 @@ struct CajaView: View {
                     Image(systemName: "tray")
                         .font(.largeTitle)
                         .foregroundColor(.gray)
-                    Text("No hay movimientos")
+                    Text(viewModel.searchText.isEmpty
+                         ? "No hay movimientos en el período seleccionado"
+                         : "No hay movimientos que coincidan con \"\(viewModel.searchText)\"")
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
                 Spacer()
             } else {

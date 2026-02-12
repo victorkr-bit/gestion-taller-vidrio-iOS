@@ -31,6 +31,19 @@ struct PedidosView: View {
                 if viewModel.isLoading && viewModel.pedidosVisibles.isEmpty {
                     ProgressView("Cargando pedidos...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.pedidosVisibles.isEmpty {
+                    VStack(spacing: 15) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.largeTitle)
+                            .foregroundStyle(.tertiary)
+                        Text(searchText.isEmpty
+                             ? "No hay pedidos con los filtros seleccionados"
+                             : "No hay pedidos que coincidan con \"\(searchText)\"")
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List {
                         ForEach(viewModel.pedidosVisibles) { pedido in
