@@ -9,7 +9,7 @@ class DeudoresViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var deudores: [DeudorItem] = []
     
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
 
     // CAMBIO 1: Repo de Finanzas
     private let repository: FinanzasRepository
@@ -21,13 +21,13 @@ class DeudoresViewModel: ObservableObject {
     }
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
     }
 
     func fetchDeudores() {
         isLoading = true
         errorMessage = nil
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.deudores = try await repository.fetchDeudores()
                 self.isLoading = false
@@ -52,7 +52,7 @@ class DeudoresViewModel: ObservableObject {
     func condonarDeuda(origen: Origen) {
         isLoading = true
         errorMessage = nil
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await repository.condonarDeuda(origen: origen)
                 fetchDeudores()

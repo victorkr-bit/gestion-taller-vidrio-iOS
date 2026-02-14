@@ -1,62 +1,65 @@
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 class CursosViewModel: ObservableObject {
-    
+
     @Published var cursos: [Curso] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
-    private var activeTasks: [Task<Void, Never>] = []
 
-    // CAMBIO 1: Repo específico
+    private let taskTracker = TaskTracker()
+    private var cursosListener: ListenerRegistration?
+
     private let repository: TallerRepository
-    
-    // CAMBIO 2: Init
+
     init(repository: TallerRepository? = nil) {
         self.repository = repository ?? TallerRepository()
-        fetchCursos()
+        startListening()
     }
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
+        cursosListener?.remove()
     }
 
-    func fetchCursos() {
+    func startListening() {
         isLoading = true
         errorMessage = nil
-        activeTasks.append(Task {
-            do {
-                let fetchedCursos = try await repository.fetchCursos()
-                self.cursos = fetchedCursos.sorted { $0.nombre < $1.nombre }
-                self.isLoading = false
-            } catch {
-                self.errorMessage = "Error al cargar cursos: \(error.localizedDescription)"
-                self.isLoading = false
+        cursosListener?.remove()
+
+        cursosListener = repository.listenToCursos { [weak self] result in
+            guard let self = self else { return }
+            self.isLoading = false
+
+            switch result {
+            case .success(let cursos):
+                self.cursos = cursos.sorted { $0.nombre < $1.nombre }
+            case .failure(let error):
+                self.errorMessage = "Error sincronizando cursos: \(error.localizedDescription)"
             }
-        })
+        }
     }
-    
+
     func saveCurso(curso: Curso) {
         isLoading = true
         errorMessage = nil
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await repository.saveCurso(curso: curso)
-                self.fetchCursos()
             } catch {
                 self.errorMessage = "Error al guardar el curso: \(error.localizedDescription)"
                 self.isLoading = false
             }
         })
     }
-    
+
     func deleteCurso(at offsets: IndexSet) {
         let cursosABorrar = offsets.map { self.cursos[$0] }
         isLoading = true
         errorMessage = nil
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for curso in cursosABorrar {
@@ -66,7 +69,6 @@ class CursosViewModel: ObservableObject {
                     }
                     try await group.waitForAll()
                 }
-                self.fetchCursos()
             } catch {
                 self.errorMessage = "Error al borrar el curso: \(error.localizedDescription)"
                 self.isLoading = false

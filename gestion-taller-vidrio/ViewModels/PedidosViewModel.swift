@@ -22,7 +22,7 @@ class PedidosViewModel: ObservableObject {
     // Almacén de Listeners
     private var pedidosListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
     
     // MARK: - Enums de Filtros
     
@@ -92,7 +92,7 @@ class PedidosViewModel: ObservableObject {
     }
     
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
         pedidosListener?.remove()
         paymentListeners.values.forEach { $0.remove() }
     }
@@ -131,7 +131,7 @@ class PedidosViewModel: ObservableObject {
             }
         }
 
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await ventasRepo.deletePedido(pedido: pedido)
             } catch {
@@ -183,7 +183,7 @@ class PedidosViewModel: ObservableObject {
     }
     
     func deletePago(_ pago: Pago) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {

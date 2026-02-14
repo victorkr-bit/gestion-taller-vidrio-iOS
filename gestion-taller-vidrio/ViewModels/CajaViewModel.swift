@@ -49,7 +49,7 @@ class CajaViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var listener: ListenerRegistration?
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
     
     // MARK: - Inyección de Dependencias
     private let finanzasRepo: FinanzasRepository
@@ -88,7 +88,7 @@ class CajaViewModel: ObservableObject {
     }
     
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
         listener?.remove()
         cancellables.removeAll()
     }
@@ -116,7 +116,7 @@ class CajaViewModel: ObservableObject {
     }
     
     func deletePago(_ pago: Pago) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {
@@ -128,7 +128,7 @@ class CajaViewModel: ObservableObject {
     // Edición
     func savePagoEditado(pago: Pago, montoAntiguo: Double) {
         isLoading = true
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await finanzasRepo.editPago(pagoActualizado: pago, montoAntiguo: montoAntiguo)
                 self.isLoading = false
@@ -146,7 +146,7 @@ class CajaViewModel: ObservableObject {
     // MARK: - Venta Directa
     
     func fetchContactos() {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.contactos = try await ventasRepo.fetchContactos()
             } catch {
@@ -156,7 +156,7 @@ class CajaViewModel: ObservableObject {
     }
 
     func saveVentaDirecta(pago: Pago) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await saveVentaDirectaAsync(pago: pago)
             } catch {

@@ -37,7 +37,7 @@ class DashboardViewModel: ObservableObject {
     private var pagosListener: ListenerRegistration?
     // NUEVO: Listener para que la agenda se actualice sola
     private var cronogramaListener: ListenerRegistration?
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
     
     // MARK: - Inyección de Dependencias
     
@@ -75,7 +75,7 @@ class DashboardViewModel: ObservableObject {
     }
     
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
         metricasListener?.remove()
         pagosListener?.remove()
         cronogramaListener?.remove()
@@ -137,7 +137,7 @@ class DashboardViewModel: ObservableObject {
 
                     // Solo recalcular si la próxima clase cambió
                     if primera.id != previousID, primera.cursoTipo == .taller, let id = primera.id {
-                        self.activeTasks.append(Task { await self.loadOcupacion(cronogramaId: id) })
+                        self.taskTracker.track(Task { await self.loadOcupacion(cronogramaId: id) })
                     } else if primera.cursoTipo != .taller {
                         self.ocupacionTaller = []
                     }

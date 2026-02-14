@@ -11,7 +11,7 @@ class ContactosViewModel: ObservableObject {
     // --- NUEVO: Estado para el texto del buscador ---
     @Published var searchText: String = ""
 
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
     private let repository: VentasRepository
     
     // --- NUEVO: Lista Computada ---
@@ -36,14 +36,14 @@ class ContactosViewModel: ObservableObject {
     }
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
     }
 
     func fetchContactos() {
         isLoading = true
         errorMessage = nil
         
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 let fetchedContactos = try await repository.fetchContactos(forceRefresh: true)
                 self.contactos = fetchedContactos.sorted { $0.nombreCompleto < $1.nombreCompleto }
@@ -56,7 +56,7 @@ class ContactosViewModel: ObservableObject {
     }
 
     func saveContacto(datos: Contacto, id: String) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await saveContactoAsync(datos: datos, id: id)
             } catch {
@@ -79,7 +79,7 @@ class ContactosViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for contacto in contactosABorrar {

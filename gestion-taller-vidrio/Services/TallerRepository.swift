@@ -13,12 +13,28 @@ final class TallerRepository {
     /// Obtiene todos los cursos del catálogo "cursos".
     func fetchCursos() async throws -> [Curso] {
         let snapshot = try await db.collection("cursos").getDocuments()
-        
+
         return snapshot.documents.compactMap { document in
             document.decodeSafely(as: Curso.self)
         }
     }
-    
+
+    /// Escucha en tiempo real cambios en el catálogo completo de cursos.
+    func listenToCursos(completion: @escaping (Result<[Curso], Error>) -> Void) -> ListenerRegistration {
+        return db.collection("cursos").addSnapshotListener { querySnapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let documents = querySnapshot?.documents else {
+                completion(.success([]))
+                return
+            }
+            let cursos = documents.compactMap { $0.decodeSafely(as: Curso.self) }
+            completion(.success(cursos))
+        }
+    }
+
     /// Guarda (crea o actualiza) un documento de Curso.
     func saveCurso(curso: Curso) async throws {
         // 1. Codificamos manualmente

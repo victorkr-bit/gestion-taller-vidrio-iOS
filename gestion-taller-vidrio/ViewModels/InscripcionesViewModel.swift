@@ -20,7 +20,7 @@ class InscripcionesViewModel: ObservableObject {
     // Listeners
     private var inscripcionesListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
 
     // MARK: - Dependencias
     private let tallerRepo: TallerRepository
@@ -34,7 +34,7 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
     }
@@ -79,7 +79,7 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     func saveInscripcion(inscripcion: Inscripcion) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
             } catch {
@@ -94,7 +94,7 @@ class InscripcionesViewModel: ObservableObject {
             return
         }
 
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
             } catch {

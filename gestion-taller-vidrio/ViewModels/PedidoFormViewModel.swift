@@ -18,10 +18,10 @@ class PedidoFormViewModel: ObservableObject {
     @Published var shouldDismiss: Bool = false
     @Published var contactos: [Contacto] = []
     
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
     }
 
     // CAMBIO 1: Repo de Ventas
@@ -57,7 +57,7 @@ class PedidoFormViewModel: ObservableObject {
     var isEditing: Bool { editingPedidoID != nil }
 
     func fetchContactos() {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.contactos = try await repository.fetchContactos()
             } catch {
@@ -70,7 +70,7 @@ class PedidoFormViewModel: ObservableObject {
         guard isValid else { return }
         self.isLoading = true
         
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 let pedido = Pedido(
                     id: nil,

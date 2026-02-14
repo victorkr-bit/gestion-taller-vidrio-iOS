@@ -34,7 +34,7 @@ class AgendaViewModel: ObservableObject {
 
     // Listener
     private var cronogramaListener: ListenerRegistration?
-    private var activeTasks: [Task<Void, Never>] = []
+    private let taskTracker = TaskTracker()
 
     // MARK: - Dependencia
     private let tallerRepo: TallerRepository
@@ -45,7 +45,7 @@ class AgendaViewModel: ObservableObject {
     }
 
     deinit {
-        activeTasks.forEach { $0.cancel() }
+        taskTracker.cancelAll()
         cronogramaListener?.remove()
     }
 
@@ -71,7 +71,7 @@ class AgendaViewModel: ObservableObject {
         }
 
         // Fetch de HISTORIAL (One-Shot)
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
@@ -83,7 +83,7 @@ class AgendaViewModel: ObservableObject {
 
     func fetchCronograma() {
         // Recarga manual del historial
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
@@ -93,7 +93,7 @@ class AgendaViewModel: ObservableObject {
     }
 
     func fetchCursos() {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
             } catch {
@@ -105,7 +105,7 @@ class AgendaViewModel: ObservableObject {
     // MARK: - CRUD Cronograma
 
     func saveCronogramaItem(item: CronogramaItem) {
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await tallerRepo.saveCronogramaItem(item: item)
             } catch {
@@ -137,7 +137,7 @@ class AgendaViewModel: ObservableObject {
         }
 
         // 3. Borrado real
-        activeTasks.append(Task {
+        taskTracker.track(Task {
             do {
                 try await tallerRepo.deleteCronogramaItem(item: item)
             } catch {

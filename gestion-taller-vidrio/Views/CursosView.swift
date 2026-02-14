@@ -59,7 +59,7 @@ struct CursosView: View {
                     }
                     .listStyle(.plain)
                     .refreshable {
-                        viewModel.fetchCursos()
+                        viewModel.startListening()
                     }
                 }
             }
