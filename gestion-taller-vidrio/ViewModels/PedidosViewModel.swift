@@ -120,12 +120,17 @@ class PedidosViewModel: ObservableObject {
     }
     
     func deletePedido(_ pedido: Pedido) {
+        guard pedido.monto_abonado == 0 else {
+            errorMessage = "No se puede eliminar el pedido porque tiene pagos registrados. Eliminá los pagos primero."
+            return
+        }
+
         if let index = pedidos.firstIndex(where: { $0.id == pedido.id }) {
             withAnimation {
                 _ = pedidos.remove(at: index)
             }
         }
-        
+
         activeTasks.append(Task {
             do {
                 try await ventasRepo.deletePedido(pedido: pedido)
@@ -164,6 +169,12 @@ class PedidosViewModel: ObservableObject {
         guard let id = pedido.id else { return }
         paymentListeners[id]?.remove()
         paymentListeners[id] = nil
+    }
+
+    func cleanupPaymentListeners() {
+        paymentListeners.values.forEach { $0.remove() }
+        paymentListeners.removeAll()
+        pagosPorPedido.removeAll()
     }
     
     func registrarPago(pago: Pago, origen: Origen) async throws {

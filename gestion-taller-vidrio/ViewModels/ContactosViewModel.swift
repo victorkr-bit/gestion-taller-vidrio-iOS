@@ -45,8 +45,7 @@ class ContactosViewModel: ObservableObject {
         
         activeTasks.append(Task {
             do {
-                let fetchedContactos = try await repository.fetchContactos()
-                // Ordenamos
+                let fetchedContactos = try await repository.fetchContactos(forceRefresh: true)
                 self.contactos = fetchedContactos.sorted { $0.nombreCompleto < $1.nombreCompleto }
                 self.isLoading = false // Se me pasó a false aquí
             } catch {

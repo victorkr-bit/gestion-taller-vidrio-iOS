@@ -3,24 +3,33 @@ import FirebaseFirestore
 import FirebaseFunctions
 
 final class VentasRepository {
-    
+
     // Acceso a la infraestructura compartida
     private let db = FirestoreManager.shared.db
     private let functions = FirestoreManager.shared.functions
-    
+
+    // Cache de contactos (compartido entre VMs)
+    private var contactosCache: [Contacto]?
+
     // MARK: - Contactos (Clientes)
-    
+
     /// Obtiene todos los contactos ordenados por nombre y apellido.
-    func fetchContactos() async throws -> [Contacto] {
-        // OPTIMIZACIÓN: Orden compuesto en el servidor.
+    /// Usa cache en memoria; se invalida automáticamente en save/delete.
+    func fetchContactos(forceRefresh: Bool = false) async throws -> [Contacto] {
+        if !forceRefresh, let cached = contactosCache {
+            return cached
+        }
+
         let snapshot = try await db.collection("contactos")
             .order(by: "nombre", descending: false)
             .order(by: "apellido", descending: false)
             .getDocuments()
-            
-        return snapshot.documents.compactMap { document in
+
+        let contactos = snapshot.documents.compactMap { document in
             document.decodeSafely(as: Contacto.self)
         }
+        contactosCache = contactos
+        return contactos
     }
     
     /// Guarda un contacto (Crear o Actualizar).
@@ -28,19 +37,18 @@ final class VentasRepository {
     ///   - contacto: El objeto con los datos.
     ///   - uid: El ID explícito donde queremos guardar el documento.
     func saveContacto(_ contacto: Contacto, uid: String) async throws {
-        // 1. Codificamos el objeto
         let data = try Firestore.Encoder().encode(contacto)
-
-        // 2. Guardamos usando el ID explícito en la ruta
         try await db.collection("contactos").document(uid).setData(data, merge: true)
+        contactosCache = nil
     }
-    
+
     /// Borra un contacto.
     func deleteContacto(contacto: Contacto) async throws {
         guard let id = contacto.id else {
             throw URLError(.cannotRemoveFile)
         }
         try await db.collection("contactos").document(id).delete()
+        contactosCache = nil
     }
     
     // MARK: - Pedidos

@@ -72,7 +72,7 @@ class CajaViewModel: ObservableObject {
         // Conexión reactiva con el Dashboard
         if let startPub = fechaInicioPublisher, let endPub = fechaFinPublisher {
             Publishers.CombineLatest(startPub, endPub)
-                .receive(on: RunLoop.main)
+                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
                 .sink { [weak self] (inicio, fin) in
                     guard let self = self else { return }
                     let changed = self.fechaInicio != inicio || self.fechaFin != fin

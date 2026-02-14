@@ -103,6 +103,10 @@ struct PedidosView: View {
         .refreshable {
             viewModel.startListeningOrders()
         }
+        .onDisappear {
+            expandedPedidoID = nil
+            viewModel.cleanupPaymentListeners()
+        }
     }
 }
 

@@ -124,6 +124,10 @@ struct CronogramaDetailView: View {
                 inscripcionesVM.fetchInscripciones(cronogramaID: id)
             }
         }
+        .onDisappear {
+            expandedInscripcionID = nil
+            inscripcionesVM.cleanupPaymentListeners()
+        }
         .errorAlert($inscripcionesVM.errorMessage)
     }
 }

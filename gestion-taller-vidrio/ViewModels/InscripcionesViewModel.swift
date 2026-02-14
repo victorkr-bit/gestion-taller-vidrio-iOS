@@ -89,6 +89,11 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     func deleteInscripcion(_ inscripcion: Inscripcion) {
+        guard inscripcion.monto_abonado == 0 else {
+            errorMessage = "No se puede eliminar la inscripción porque tiene pagos registrados. Eliminá los pagos primero."
+            return
+        }
+
         activeTasks.append(Task {
             do {
                 try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
@@ -135,6 +140,12 @@ class InscripcionesViewModel: ObservableObject {
         guard let id = inscripcion.id else { return }
         paymentListeners[id]?.remove()
         paymentListeners[id] = nil
+    }
+
+    func cleanupPaymentListeners() {
+        paymentListeners.values.forEach { $0.remove() }
+        paymentListeners.removeAll()
+        pagosPorInscripcion.removeAll()
     }
 
     func registrarPago(pago: Pago, origen: Origen) async throws {

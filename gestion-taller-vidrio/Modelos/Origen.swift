@@ -7,8 +7,8 @@ enum Origen: Identifiable {
 
     var id: String {
         switch self {
-        case .pedido(let p): return p.id ?? UUID().uuidString
-        case .inscripcion(let i): return i.id ?? UUID().uuidString
+        case .pedido(let p): return p.id ?? "unknown-pedido"
+        case .inscripcion(let i): return i.id ?? "unknown-inscripcion"
         }
     }
 

@@ -12,11 +12,11 @@ class DashboardViewModel: ObservableObject {
     
     // MARK: - Filtros de Fecha
     @Published var fechaInicio: Date = Date() {
-        didSet { refreshData() }
+        didSet { restartPagosListener() }
     }
-    
+
     @Published var fechaFin: Date = Date() {
-        didSet { refreshData() }
+        didSet { restartPagosListener() }
     }
     
     // MARK: - KPIs Financieros
@@ -83,7 +83,7 @@ class DashboardViewModel: ObservableObject {
     
     func setupListeners() {
         isLoading = true
-        
+
         // 1. Escuchar Métricas Globales
         metricasListener?.remove()
         metricasListener = finanzasRepo.listenToMetricas { [weak self] result in
@@ -95,11 +95,18 @@ class DashboardViewModel: ObservableObject {
                 self.errorMessage = "Error cargando métricas: \(error.localizedDescription)"
             }
         }
-        
-        // 2. Escuchar Pagos (Filtrado por fechas)
+
+        // 2. Escuchar Pagos (filtrado por fechas)
+        restartPagosListener()
+
+        // 3. Escuchar Agenda
+        listenToProximaClase()
+    }
+
+    private func restartPagosListener() {
         pagosListener?.remove()
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: fechaFin) ?? fechaFin
-        
+
         pagosListener = finanzasRepo.listenToPagos(from: fechaInicio, to: endOfDay) { [weak self] result in
             guard let self = self else { return }
             switch result {
@@ -111,9 +118,6 @@ class DashboardViewModel: ObservableObject {
                 self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
             }
         }
-        
-        // 3. Escuchar Agenda (CAMBIO CRÍTICO: De load a listen)
-        listenToProximaClase()
     }
     
     // Renombramos y cambiamos la lógica para usar Listeners en lugar de Fetch
@@ -123,17 +127,18 @@ class DashboardViewModel: ObservableObject {
         // Usamos la función del repo que ya existía: listenToCursosProximos
         cronogramaListener = tallerRepo.listenToCursosProximos { [weak self] result in
             guard let self = self else { return }
-            
+
             switch result {
             case .success(let proximos):
+                let previousID = self.proximaClase?.id
+
                 if let primera = proximos.first {
                     self.proximaClase = primera
-                    
-                    // Si la próxima clase cambió, recalculamos la ocupación
-                    if primera.cursoTipo == .taller, let id = primera.id {
-                        // Como estamos dentro de un closure no-async, lanzamos una Task
+
+                    // Solo recalcular si la próxima clase cambió
+                    if primera.id != previousID, primera.cursoTipo == .taller, let id = primera.id {
                         self.activeTasks.append(Task { await self.loadOcupacion(cronogramaId: id) })
-                    } else {
+                    } else if primera.cursoTipo != .taller {
                         self.ocupacionTaller = []
                     }
                 } else {
