@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Taller Cris" — iOS management app for a glass art workshop. Handles orders, payments, course scheduling, enrollments, contacts, and financial dashboards. All data lives in Firebase Firestore; there is no local persistence.
 
+## Workflow
+- Before implementing any changes, explain your plan and list the files you'll modify.
+- Wait for explicit approval before proceeding.
+
 ## Build & Run
 
 - **Xcode project:** `gestion-taller-vidrio.xcodeproj` (no workspace needed)

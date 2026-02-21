@@ -44,10 +44,9 @@ class CajaViewModel: ObservableObject {
     }
     
     // MARK: - Filtros de Fecha
-    @Published var fechaInicio: Date = Date()
-    @Published var fechaFin: Date = Date()
-    
-    private var cancellables = Set<AnyCancellable>()
+    @Published var mesInicio: MesAño = .current() { didSet { restartListener() } }
+    @Published var mesFin: MesAño = .current() { didSet { restartListener() } }
+
     private var listener: ListenerRegistration?
     private let taskTracker = TaskTracker()
     
@@ -58,31 +57,10 @@ class CajaViewModel: ObservableObject {
     // MARK: - Inicializador
     init(
         finanzasRepo: FinanzasRepository? = nil,
-        ventasRepo: VentasRepository? = nil,
-        fechaInicioPublisher: AnyPublisher<Date, Never>? = nil,
-        fechaFinPublisher: AnyPublisher<Date, Never>? = nil
+        ventasRepo: VentasRepository? = nil
     ) {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.ventasRepo = ventasRepo ?? VentasRepository()
-        
-        let calendar = Calendar.current
-        self.fechaInicio = calendar.startOfDay(for: Date())
-        self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: Date()) ?? Date()
-        
-        // Conexión reactiva con el Dashboard
-        if let startPub = fechaInicioPublisher, let endPub = fechaFinPublisher {
-            Publishers.CombineLatest(startPub, endPub)
-                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-                .sink { [weak self] (inicio, fin) in
-                    guard let self = self else { return }
-                    let changed = self.fechaInicio != inicio || self.fechaFin != fin
-                    self.fechaInicio = inicio
-                    self.fechaFin = fin
-                    if changed { self.restartListener() }
-                }
-                .store(in: &cancellables)
-        }
-        
         restartListener()
         fetchContactos()
     }
@@ -90,7 +68,6 @@ class CajaViewModel: ObservableObject {
     deinit {
         taskTracker.cancelAll()
         listener?.remove()
-        cancellables.removeAll()
     }
     
     // MARK: - Lógica de Caja
@@ -99,10 +76,8 @@ class CajaViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         listener?.remove()
-        
-        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: fechaFin) ?? fechaFin
-        
-        listener = finanzasRepo.listenToPagos(from: fechaInicio, to: endOfDay) { [weak self] result in
+
+        listener = finanzasRepo.listenToPagos(from: mesInicio.fechaInicio, to: mesFin.fechaFin) { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false
             

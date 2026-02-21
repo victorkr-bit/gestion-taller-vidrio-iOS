@@ -73,8 +73,20 @@ enum TipoVenta: String, Codable, CaseIterable, Identifiable {
     case online = "Online"
     case presencial = "Presencial"
     case otros = "Otros"
-    
+
     var id: String { self.rawValue }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self)
+        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        guard let valor = TipoVenta.allCases.first(where: {
+            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
+        }) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "TipoVenta inválido: '\(raw)'")
+        }
+        self = valor
+    }
     
     // NUEVO: Propiedad para UI
     var descripcion: String {
@@ -114,6 +126,18 @@ enum MedioDePago: String, Codable, CaseIterable, Identifiable {
 
     var id: String { self.rawValue }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self)
+        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        guard let valor = MedioDePago.allCases.first(where: {
+            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
+        }) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "MedioDePago inválido: '\(raw)'")
+        }
+        self = valor
+    }
+
     var color: Color {
         switch self {
         case .efectivo: return .green
@@ -131,12 +155,24 @@ enum MedioDePago: String, Codable, CaseIterable, Identifiable {
 }
 
 // Enum para el origen del pago [cite: 221]
-enum OrigenTipoPago: String, Codable {
+enum OrigenTipoPago: String, Codable, CaseIterable {
     case pedido = "pedido"
     case inscripcion = "inscripcion"
     case ventaDirecta = "Venta Directa"
-    
+
     var id: String { self.rawValue }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self)
+        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        guard let valor = OrigenTipoPago.allCases.first(where: {
+            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
+        }) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "OrigenTipoPago inválido: '\(raw)'")
+        }
+        self = valor
+    }
 }
 
 enum TallerError: Error, LocalizedError {

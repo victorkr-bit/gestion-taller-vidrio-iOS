@@ -35,12 +35,10 @@ final class AppContainer: ObservableObject {
         )
         self.dashboardVM = dashboardVM
 
-        // 3. INYECCIÓN EN CAJA (Repos + Conexión de Fechas)
+        // 3. INYECCIÓN EN CAJA
         self.cajaVM = CajaViewModel(
             finanzasRepo: finanzasRepo,
-            ventasRepo: ventasRepo,
-            fechaInicioPublisher: dashboardVM.$fechaInicio.eraseToAnyPublisher(),
-            fechaFinPublisher: dashboardVM.$fechaFin.eraseToAnyPublisher()
+            ventasRepo: ventasRepo
         )
 
         // 4. INYECCIÓN EN CRONOGRAMA (3 VMs)

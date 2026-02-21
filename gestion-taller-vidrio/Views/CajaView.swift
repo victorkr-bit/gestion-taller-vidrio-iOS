@@ -9,8 +9,10 @@ struct CajaView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // MARK: - Buscador y Total
+            // MARK: - Filtro y Buscador
             VStack(spacing: 12) {
+                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
+
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)

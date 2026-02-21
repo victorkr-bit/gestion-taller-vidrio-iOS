@@ -13,28 +13,7 @@ struct DashboardView: View {
             VStack(spacing: 20) {
                 
                 // MARK: - Filtro de Fechas
-                HStack {
-                    Text("Desde:")
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-                    
-                    DatePicker("Desde", selection: $viewModel.fechaInicio, displayedComponents: .date)
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .frame(maxWidth: .infinity)
-                    Text("Hasta:")
-                            .font(.footnote)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                    DatePicker("Hasta", selection: $viewModel.fechaFin, displayedComponents: .date)
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .frame(maxWidth: .infinity)
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
+                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
                 
                 // MARK: - Tarjetas de Resumen (KPIs)
                 HStack(spacing: 15) {
@@ -169,57 +148,106 @@ struct DashboardView: View {
                     }
                 }
                 
-                // MARK: - Gráfico de Ingresos por Medio de Pago
-                VStack(alignment: .leading) {
-                    Text("Ingresos por Medio de Pago")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal)
+                // MARK: - Detalle de Clases
+                if viewModel.detalleClases.tieneContenido {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Detalle de clases")
+                            .font(.title2).fontWeight(.semibold)
+                            .padding(.horizontal)
 
-                    if viewModel.datosGraficoPorMedio.isEmpty {
-                        Text("No hay ingresos en el período seleccionado")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding()
-                    } else {
-                        Chart(viewModel.datosGraficoPorMedio) { dato in
-                            SectorMark(
-                                angle: .value("Monto", dato.monto),
-                                innerRadius: .ratio(0.5),
-                                angularInset: 1.5
-                            )
-                            .foregroundStyle(by: .value("Medio", dato.medio))
-                            .cornerRadius(4)
+                        VStack(spacing: 0) {
+                            // TALLER — una sola fila
+                            if let t = viewModel.detalleClases.taller {
+                                DetalleHeaderRow(
+                                    label: "Taller",
+                                    color: TipoVenta.taller.color,
+                                    resumen: "\(t.clases) \(t.clases == 1 ? "clase" : "clases") · \(t.alumnos) \(t.alumnos == 1 ? "alumno" : "alumnos")"
+                                )
+                                if !viewModel.detalleClases.presencial.isEmpty || !viewModel.detalleClases.online.isEmpty {
+                                    Divider().padding(.horizontal)
+                                }
+                            }
+
+                            // PRESENCIAL — header + filas por curso
+                            if !viewModel.detalleClases.presencial.isEmpty {
+                                let totalCl = viewModel.detalleClases.presencial.reduce(0) { $0 + ($1.clases ?? 0) }
+                                let totalAl = viewModel.detalleClases.presencial.reduce(0) { $0 + $1.alumnos }
+                                DetalleHeaderRow(
+                                    label: "Presencial",
+                                    color: TipoVenta.presencial.color,
+                                    resumen: "\(totalCl) \(totalCl == 1 ? "clase" : "clases") · \(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")"
+                                )
+                                ForEach(viewModel.detalleClases.presencial) { curso in
+                                    DetalleCursoRow(curso: curso)
+                                    if curso.id != viewModel.detalleClases.presencial.last?.id {
+                                        Divider().padding(.leading, 32)
+                                    }
+                                }
+                                if !viewModel.detalleClases.online.isEmpty {
+                                    Divider().padding(.horizontal)
+                                }
+                            }
+
+                            // ONLINE — header + filas por curso
+                            if !viewModel.detalleClases.online.isEmpty {
+                                let totalAl = viewModel.detalleClases.online.reduce(0) { $0 + $1.alumnos }
+                                DetalleHeaderRow(
+                                    label: "Online",
+                                    color: TipoVenta.online.color,
+                                    resumen: "\(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")"
+                                )
+                                ForEach(viewModel.detalleClases.online) { curso in
+                                    DetalleCursoRow(curso: curso)
+                                    if curso.id != viewModel.detalleClases.online.last?.id {
+                                        Divider().padding(.leading, 32)
+                                    }
+                                }
+                            }
                         }
-                        .frame(height: 220)
-                        .chartForegroundStyleScale { MedioDePago.color(forRawValue: $0) }
-                        .chartLegend(.hidden)
-                        .padding()
                         .background(Color(.systemBackground))
                         .cornerRadius(12)
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                         .padding(.horizontal)
+                    }
+                }
 
-                        // Leyenda personalizada
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(viewModel.datosGraficoPorMedio) { dato in
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(MedioDePago.color(forRawValue:dato.medio))
-                                        .frame(width: 10, height: 10)
-                                    Text(dato.medio)
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                    Spacer()
-                                    Text("\(Formatters.money(dato.monto)) (\(dato.porcentaje)%)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                // MARK: - Tabla Facturación Anual
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Facturación últimos 12 meses")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal)
+
+                    VStack(spacing: 0) {
+                        ForEach(viewModel.facturacionAnual) { dato in
+                            HStack {
+                                Text(dato.label)
+                                    .font(.subheadline)
+                                if dato.esMesActual {
+                                    Text("actual")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 5).padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.15))
+                                        .foregroundStyle(.blue)
+                                        .cornerRadius(4)
                                 }
+                                Spacer()
+                                Text(dato.total > 0 ? Formatters.money(dato.total) : "—")
+                                    .font(.subheadline)
+                                    .fontWeight(dato.esMesActual ? .semibold : .regular)
+                                    .foregroundStyle(dato.total > 0 ? .primary : .tertiary)
+                            }
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .background(dato.esMesActual ? Color.blue.opacity(0.05) : Color(.systemBackground))
+
+                            if dato.id != viewModel.facturacionAnual.last?.id {
+                                Divider().padding(.horizontal)
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 4)
                     }
+                    .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                    .padding(.horizontal)
                 }
 
                 Spacer(minLength: 50)
@@ -284,6 +312,49 @@ struct DashboardView: View {
         }
     }
     
+}
+
+// MARK: - Subvistas Detalle de Clases
+
+private struct DetalleHeaderRow: View {
+    let label: String
+    let color: Color
+    let resumen: String
+    var body: some View {
+        HStack {
+            Text(label.uppercased())
+                .font(.caption).fontWeight(.bold)
+                .foregroundStyle(color)
+            Spacer()
+            Text(resumen)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+    }
+}
+
+private struct DetalleCursoRow: View {
+    let curso: DetalleCurso
+    var body: some View {
+        HStack {
+            Text(curso.nombre)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .padding(.leading, 16)
+            Spacer()
+            if let cl = curso.clases {
+                Text("\(cl) \(cl == 1 ? "clase" : "clases") · \(curso.alumnos) \(curso.alumnos == 1 ? "alumno" : "alumnos")")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("\(curso.alumnos) \(curso.alumnos == 1 ? "alumno" : "alumnos")")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8)
+    }
 }
 
 // MARK: - Componentes Visuales (KPI)

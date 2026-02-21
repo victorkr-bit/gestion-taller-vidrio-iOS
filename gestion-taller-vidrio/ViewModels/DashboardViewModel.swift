@@ -11,12 +11,12 @@ class DashboardViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     // MARK: - Filtros de Fecha
-    @Published var fechaInicio: Date = Date() {
-        didSet { restartPagosListener() }
+    @Published var mesInicio: MesAño = .current() {
+        didSet { restartPagosListener(); loadDetalleClases() }
     }
 
-    @Published var fechaFin: Date = Date() {
-        didSet { restartPagosListener() }
+    @Published var mesFin: MesAño = .current() {
+        didSet { restartPagosListener(); loadDetalleClases() }
     }
     
     // MARK: - KPIs Financieros
@@ -26,17 +26,18 @@ class DashboardViewModel: ObservableObject {
 
     // MARK: - Datos de Gráficos (pre-calculados)
     @Published var datosGraficoPorTipo: [DatoGraficoTipo] = []
-    @Published var datosGraficoPorMedio: [DatoGraficoMedio] = []
+    @Published var facturacionAnual: [DatoMensual] = []
 
     // MARK: - KPIs Operativos
     @Published var proximaClase: CronogramaItem? = nil
     @Published var ocupacionTaller: [OcupacionHoraDato] = []
+    @Published var detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
     
     // Listeners
     private var metricasListener: ListenerRegistration?
     private var pagosListener: ListenerRegistration?
-    // NUEVO: Listener para que la agenda se actualice sola
     private var cronogramaListener: ListenerRegistration?
+    private var anualListener: ListenerRegistration?
     private let taskTracker = TaskTracker()
     
     // MARK: - Inyección de Dependencias
@@ -47,30 +48,6 @@ class DashboardViewModel: ObservableObject {
     init(finanzasRepo: FinanzasRepository? = nil, tallerRepo: TallerRepository? = nil) {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.tallerRepo = tallerRepo ?? TallerRepository()
-        
-        // Configuración inicial de fechas (ROBUSTA)
-        let calendar = Calendar.current
-        let now = Date()
-        
-        // 1. Calcular Inicio del Mes (Forzando día 1)
-        var components = calendar.dateComponents([.year, .month], from: now)
-        components.day = 1
-        components.hour = 0
-        components.minute = 0
-        components.second = 0
-        
-        let startOfMonth = calendar.date(from: components) ?? now
-        self.fechaInicio = startOfMonth
-        
-        // 2. Calcular Fin del Mes
-        if let nextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) {
-            let endOfMonth = calendar.date(byAdding: .day, value: -1, to: nextMonth) ?? now
-            self.fechaFin = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: endOfMonth) ?? endOfMonth
-        } else {
-            self.fechaFin = now
-        }
-        
-        // Iniciamos listeners
         setupListeners()
     }
     
@@ -79,6 +56,7 @@ class DashboardViewModel: ObservableObject {
         metricasListener?.remove()
         pagosListener?.remove()
         cronogramaListener?.remove()
+        anualListener?.remove()
     }
     
     func setupListeners() {
@@ -101,13 +79,18 @@ class DashboardViewModel: ObservableObject {
 
         // 3. Escuchar Agenda
         listenToProximaClase()
+
+        // 4. Escuchar Facturación Anual (ventana fija 12 meses)
+        listenToFacturacionAnual()
+
+        // 5. Cargar detalle de clases por período
+        loadDetalleClases()
     }
 
     private func restartPagosListener() {
         pagosListener?.remove()
-        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: fechaFin) ?? fechaFin
 
-        pagosListener = finanzasRepo.listenToPagos(from: fechaInicio, to: endOfDay) { [weak self] result in
+        pagosListener = finanzasRepo.listenToPagos(from: mesInicio.fechaInicio, to: mesFin.fechaFin) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let pagos):
@@ -181,15 +164,93 @@ class DashboardViewModel: ObservableObject {
             let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
             return DatoGraficoTipo(tipo: tipo, monto: montoGrupo, porcentaje: porcentaje)
         }.sorted { $0.monto > $1.monto }
-
-        // Por Medio de Pago
-        let agrupadosPorMedio = Dictionary(grouping: pagos) { $0.medio_de_pago.rawValue }
-        self.datosGraficoPorMedio = agrupadosPorMedio.map { (medio, pagosGrupo) in
-            let montoGrupo = pagosGrupo.reduce(0) { $0 + $1.monto }
-            let porcentaje = totalGlobal > 0 ? Int((montoGrupo / totalGlobal) * 100) : 0
-            return DatoGraficoMedio(medio: medio, monto: montoGrupo, porcentaje: porcentaje)
-        }.sorted { $0.monto > $1.monto }
     }
+
+    private func listenToFacturacionAnual() {
+        anualListener?.remove()
+        let cal = Calendar.current
+        let inicioVentana = cal.date(byAdding: .month, value: -11, to: MesAño.current().fechaInicio)!
+        let finVentana = MesAño.current().fechaFin
+
+        anualListener = finanzasRepo.listenToPagos(from: inicioVentana, to: finVentana) { [weak self] result in
+            guard let self = self else { return }
+            if case .success(let pagos) = result { self.calcularFacturacionAnual(pagos: pagos) }
+        }
+    }
+
+    private func loadDetalleClases() {
+        taskTracker.track(Task {
+            do {
+                let ins = try await self.tallerRepo.fetchInscripcionesPorFecha(
+                    from: self.mesInicio.fechaInicio,
+                    to: self.mesFin.fechaFin
+                )
+                self.computeDetalleClases(ins)
+            } catch { /* fallo silencioso — info secundaria */ }
+        })
+    }
+
+    private func computeDetalleClases(_ inscripciones: [Inscripcion]) {
+        // Taller
+        let tallerIns = inscripciones.filter { $0.cursoTipo == .taller }
+        let taller: DetalleTaller? = tallerIns.isEmpty ? nil : DetalleTaller(
+            clases: Set(tallerIns.compactMap { $0.cronogramaId }).count,
+            alumnos: tallerIns.count
+        )
+
+        // Presencial — agrupado por cursoNombre
+        let presencialIns = inscripciones.filter { $0.cursoTipo == .presencial }
+        let presencial = Dictionary(grouping: presencialIns) { $0.cursoNombre }
+            .map { nombre, ins in
+                DetalleCurso(nombre: nombre,
+                             clases: Set(ins.compactMap { $0.cronogramaId }).count,
+                             alumnos: ins.count)
+            }
+            .sorted { $0.alumnos > $1.alumnos }
+
+        // Online — agrupado por cursoNombre, sin conteo de clases
+        let onlineIns = inscripciones.filter { $0.cursoTipo == .online }
+        let online = Dictionary(grouping: onlineIns) { $0.cursoNombre }
+            .map { nombre, ins in DetalleCurso(nombre: nombre, clases: nil, alumnos: ins.count) }
+            .sorted { $0.alumnos > $1.alumnos }
+
+        self.detalleClases = DetalleClases(taller: taller, presencial: presencial, online: online)
+    }
+
+    private func calcularFacturacionAnual(pagos: [Pago]) {
+        let cal = Calendar.current
+        let now = Date()
+        facturacionAnual = (0..<12).map { i in
+            let date = cal.date(byAdding: .month, value: -i, to: now)!
+            let m = cal.component(.month, from: date)
+            let a = cal.component(.year, from: date)
+            let total = pagos
+                .filter { cal.component(.month, from: $0.fecha) == m && cal.component(.year, from: $0.fecha) == a }
+                .reduce(0) { $0 + $1.monto }
+            return DatoMensual(mes: m, año: a, total: total)
+        }
+    }
+}
+
+// MARK: - Structs de detalle de clases
+
+struct DetalleClases {
+    var taller: DetalleTaller?
+    var presencial: [DetalleCurso]
+    var online: [DetalleCurso]
+    var tieneContenido: Bool { taller != nil || !presencial.isEmpty || !online.isEmpty }
+}
+
+struct DetalleTaller {
+    let clases: Int
+    let alumnos: Int
+}
+
+struct DetalleCurso: Identifiable {
+    var id: String { nombre }
+    let nombre: String
+    let clases: Int?  // nil para Online
+    let alumnos: Int
 }
 
 // MARK: - Structs de datos para gráficos
@@ -201,9 +262,20 @@ struct DatoGraficoTipo: Identifiable {
     let porcentaje: Int
 }
 
-struct DatoGraficoMedio: Identifiable {
-    let id = UUID()
-    let medio: String
-    let monto: Double
-    let porcentaje: Int
+struct DatoMensual: Identifiable {
+    var id: String { "\(año)-\(mes)" }
+    let mes: Int
+    let año: Int
+    let total: Double
+
+    var label: String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.locale = Locale(identifier: "es_AR")
+        return "\(cal.shortMonthSymbols[mes - 1].capitalized) \(año)"
+    }
+
+    var esMesActual: Bool {
+        let c = Calendar.current, now = Date()
+        return mes == c.component(.month, from: now) && año == c.component(.year, from: now)
+    }
 }

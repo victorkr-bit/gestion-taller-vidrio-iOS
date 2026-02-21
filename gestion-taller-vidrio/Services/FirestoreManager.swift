@@ -66,6 +66,22 @@ extension QueryDocumentSnapshot {
     func decodeSafely<T: Decodable>(as type: T.Type) -> T? {
         do {
             return try data(as: type)
+        } catch let decodingError as DecodingError {
+            let detail: String
+            switch decodingError {
+            case .keyNotFound(let key, _):
+                detail = "campo faltante: '\(key.stringValue)'"
+            case .typeMismatch(_, let ctx):
+                detail = "tipo incorrecto en '\(ctx.codingPath.map(\.stringValue).joined(separator: "."))': \(ctx.debugDescription)"
+            case .valueNotFound(_, let ctx):
+                detail = "valor nulo en '\(ctx.codingPath.map(\.stringValue).joined(separator: "."))'"
+            case .dataCorrupted(let ctx):
+                detail = "datos corruptos en '\(ctx.codingPath.map(\.stringValue).joined(separator: "."))': \(ctx.debugDescription)"
+            @unknown default:
+                detail = decodingError.localizedDescription
+            }
+            firestoreLogger.warning("Error decodificando \(String(describing: type)) [doc: \(self.documentID)]: \(detail)")
+            return nil
         } catch {
             firestoreLogger.warning("Error decodificando \(String(describing: type)) [doc: \(self.documentID)]: \(error.localizedDescription)")
             return nil

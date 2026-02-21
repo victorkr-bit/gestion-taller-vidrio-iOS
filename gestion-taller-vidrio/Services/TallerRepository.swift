@@ -298,6 +298,15 @@ final class TallerRepository {
         }
     }
     
+    /// Obtiene inscripciones cuya `fecha_curso` cae dentro del rango dado.
+    func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion] {
+        let snapshot = try await db.collection("inscripciones")
+            .whereField("fecha_curso", isGreaterThanOrEqualTo: from)
+            .whereField("fecha_curso", isLessThanOrEqualTo: to)
+            .getDocuments()
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
+    }
+
     // MARK: - Helpers Privados
     
     private func getStartOfTodayInArgentina() -> Date {
