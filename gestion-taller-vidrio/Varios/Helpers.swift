@@ -25,6 +25,12 @@ struct MesAño: Equatable {
         let now = Date()
         return MesAño(mes: c.component(.month, from: now), año: c.component(.year, from: now))
     }
+
+    var shortLabel: String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.locale = Locale(identifier: "es_AR")
+        return "\(cal.shortMonthSymbols[mes - 1].capitalized) \(año)"
+    }
 }
 
 struct FiltroMesAñoView: View {

@@ -5,14 +5,13 @@ struct CajaView: View {
     
     @State private var showVentaDirecta = false
     @State private var pagoAEditar: Pago? = nil
+    @State private var showFiltro = false
 
     var body: some View {
         VStack(spacing: 0) {
-            
-            // MARK: - Filtro y Buscador
-            VStack(spacing: 12) {
-                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
 
+            // MARK: - Buscador y Total
+            VStack(spacing: 12) {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
@@ -21,13 +20,11 @@ struct CajaView: View {
                 .padding(10)
                 .background(Color(.systemBackground))
                 .cornerRadius(8)
-                
+
                 HStack {
-                    //Spacer()
                     Text("Total Filtrado:")
                         .font(.callout)
                         .foregroundStyle(.primary)
-                    
                     Text(Formatters.money(viewModel.totalFiltrado))
                         .font(.title3)
                         .bold()
@@ -75,11 +72,36 @@ struct CajaView: View {
         }
         .navigationTitle("Caja")
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { showFiltro = true } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                        Text(viewModel.periodoLabel)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(.blue)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showVentaDirecta = true }) {
                     Label("Venta Directa", systemImage: "plus")
                 }
             }
+        }
+        .sheet(isPresented: $showFiltro) {
+            NavigationStack {
+                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
+                    .padding()
+                    .navigationTitle("Período")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Listo") { showFiltro = false }
+                        }
+                    }
+            }
+            .presentationDetents([.height(200)])
         }
         .sheet(isPresented: $showVentaDirecta) {
             NavigationStack {

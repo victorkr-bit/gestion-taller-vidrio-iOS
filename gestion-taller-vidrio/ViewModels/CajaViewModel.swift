@@ -47,6 +47,19 @@ class CajaViewModel: ObservableObject {
     @Published var mesInicio: MesAño = .current() { didSet { restartListener() } }
     @Published var mesFin: MesAño = .current() { didSet { restartListener() } }
 
+    var periodoLabel: String {
+        if mesInicio == mesFin {
+            return mesInicio.shortLabel
+        } else if mesInicio.año == mesFin.año {
+            var cal = Calendar(identifier: .gregorian)
+            cal.locale = Locale(identifier: "es_AR")
+            let inicioStr = cal.shortMonthSymbols[mesInicio.mes - 1].capitalized
+            return "\(inicioStr) – \(mesFin.shortLabel)"
+        } else {
+            return "\(mesInicio.shortLabel) – \(mesFin.shortLabel)"
+        }
+    }
+
     private var listener: ListenerRegistration?
     private let taskTracker = TaskTracker()
     

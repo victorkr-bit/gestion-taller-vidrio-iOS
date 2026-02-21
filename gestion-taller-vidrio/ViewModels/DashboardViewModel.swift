@@ -29,7 +29,7 @@ class DashboardViewModel: ObservableObject {
     @Published var facturacionAnual: [DatoMensual] = []
 
     // MARK: - KPIs Operativos
-    @Published var proximaClase: CronogramaItem? = nil
+    @Published var proximasClases: [CronogramaItem] = []
     @Published var ocupacionTaller: [OcupacionHoraDato] = []
     @Published var detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
     
@@ -103,33 +103,29 @@ class DashboardViewModel: ObservableObject {
         }
     }
     
-    // Renombramos y cambiamos la lógica para usar Listeners en lugar de Fetch
     private func listenToProximaClase() {
         cronogramaListener?.remove()
-        
-        // Usamos la función del repo que ya existía: listenToCursosProximos
+
         cronogramaListener = tallerRepo.listenToCursosProximos { [weak self] result in
             guard let self = self else { return }
 
             switch result {
             case .success(let proximos):
-                let previousID = self.proximaClase?.id
+                let previousID = self.proximasClases.first?.id
+                self.proximasClases = Array(proximos.prefix(3))
 
                 if let primera = proximos.first {
-                    self.proximaClase = primera
-
-                    // Solo recalcular si la próxima clase cambió
+                    // Solo recalcular ocupación si la próxima clase cambió
                     if primera.id != previousID, primera.cursoTipo == .taller, let id = primera.id {
                         self.taskTracker.track(Task { await self.loadOcupacion(cronogramaId: id) })
                     } else if primera.cursoTipo != .taller {
                         self.ocupacionTaller = []
                     }
                 } else {
-                    self.proximaClase = nil
                     self.ocupacionTaller = []
                 }
                 self.isLoading = false
-                
+
             case .failure(let error):
                 self.errorMessage = "Error sincronizando agenda: \(error.localizedDescription)"
                 self.isLoading = false
@@ -169,7 +165,7 @@ class DashboardViewModel: ObservableObject {
     private func listenToFacturacionAnual() {
         anualListener?.remove()
         let cal = Calendar.current
-        let inicioVentana = cal.date(byAdding: .month, value: -11, to: MesAño.current().fechaInicio)!
+        let inicioVentana = cal.date(byAdding: .month, value: -12, to: MesAño.current().fechaInicio)!
         let finVentana = MesAño.current().fechaFin
 
         anualListener = finanzasRepo.listenToPagos(from: inicioVentana, to: finVentana) { [weak self] result in
@@ -220,7 +216,7 @@ class DashboardViewModel: ObservableObject {
     private func calcularFacturacionAnual(pagos: [Pago]) {
         let cal = Calendar.current
         let now = Date()
-        facturacionAnual = (0..<12).map { i in
+        facturacionAnual = (0..<13).map { i in
             let date = cal.date(byAdding: .month, value: -i, to: now)!
             let m = cal.component(.month, from: date)
             let a = cal.component(.year, from: date)
@@ -229,6 +225,50 @@ class DashboardViewModel: ObservableObject {
                 .reduce(0) { $0 + $1.monto }
             return DatoMensual(mes: m, año: a, total: total)
         }
+    }
+
+    // MARK: - Computed Properties para UI
+
+    var periodoLabel: String {
+        if mesInicio == mesFin {
+            return mesInicio.shortLabel
+        } else if mesInicio.año == mesFin.año {
+            var cal = Calendar(identifier: .gregorian)
+            cal.locale = Locale(identifier: "es_AR")
+            let inicioStr = cal.shortMonthSymbols[mesInicio.mes - 1].capitalized
+            return "\(inicioStr) – \(mesFin.shortLabel)"
+        } else {
+            return "\(mesInicio.shortLabel) – \(mesFin.shortLabel)"
+        }
+    }
+
+    var diasHastaProximaClase: Int? {
+        guard let fecha = proximasClases.first?.fecha else { return nil }
+        let cal = Calendar.current
+        let dias = cal.dateComponents([.day],
+            from: cal.startOfDay(for: Date()),
+            to: cal.startOfDay(for: fecha)).day
+        return max(0, dias ?? 0)
+    }
+
+    var tendenciaPorcentaje: Double {
+        let cal = Calendar.current
+        let duracion = mesRange
+        var totalAnterior: Double = 0
+        for i in 1...duracion {
+            guard let fecha = cal.date(byAdding: .month, value: -i, to: mesInicio.fechaInicio) else { continue }
+            let m = cal.component(.month, from: fecha)
+            let a = cal.component(.year, from: fecha)
+            totalAnterior += facturacionAnual.first { $0.mes == m && $0.año == a }?.total ?? 0
+        }
+        guard totalAnterior > 0 else { return 0 }
+        return ((totalIngresosMes - totalAnterior) / totalAnterior) * 100
+    }
+
+    private var mesRange: Int {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.month], from: mesInicio.fechaInicio, to: mesFin.fechaFin)
+        return max(1, (comps.month ?? 0) + 1)
     }
 }
 
@@ -277,5 +317,9 @@ struct DatoMensual: Identifiable {
     var esMesActual: Bool {
         let c = Calendar.current, now = Date()
         return mes == c.component(.month, from: now) && año == c.component(.year, from: now)
+    }
+
+    var esAñoAnterior: Bool {
+        año < Calendar.current.component(.year, from: Date())
     }
 }

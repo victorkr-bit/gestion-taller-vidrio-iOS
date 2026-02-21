@@ -42,6 +42,25 @@ struct Formatters {
     static func money(_ value: Double) -> String {
         return currencyFormatter.string(from: NSNumber(value: value)) ?? "$0"
     }
+
+    /// Formato compacto para gráficos: $4,15M / $45K / $800
+    static func compactMoney(_ value: Double) -> String {
+        if value >= 1_000_000 {
+            var s = String(format: "%.2f", value / 1_000_000)
+                .replacingOccurrences(of: ".", with: ",")
+            while s.hasSuffix("0") { s = String(s.dropLast()) }
+            if s.hasSuffix(",") { s = String(s.dropLast()) }
+            return "$\(s)M"
+        } else if value >= 1_000 {
+            var s = String(format: "%.1f", value / 1_000)
+                .replacingOccurrences(of: ".", with: ",")
+            while s.hasSuffix("0") { s = String(s.dropLast()) }
+            if s.hasSuffix(",") { s = String(s.dropLast()) }
+            return "$\(s)K"
+        } else {
+            return money(value)
+        }
+    }
     
     static func date(_ date: Date) -> String {
         // Capitalizamos (ej: "dic" -> "Dic")
