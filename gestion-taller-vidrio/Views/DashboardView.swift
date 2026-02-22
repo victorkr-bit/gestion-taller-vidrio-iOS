@@ -223,7 +223,7 @@ struct DashboardView: View {
 
     private var facturacionAnualSection: some View {
         let añoActual = Calendar.current.component(.year, from: Date())
-        let datosOrdenados = Array(viewModel.facturacionAnual.reversed())
+        let datosOrdenados = viewModel.facturacionAnual
         let maxTotal = datosOrdenados.map { $0.total }.max() ?? 1
 
         return VStack(alignment: .leading, spacing: 10) {
