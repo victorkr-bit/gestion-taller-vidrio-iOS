@@ -81,12 +81,12 @@ struct PedidosView: View {
         }
         .sheet(isPresented: $isCreatingNew) {
             NavigationStack {
-                PedidoFormView(viewModel: PedidoFormViewModel())
+                PedidoFormView(viewModel: viewModel.makePedidoFormViewModel())
             }
         }
         .sheet(item: $pedidoParaEditar) { pedido in
             NavigationStack {
-                PedidoFormView(viewModel: PedidoFormViewModel(pedido: pedido))
+                PedidoFormView(viewModel: viewModel.makePedidoFormViewModel(pedido: pedido))
             }
         }
         .sheet(item: $pedidoParaPagar) { pedido in

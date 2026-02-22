@@ -97,6 +97,12 @@ class PedidosViewModel: ObservableObject {
         paymentListeners.values.forEach { $0.remove() }
     }
     
+    // MARK: - Factory
+
+    func makePedidoFormViewModel(pedido: Pedido? = nil) -> PedidoFormViewModel {
+        PedidoFormViewModel(pedido: pedido, repository: ventasRepo)
+    }
+
     // MARK: - Gestión de Pedidos (VentasRepository)
     
     func startListeningOrders() {
