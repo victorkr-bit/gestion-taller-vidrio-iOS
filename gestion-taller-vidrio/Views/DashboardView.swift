@@ -109,7 +109,8 @@ struct DashboardView: View {
                     titulo: "Ingresos",
                     valor: viewModel.totalIngresosMes,
                     icon: "arrow.up.circle.fill",
-                    color: .blue
+                    color: .blue,
+                    tendencia: viewModel.tendenciaPorcentaje != 0 ? viewModel.tendenciaPorcentaje : nil
                 )
             }
             .buttonStyle(.plain)
@@ -543,6 +544,17 @@ struct KpiCardView: View {
     let icon: String
     let color: Color
     var etiqueta: String? = nil
+    var tendencia: Double? = nil
+
+    private var tendenciaColor: Color {
+        (tendencia ?? 0) >= 0 ? .green : .red
+    }
+
+    private var tendenciaLabel: String {
+        guard let t = tendencia else { return "" }
+        let signo = t >= 0 ? "↑" : "↓"
+        return "\(signo) \(String(format: "%.1f", abs(t)))% vs período ant."
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -556,6 +568,10 @@ struct KpiCardView: View {
                 .foregroundStyle(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
+            Text(tendencia != nil && tendencia != 0 ? tendenciaLabel : " ")
+                .font(.caption2)
+                .foregroundStyle(tendenciaColor)
+                .opacity(tendencia != nil && tendencia != 0 ? 1 : 0)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)

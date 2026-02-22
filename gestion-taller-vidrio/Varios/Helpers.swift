@@ -44,6 +44,11 @@ struct FiltroMesAñoView: View {
     }()
     private let años: [Int] = Array(2023...2030)
 
+    private var esMesActual: Bool {
+        let actual = MesAño.current()
+        return desde == actual && hasta == actual
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             filtrRow(label: "Desde", mes: $desde.mes, año: $desde.año)
@@ -52,6 +57,18 @@ struct FiltroMesAñoView: View {
         }
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if !esMesActual {
+                    Button("Mes actual") {
+                        let actual = MesAño.current()
+                        desde = actual
+                        hasta = actual
+                    }
+                    .font(.subheadline)
+                }
+            }
+        }
     }
 
     private func filtrRow(label: String, mes: Binding<Int>, año: Binding<Int>) -> some View {
