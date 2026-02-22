@@ -242,15 +242,6 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    var diasHastaProximaClase: Int? {
-        guard let fecha = proximasClases.first?.fecha else { return nil }
-        let cal = Calendar.current
-        let dias = cal.dateComponents([.day],
-            from: cal.startOfDay(for: Date()),
-            to: cal.startOfDay(for: fecha)).day
-        return max(0, dias ?? 0)
-    }
-
     var tendenciaPorcentaje: Double {
         let cal = Calendar.current
         let duracion = mesRange
