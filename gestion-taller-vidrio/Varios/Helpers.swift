@@ -125,6 +125,22 @@ final class TaskTracker {
     }
 }
 
+// MARK: - Keyboard Helpers
+
+func hideKeyboard() {
+    UIApplication.shared.sendAction(
+        #selector(UIResponder.resignFirstResponder),
+        to: nil, from: nil, for: nil
+    )
+}
+
+extension View {
+    /// Cierra el teclado al hacer scroll. Aplicar sobre Form o ScrollView.
+    func dismissibleKeyboard() -> some View {
+        self.scrollDismissesKeyboard(.interactively)
+    }
+}
+
 // MARK: - Error Alert Reutilizable
 extension View {
     func errorAlert(_ errorMessage: Binding<String?>) -> some View {

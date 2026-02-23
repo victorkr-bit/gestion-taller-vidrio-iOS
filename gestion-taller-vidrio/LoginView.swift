@@ -17,6 +17,9 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
+            ZStack {
+            Color(.systemBackground).ignoresSafeArea()
+                .onTapGesture { hideKeyboard() }
             VStack(spacing: 20) {
                 
                 Spacer()
@@ -76,6 +79,7 @@ struct LoginView: View {
                 
             }
             .padding(.horizontal)
+            } // ZStack
         }
     }
     

@@ -93,6 +93,7 @@ struct RegistrarPagoView: View {
             }
             
         }
+        .dismissibleKeyboard()
         .navigationTitle("Registrar Pago")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(isSaving)

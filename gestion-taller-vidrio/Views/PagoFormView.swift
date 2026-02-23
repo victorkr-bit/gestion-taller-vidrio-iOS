@@ -76,6 +76,7 @@ struct PagoFormView: View {
                 .disabled(!isFormValid)
             }
         }
+        .dismissibleKeyboard()
         .navigationTitle("Editar Pago")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

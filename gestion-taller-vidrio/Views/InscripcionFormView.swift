@@ -251,6 +251,7 @@ struct InscripcionFormView: View {
                 .disabled(!isFormValid)
             }
         }
+        .dismissibleKeyboard()
         .navigationTitle(inscripcionToEdit == nil ? "Nueva Inscripción" : "Editar Inscripción")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

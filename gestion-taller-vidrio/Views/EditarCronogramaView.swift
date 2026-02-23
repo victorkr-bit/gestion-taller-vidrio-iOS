@@ -90,6 +90,7 @@ struct EditarCronogramaView: View {
                 .disabled(!hayCambios || isSaving)
             }
         }
+        .dismissibleKeyboard()
         .navigationTitle("Editar Curso")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

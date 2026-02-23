@@ -130,6 +130,7 @@ struct VentaDirectaFormView: View {
             }
 
         }
+        .dismissibleKeyboard()
         .navigationTitle("Nueva Venta Directa")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(isSaving)

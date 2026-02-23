@@ -53,6 +53,7 @@ struct CursoFormView: View {
                 .disabled(!isFormValid)
             }
         }
+        .dismissibleKeyboard()
         .navigationTitle(cursoToEdit == nil ? "Nuevo Curso" : "Editar Curso")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

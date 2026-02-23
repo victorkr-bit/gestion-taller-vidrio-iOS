@@ -74,6 +74,7 @@ struct ContactoFormView: View {
             }
 
         }
+        .dismissibleKeyboard()
         .navigationTitle(contactoToEdit == nil ? "Nuevo Contacto" : "Editar Contacto")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(isSaving)

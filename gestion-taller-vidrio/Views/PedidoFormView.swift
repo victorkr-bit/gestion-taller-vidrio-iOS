@@ -137,6 +137,7 @@ struct PedidoFormView: View {
                 .disabled(!viewModel.isValid || viewModel.isLoading)
             }
         }
+        .dismissibleKeyboard()
         .navigationTitle(viewModel.isEditing ? "Editar Pedido" : "Nuevo Pedido")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
