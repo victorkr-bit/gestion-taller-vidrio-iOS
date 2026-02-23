@@ -1,11 +1,3 @@
-//
-//  Pago.swift
-//  gestiontaller
-//
-//  Created by Victor Krongold on 13/11/2025.
-//
-
-
 import Foundation
 import FirebaseFirestore
 

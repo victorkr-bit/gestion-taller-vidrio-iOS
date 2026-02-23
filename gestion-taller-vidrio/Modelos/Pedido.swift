@@ -1,22 +1,20 @@
-
-
 import Foundation
 import FirebaseFirestore
 
 // Modelo para la coleccion "pedidos"
 struct Pedido: Codable, Identifiable {
     @DocumentID var id: String?
-    var numero_pedido: String // ej: "PED-0001" [cite: 184]
-    var cliente_id: String // Ref a contactos [cite: 185]
-    var cliente_nombre: String // Denormalizado [cite: 186]
-    var presupuesto: Double // [cite: 187]
-    var monto_abonado: Double // [cite: 188]
-    var monto_adeudado: Double // [cite: 189]
-    var estado_pago: Bool // [cite: 190]
-    var fecha: Date // Timestamp [cite: 191]
-    var descripcion: String // [cite: 192]
-    var tipo: TipoPedido // Enum [cite: 193]
-    var estado_entrega: Bool // [cite: 194]
+    var numero_pedido: String
+    var cliente_id: String
+    var cliente_nombre: String
+    var presupuesto: Double
+    var monto_abonado: Double
+    var monto_adeudado: Double
+    var estado_pago: Bool
+    var fecha: Date
+    var descripcion: String
+    var tipo: TipoPedido
+    var estado_entrega: Bool
 }
 
 extension Pedido {
@@ -25,13 +23,11 @@ extension Pedido {
     // Manda todos los datos necesarios para inicializar el pedido
     var asCloudPayload: [String: Any] {
         return [
-            // "id": No lo mandamos porque lo genera Firebase o la Cloud Function
             "clienteId": cliente_id,
             "clienteNombre": cliente_nombre,
             "descripcion": descripcion,
             "presupuesto": presupuesto,
-            "tipo": tipo.rawValue, // Importante: Mandar el String, no el Enum
-            // La fecha la puede poner el servidor, o la mandamos nosotros formateada:
+            "tipo": tipo.rawValue,
             "fecha": Formatters.iso8601.string(from: fecha)
         ]
     }

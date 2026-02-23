@@ -11,7 +11,7 @@ struct Contacto: Codable, Identifiable {
     var email: String?
     var telefono: String?
     var direccion: String?
-    var redes_sociales: String? // [cite: 162]
+    var redes_sociales: String? 
     var cuit: String?
     var notas: String?
     

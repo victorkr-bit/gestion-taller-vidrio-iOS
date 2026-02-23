@@ -74,6 +74,9 @@ struct DeudoresView: View {
             viewModel.fetchDeudores()
         }
         .errorAlert($viewModel.errorMessage)
+        .onAppear {
+            viewModel.fetchDeudores()
+        }
         
         .sheet(item: $origenParaPagar) { origen in
             NavigationStack {
