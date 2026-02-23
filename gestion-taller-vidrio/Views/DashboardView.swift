@@ -184,7 +184,8 @@ struct DashboardView: View {
                     CategoriaHeaderRow(
                         label: "Presencial",
                         color: TipoVenta.presencial.color,
-                        resumen: "\(totalCl) \(totalCl == 1 ? "clase" : "clases") · \(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")"
+                        resumen: "\(totalCl) \(totalCl == 1 ? "clase" : "clases") · \(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")",
+                        icon: "studentdesk"
                     )
                     ForEach(viewModel.detalleClases.presencial) { curso in
                         CursoDetalleRow(curso: curso, mostrarClases: true)
@@ -203,7 +204,8 @@ struct DashboardView: View {
                     CategoriaHeaderRow(
                         label: "Online",
                         color: TipoVenta.online.color,
-                        resumen: "\(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")"
+                        resumen: "\(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")",
+                        icon: "inset.filled.rectangle.and.person.filled"
                     )
                     ForEach(viewModel.detalleClases.online) { curso in
                         CursoDetalleRow(curso: curso, mostrarClases: false)
@@ -499,9 +501,13 @@ private struct CategoriaHeaderRow: View {
     let label: String
     let color: Color
     let resumen: String
+    let icon: String	
 
     var body: some View {
         HStack {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(color)
             Text(label.uppercased())
                 .font(.caption).fontWeight(.bold)
                 .foregroundStyle(color)
