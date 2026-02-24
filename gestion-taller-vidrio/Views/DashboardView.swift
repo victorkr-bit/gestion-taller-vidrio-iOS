@@ -77,21 +77,19 @@ struct DashboardView: View {
                     Spacer()
                 }
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(viewModel.proximasClases) { actividad in
-                            Button {
-                                navManager.selectedTab = .cronograma
-                                navManager.cronogramaPath.append(actividad)
-                            } label: {
-                                ProximaActividadCard(actividad: actividad)
-                                    .frame(width: 200)
-                            }
-                            .buttonStyle(.plain)
+                HStack(spacing: 12) {
+                    ForEach(viewModel.proximasClases) { actividad in
+                        Button {
+                            navManager.selectedTab = .cronograma
+                            navManager.cronogramaPath.append(actividad)
+                        } label: {
+                            ProximaActividadCard(actividad: actividad)
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.horizontal)
 
                 if viewModel.proximasClases.first?.cursoTipo == .taller && !viewModel.ocupacionTaller.isEmpty {
                     ocupacionChart
