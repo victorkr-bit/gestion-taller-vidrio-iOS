@@ -557,7 +557,7 @@ struct KpiCardView: View {
     private var tendenciaLabel: String {
         guard let t = tendencia else { return "" }
         let signo = t >= 0 ? "↑" : "↓"
-        return "\(signo) \(String(format: "%.1f", abs(t)))% vs período ant."
+        return "\(signo) \(String(format: "%.1f", abs(t)))%"
     }
 
     var body: some View {
