@@ -112,7 +112,7 @@ class DashboardViewModel: ObservableObject {
             switch result {
             case .success(let proximos):
                 let previousID = self.proximasClases.first?.id
-                self.proximasClases = Array(proximos.prefix(3))
+                self.proximasClases = Array(proximos.prefix(2))
 
                 if let primera = proximos.first {
                     // Solo recalcular ocupación si la próxima clase cambió
