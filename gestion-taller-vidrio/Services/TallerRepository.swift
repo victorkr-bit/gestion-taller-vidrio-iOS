@@ -156,14 +156,17 @@ final class TallerRepository {
         }
     }
     
-    /// Actualiza precio y/o fecha de un cronograma y propaga a inscripciones vía Cloud Function.
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?) async throws {
+    /// Actualiza precio, fecha y/o notas de un cronograma y propaga a inscripciones vía Cloud Function.
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {
         var nuevosDatos: [String: Any] = [:]
         if let precio = nuevoPrecio {
             nuevosDatos["precio"] = precio
         }
         if let fecha = nuevaFecha {
             nuevosDatos["fecha"] = Formatters.iso8601.string(from: fecha)
+        }
+        if let notas = nuevasNotas {
+            nuevosDatos["notas"] = notas
         }
 
         let data: [String: Any] = [

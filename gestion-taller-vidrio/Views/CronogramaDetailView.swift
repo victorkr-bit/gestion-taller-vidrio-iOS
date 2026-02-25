@@ -15,10 +15,14 @@ struct CronogramaDetailView: View {
     // Control de expansión
     @State private var expandedInscripcionID: String?
 
+    // Copia local del item, actualizada en tiempo real por onReceive($cursosProximos)
+    @State private var localItem: CronogramaItem?
+    private var displayItem: CronogramaItem { localItem ?? cronogramaItem }
+
     var inscripcionesOrdenadas: [Inscripcion] {
         let lista = inscripcionesVM.inscripciones
 
-        if cronogramaItem.cursoTipo == .taller {
+        if displayItem.cursoTipo == .taller {
                  return lista.sorted { (insc1, insc2) -> Bool in
                      // Usamos una comparación numérica real, no lexicográfica
                      let mins1 = TallerCalculator.minutosDesdeMedianoche(from: insc1.horario_inicio) ?? 1439 // 23:59 en mins
@@ -40,11 +44,17 @@ struct CronogramaDetailView: View {
                     Section {
                         CardView {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(cronogramaItem.cursoNombre)
+                                Text(displayItem.cursoNombre)
                                     .font(.title)
                                     .fontWeight(.bold)
-                                Text(cronogramaItem.fecha, style: .date)
+                                Text(displayItem.fecha, style: .date)
                                     .font(.headline)
+                                if let notas = displayItem.notas, !notas.isEmpty {
+                                    Text(notas)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                             }
                         }
                     }
@@ -86,7 +96,7 @@ struct CronogramaDetailView: View {
         }
         .sheet(isPresented: $isEditingCronograma) {
             NavigationStack {
-                EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: cronogramaItem)
+                EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: displayItem)
             }
         }
         .sheet(isPresented: $isCreatingNew) {
@@ -94,7 +104,7 @@ struct CronogramaDetailView: View {
                 InscripcionFormView(
                     inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: nil,
-                    cronogramaItem: cronogramaItem,
+                    cronogramaItem: displayItem,
                     curso: nil
                 )
             }
@@ -104,7 +114,7 @@ struct CronogramaDetailView: View {
                 InscripcionFormView(
                     inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: inscripcion,
-                    cronogramaItem: cronogramaItem,
+                    cronogramaItem: displayItem,
                     curso: nil
                 )
             }
@@ -119,9 +129,25 @@ struct CronogramaDetailView: View {
                 )
             }
         }
+        .onReceive(agendaVM.$cursosProximos) { items in
+            if let id = cronogramaItem.id,
+               let fresh = items.first(where: { $0.id == id }) {
+                localItem = fresh
+            }
+        }
+        .onReceive(agendaVM.$cursosHistoricos) { items in
+            if let id = cronogramaItem.id,
+               let fresh = items.first(where: { $0.id == id }) {
+                localItem = fresh
+            }
+        }
         .onAppear {
             if let id = cronogramaItem.id {
                 inscripcionesVM.fetchInscripciones(cronogramaID: id)
+                // Sincronizar con el estado actual del listener al abrir la vista
+                if let fresh = agendaVM.item(for: id) {
+                    localItem = fresh
+                }
             }
         }
         .onDisappear {

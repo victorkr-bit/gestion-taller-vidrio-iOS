@@ -11,8 +11,8 @@ class AgendaViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     // Lógica de Filtro
-    @Published private var cursosProximos: [CronogramaItem] = []
-    @Published private var cursosHistoricos: [CronogramaItem] = []
+    @Published private(set) var cursosProximos: [CronogramaItem] = []
+    @Published private(set) var cursosHistoricos: [CronogramaItem] = []
 
     enum FiltroCronograma: String, CaseIterable, Identifiable {
         case proximos = "Próximos"
@@ -114,9 +114,27 @@ class AgendaViewModel: ObservableObject {
         })
     }
 
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?) async throws {
+    func item(for id: String) -> CronogramaItem? {
+        cursosProximos.first { $0.id == id } ?? cursosHistoricos.first { $0.id == id }
+    }
+
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {
         errorMessage = nil
-        try await tallerRepo.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha)
+        try await tallerRepo.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas)
+
+        // Actualización local inmediata para que la UI refleje los cambios
+        // sin esperar al listener (que además no cubre históricos).
+        let aplicar = { (item: inout CronogramaItem) in
+            if let precio = nuevoPrecio { item.precio_curso = precio }
+            if let fecha = nuevaFecha { item.fecha = fecha }
+            if let notas = nuevasNotas { item.notas = notas }
+        }
+        if let idx = cursosProximos.firstIndex(where: { $0.id == id }) {
+            aplicar(&cursosProximos[idx])
+        }
+        if let idx = cursosHistoricos.firstIndex(where: { $0.id == id }) {
+            aplicar(&cursosHistoricos[idx])
+        }
     }
 
     func deleteCronogramaItem(_ item: CronogramaItem) {

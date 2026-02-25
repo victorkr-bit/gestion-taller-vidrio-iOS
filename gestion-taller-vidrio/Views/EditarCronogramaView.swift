@@ -9,6 +9,7 @@ struct EditarCronogramaView: View {
 
     @State private var precioInput: String = ""
     @State private var fecha: Date = Date()
+    @State private var notas: String = ""
     @State private var isSaving = false
 
     private var precioValido: Double? {
@@ -19,7 +20,8 @@ struct EditarCronogramaView: View {
     private var hayCambios: Bool {
         let precioCambio = precioValido != nil && precioValido != cronogramaItem.precio_curso
         let fechaCambio = !Calendar.current.isDate(fecha, inSameDayAs: cronogramaItem.fecha)
-        return precioCambio || fechaCambio
+        let notasCambio = notas != (cronogramaItem.notas ?? "")
+        return precioCambio || fechaCambio || notasCambio
     }
 
     var body: some View {
@@ -64,7 +66,13 @@ struct EditarCronogramaView: View {
                 }
             }
 
-            // Sección 3: Fecha
+            // Sección 3: Notas
+            Section("Notas") {
+                TextField("Observaciones sobre la clase", text: $notas, axis: .vertical)
+                    .lineLimit(3...6)
+            }
+
+            // Sección 4: Fecha
             Section("Fecha") {
                 DatePicker(
                     "Nueva fecha",
@@ -101,6 +109,7 @@ struct EditarCronogramaView: View {
         .onAppear {
             precioInput = String(Int(cronogramaItem.precio_curso))
             fecha = cronogramaItem.fecha
+            notas = cronogramaItem.notas ?? ""
         }
     }
 
@@ -111,12 +120,13 @@ struct EditarCronogramaView: View {
             ? precioValido : nil
         let nuevaFecha: Date? = Calendar.current.isDate(fecha, inSameDayAs: cronogramaItem.fecha)
             ? nil : ajustarHora(fecha)
+        let nuevasNotas: String? = notas != (cronogramaItem.notas ?? "") ? notas : nil
 
         isSaving = true
 
         Task {
             do {
-                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha)
+                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas)
                 dismiss()
             } catch {
                 agendaVM.errorMessage = error.localizedDescription
