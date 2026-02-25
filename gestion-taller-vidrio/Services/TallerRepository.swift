@@ -97,27 +97,31 @@ final class TallerRepository {
 
     // MARK: - Cronograma (Agenda)
 
-    /// Obtiene los cursos programados a futuro (incluyendo todo el día de hoy).
+    /// Obtiene los cursos programados a futuro (incluyendo todo el día de hoy), hasta 30 días adelante.
     func fetchCursosProximos() async throws -> [CronogramaItem] {
         let hoyArgentina = getStartOfTodayInArgentina()
-        
+        let limite30Dias = Calendar.current.date(byAdding: .day, value: 30, to: hoyArgentina)!
+
         let snapshot = try await db.collection("cronograma")
             .whereField("fecha", isGreaterThanOrEqualTo: hoyArgentina)
+            .whereField("fecha", isLessThanOrEqualTo: limite30Dias)
             .order(by: "fecha", descending: false)
             .getDocuments()
-            
+
         return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
     }
-    
-    /// Escucha en tiempo real los cursos PRÓXIMOS.
+
+    /// Escucha en tiempo real los cursos PRÓXIMOS (hasta 30 días adelante).
     /// Fundamental para actualizar el contador 'cant_inscriptos' sin recargar manualmente.
     func listenToCursosProximos(completion: @escaping (Result<[CronogramaItem], Error>) -> Void) -> ListenerRegistration {
         let hoyArgentina = getStartOfTodayInArgentina()
-        
+        let limite30Dias = Calendar.current.date(byAdding: .day, value: 30, to: hoyArgentina)!
+
         let query = db.collection("cronograma")
             .whereField("fecha", isGreaterThanOrEqualTo: hoyArgentina)
+            .whereField("fecha", isLessThanOrEqualTo: limite30Dias)
             .order(by: "fecha", descending: false)
-        
+
         return query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
