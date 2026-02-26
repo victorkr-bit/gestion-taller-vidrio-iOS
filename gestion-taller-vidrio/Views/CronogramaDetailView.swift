@@ -177,7 +177,7 @@ struct InscripcionRowView: View {
 
                     GenericRowView(
                         titulo: inscripcion.alumno_nombre,
-                        subtitulo: nil, // No mostramos descripción aquí
+                        subtitulo: inscripcion.notas.flatMap { $0.isEmpty ? nil : $0 },
                         infoSuperior: inscripcion.horario_inicio, // Ej: "18:00"
                         iconoSuperior: "clock",
                         monto: nil, // La fila original no mostraba precio base, solo estado de deuda en tags

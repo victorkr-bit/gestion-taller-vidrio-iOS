@@ -276,8 +276,11 @@ final class TallerRepository {
         if inscripcion.cronogramaId == nil {
             data["cronogramaId"] = NSNull()
         }
-        
-        // 3. Guardado
+
+        // 3. Notas: escribir NSNull si está vacío para limpiar el campo en Firestore
+        data["notas"] = inscripcion.notas.flatMap { $0.isEmpty ? nil : $0 } ?? NSNull()
+
+        // 4. Guardado
         if let id = inscripcion.id {
             try await db.collection("inscripciones").document(id).setData(data, merge: true)
         } else {

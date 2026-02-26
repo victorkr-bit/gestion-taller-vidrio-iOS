@@ -31,4 +31,6 @@ struct Inscripcion: Codable, Identifiable {
     // Opcionales (solo aplican a talleres/agenda)
     var horario_inicio: String?
     var turnos: Int?
+
+    var notas: String?
 }

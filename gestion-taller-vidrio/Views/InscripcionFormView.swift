@@ -32,6 +32,8 @@ struct InscripcionFormView: View {
     @State private var precioTotal: Double = 0.0
     @State private var valorUnitarioInput: String = ""
     
+    @State private var notas: String = ""
+
     // --- ESTADOS DE TALLER ---
     @State private var selectedHour: Int = 18
     @State private var selectedMinute: Int = 00
@@ -237,6 +239,14 @@ struct InscripcionFormView: View {
             }
             
             // -----------------------------------------------------------
+            // SECCIÓN NOTAS
+            // -----------------------------------------------------------
+            Section("Notas") {
+                TextField("Observaciones...", text: $notas, axis: .vertical)
+                    .lineLimit(3...6)
+            }
+
+            // -----------------------------------------------------------
             // BOTÓN GUARDAR
             // -----------------------------------------------------------
             Section {
@@ -297,6 +307,7 @@ struct InscripcionFormView: View {
             alumnoId = inscripcion.alumnoId
             alumno_nombre = inscripcion.alumno_nombre
             turnos = inscripcion.turnos ?? 1
+            notas = inscripcion.notas ?? ""
             self.precioTotal = inscripcion.precio_curso
             
             let cantidad = Double(max(1, turnos))
@@ -368,7 +379,9 @@ struct InscripcionFormView: View {
             inscripcion.horario_inicio = nil
             inscripcion.turnos = nil
         }
-        
+
+        inscripcion.notas = notas.isEmpty ? nil : notas
+
         inscripcionesVM.saveInscripcion(inscripcion: inscripcion)
         dismiss()
     }
