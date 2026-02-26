@@ -26,6 +26,11 @@ class CatalogoOnlineViewModel: ObservableObject {
 
     // MARK: - Lógica Online
 
+    func stopListening() {
+        catalogoListener?.remove()
+        catalogoListener = nil
+    }
+
     func subscribeToCatalogoOnline() {
         isLoading = true
         errorMessage = nil

@@ -101,6 +101,7 @@ struct CronogramaView: View {
                 if newMode == .online {
                     catalogoOnlineVM.subscribeToCatalogoOnline()
                 } else {
+                    catalogoOnlineVM.stopListening()
                     agendaVM.fetchCronograma()
                 }
             }

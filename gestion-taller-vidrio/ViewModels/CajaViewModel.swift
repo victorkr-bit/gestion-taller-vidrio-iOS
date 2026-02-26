@@ -12,15 +12,16 @@ class CajaViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // MARK: - Estado de UI (Buscador y Totales) -- AGREGADO
+    // MARK: - Estado de UI (Buscador y Totales)
     @Published var searchText: String = ""
-    
-    /// Filtra los pagos locales por el texto de búsqueda
+    @Published private var searchQuery: String = ""
+
+    /// Filtra los pagos locales por el texto de búsqueda (usa searchQuery debounceado)
     var pagosFiltrados: [Pago] {
-        if searchText.isEmpty {
+        if searchQuery.isEmpty {
             return pagos
         } else {
-            let query = searchText.lowercased()
+            let query = searchQuery.lowercased()
             
             return pagos.filter { pago in
                 // 1. Buscamos en Cliente, Descripción o Notas (Lo que ya tenías)
@@ -62,6 +63,7 @@ class CajaViewModel: ObservableObject {
 
     private var listener: ListenerRegistration?
     private let taskTracker = TaskTracker()
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Inyección de Dependencias
     private let finanzasRepo: FinanzasRepository
@@ -76,6 +78,11 @@ class CajaViewModel: ObservableObject {
         self.ventasRepo = ventasRepo ?? VentasRepository()
         restartListener()
         fetchContactos()
+
+        $searchText
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] text in self?.searchQuery = text }
+            .store(in: &cancellables)
     }
     
     deinit {

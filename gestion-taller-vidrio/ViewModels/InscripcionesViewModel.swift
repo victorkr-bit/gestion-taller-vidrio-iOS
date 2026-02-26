@@ -142,6 +142,13 @@ class InscripcionesViewModel: ObservableObject {
         paymentListeners[id] = nil
     }
 
+    func stopListeningInscripciones() {
+        inscripcionesListener?.remove()
+        inscripcionesListener = nil
+        inscripciones = []
+        ocupacionPorInscripcion = [:]
+    }
+
     func cleanupPaymentListeners() {
         paymentListeners.values.forEach { $0.remove() }
         paymentListeners.removeAll()
