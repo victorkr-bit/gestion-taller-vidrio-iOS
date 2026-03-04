@@ -14,9 +14,7 @@ struct DashboardView: View {
                 proximasActividadesSection
                 kpiGrid
                 ingresosPorTipoSection
-                if viewModel.detalleClases.tieneContenido {
-                    detalleClasesSection
-                }
+                detalleClasesSection
                 facturacionAnualSection
                 Spacer(minLength: 50)
             }
@@ -167,6 +165,14 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
             VStack(spacing: 0) {
+                if !viewModel.detalleClases.tieneContenido {
+                    Text("Sin clases en el período seleccionado")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                }
+
                 // TALLER — resumen único (sin desglose por curso)
                 if let t = viewModel.detalleClases.taller {
                     TallerSummaryRow(clases: t.clases, alumnos: t.alumnos)
