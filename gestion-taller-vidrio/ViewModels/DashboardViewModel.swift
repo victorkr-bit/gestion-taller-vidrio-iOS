@@ -177,9 +177,16 @@ class DashboardViewModel: ObservableObject {
     private func loadDetalleClases() {
         taskTracker.track(Task {
             do {
+                let ahora = Date()
+                let fechaInicio = self.mesInicio.fechaInicio
+                guard fechaInicio <= ahora else {
+                    self.detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
+                    return
+                }
+                let fechaFin = min(self.mesFin.fechaFin, ahora)
                 let ins = try await self.tallerRepo.fetchInscripcionesPorFecha(
-                    from: self.mesInicio.fechaInicio,
-                    to: self.mesFin.fechaFin
+                    from: fechaInicio,
+                    to: fechaFin
                 )
                 self.computeDetalleClases(ins)
             } catch { /* fallo silencioso — info secundaria */ }
