@@ -12,6 +12,11 @@ struct PagoRowView: View {
                 Text(pago.medio_de_pago.rawValue)
                     .font(.subheadline)
                     .fontWeight(.medium)
+                if let notas = pago.notas, !notas.isEmpty {
+                    Text(notas)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             Text(Formatters.money(pago.monto))
