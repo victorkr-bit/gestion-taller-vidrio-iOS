@@ -130,6 +130,7 @@ struct VentaDirectaFormView: View {
             }
 
         }
+        .task { viewModel.fetchContactos() }
         .dismissibleKeyboard()
         .navigationTitle("Nueva Venta Directa")
         .navigationBarTitleDisplayMode(.inline)
