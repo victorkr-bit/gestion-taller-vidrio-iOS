@@ -153,7 +153,6 @@ struct CronogramaDetailView: View {
         .onDisappear {
             expandedInscripcionID = nil
             inscripcionesVM.cleanupPaymentListeners()
-            inscripcionesVM.stopListeningInscripciones()
         }
         .errorAlert($inscripcionesVM.errorMessage)
     }

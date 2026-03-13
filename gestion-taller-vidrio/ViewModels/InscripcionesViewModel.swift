@@ -44,6 +44,7 @@ class InscripcionesViewModel: ObservableObject {
     func fetchInscripciones(cronogramaID: String) {
         isLoading = true
         errorMessage = nil
+        inscripciones = []
         inscripcionesListener?.remove()
 
         inscripcionesListener = tallerRepo.listenToInscripciones(cronogramaID: cronogramaID) { [weak self] result in
@@ -63,6 +64,7 @@ class InscripcionesViewModel: ObservableObject {
     func fetchInscripcionesOnline(cursoID: String) {
         isLoading = true
         errorMessage = nil
+        inscripciones = []
         inscripcionesListener?.remove()
 
         inscripcionesListener = tallerRepo.listenToInscripcionesOnline(cursoID: cursoID) { [weak self] result in
@@ -145,6 +147,7 @@ class InscripcionesViewModel: ObservableObject {
     func stopListeningInscripciones() {
         inscripcionesListener?.remove()
         inscripcionesListener = nil
+        isLoading = false
         inscripciones = []
         ocupacionPorInscripcion = [:]
     }
