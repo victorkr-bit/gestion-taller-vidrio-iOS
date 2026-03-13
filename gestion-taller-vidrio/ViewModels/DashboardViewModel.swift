@@ -112,16 +112,15 @@ class DashboardViewModel: ObservableObject {
             switch result {
             case .success(let proximos):
                 let previousID = self.proximasClases.first?.id
+                let previousInscriptos = self.proximasClases.first?.cant_inscriptos
                 self.proximasClases = Array(proximos.prefix(2))
 
-                if let primera = proximos.first {
-                    // Solo recalcular ocupación si la próxima clase cambió
-                    if primera.id != previousID, primera.cursoTipo == .taller, let id = primera.id {
+                if let primera = proximos.first, primera.cursoTipo == .taller, let id = primera.id {
+                    // Recalcular si cambió la clase o si cambió la cantidad de inscriptos
+                    if primera.id != previousID || primera.cant_inscriptos != previousInscriptos {
                         self.taskTracker.track(Task { await self.loadOcupacion(cronogramaId: id) })
-                    } else if primera.cursoTipo != .taller {
-                        self.ocupacionTaller = []
                     }
-                } else {
+                } else if proximos.first == nil || proximos.first?.cursoTipo != .taller {
                     self.ocupacionTaller = []
                 }
                 self.isLoading = false
