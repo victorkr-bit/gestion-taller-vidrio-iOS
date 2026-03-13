@@ -30,7 +30,7 @@ class DashboardViewModel: ObservableObject {
 
     // MARK: - KPIs Operativos
     @Published var proximasClases: [CronogramaItem] = []
-    @Published var ocupacionTaller: [OcupacionHoraDato] = []
+    @Published var ocupacionesTaller: [OcupacionTallerItem] = []
     @Published var detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
     
     // Listeners
@@ -111,17 +111,23 @@ class DashboardViewModel: ObservableObject {
 
             switch result {
             case .success(let proximos):
-                let previousID = self.proximasClases.first?.id
-                let previousInscriptos = self.proximasClases.first?.cant_inscriptos
+                let previousTalleres = self.proximasClases.filter { $0.cursoTipo == .taller }
                 self.proximasClases = Array(proximos.prefix(2))
 
-                if let primera = proximos.first, primera.cursoTipo == .taller, let id = primera.id {
-                    // Recalcular si cambió la clase o si cambió la cantidad de inscriptos
-                    if primera.id != previousID || primera.cant_inscriptos != previousInscriptos {
-                        self.taskTracker.track(Task { await self.loadOcupacion(cronogramaId: id) })
+                let talleres = proximos.prefix(2).filter { $0.cursoTipo == .taller }
+                let tallerIDs = Set(talleres.compactMap { $0.id })
+                self.ocupacionesTaller.removeAll { !tallerIDs.contains($0.id) }
+
+                if talleres.isEmpty {
+                    self.ocupacionesTaller = []
+                } else {
+                    for taller in talleres {
+                        guard let id = taller.id else { continue }
+                        let prev = previousTalleres.first { $0.id == id }
+                        if prev == nil || prev?.cant_inscriptos != taller.cant_inscriptos {
+                            self.taskTracker.track(Task { await self.loadOcupacion(for: taller) })
+                        }
                     }
-                } else if proximos.first == nil || proximos.first?.cursoTipo != .taller {
-                    self.ocupacionTaller = []
                 }
                 self.isLoading = false
 
@@ -131,15 +137,22 @@ class DashboardViewModel: ObservableObject {
             }
         }
     }
-    
-    private func loadOcupacion(cronogramaId: String) async {
+
+    private func loadOcupacion(for taller: CronogramaItem) async {
+        guard let id = taller.id else { return }
+        let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
         do {
-            let inscripciones = try await tallerRepo.fetchInscripciones(cronogramaID: cronogramaId)
-            let datosGrafico = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
-            self.ocupacionTaller = datosGrafico
+            let inscripciones = try await tallerRepo.fetchInscripciones(cronogramaID: id)
+            let datos = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
+            let item = OcupacionTallerItem(id: id, titulo: titulo, datos: datos)
+            if let idx = self.ocupacionesTaller.firstIndex(where: { $0.id == id }) {
+                self.ocupacionesTaller[idx] = item
+            } else {
+                self.ocupacionesTaller.append(item)
+            }
         } catch {
             self.errorMessage = "Error calculando ocupación: \(error.localizedDescription)"
-            self.ocupacionTaller = []
+            self.ocupacionesTaller.removeAll { $0.id == id }
         }
     }
     
@@ -288,6 +301,14 @@ struct DetalleCurso: Identifiable {
     let nombre: String
     let clases: Int?  // nil para Online
     let alumnos: Int
+}
+
+// MARK: - Structs de ocupación
+
+struct OcupacionTallerItem: Identifiable {
+    let id: String
+    let titulo: String
+    let datos: [OcupacionHoraDato]
 }
 
 // MARK: - Structs de datos para gráficos

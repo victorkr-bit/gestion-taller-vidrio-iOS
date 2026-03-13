@@ -89,8 +89,26 @@ struct DashboardView: View {
                 }
                 .padding(.horizontal)
 
-                if viewModel.proximasClases.first?.cursoTipo == .taller && !viewModel.ocupacionTaller.isEmpty {
-                    ocupacionChart
+                if !viewModel.ocupacionesTaller.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Ocupación estimada por hora")
+                            .font(.callout)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+
+                        if viewModel.ocupacionesTaller.count == 2 {
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(viewModel.ocupacionesTaller) { item in
+                                    ocupacionChartPanel(item)
+                                }
+                            }
+                            .padding(.horizontal)
+                        } else if let item = viewModel.ocupacionesTaller.first {
+                            ocupacionChartPanel(item)
+                                .padding(.horizontal)
+                        }
+                    }
                 }
             }
         }
@@ -320,15 +338,14 @@ struct DashboardView: View {
 
     // MARK: - Gráfico de Ocupación
 
-    private var ocupacionChart: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Ocupación estimada por hora")
-                .font(.callout)
-                .fontWeight(.bold)
+    private func ocupacionChartPanel(_ item: OcupacionTallerItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.titulo)
+                .font(.caption)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal)
+                .padding(.horizontal, 4)
 
-            Chart(viewModel.ocupacionTaller) { dato in
+            Chart(item.datos) { dato in
                 BarMark(
                     x: .value("Hora", dato.horaString),
                     y: .value("Cantidad", dato.cantidad)
@@ -355,12 +372,11 @@ struct DashboardView: View {
                     AxisValueLabel().font(.caption2).foregroundStyle(.primary)
                 }
             }
-            .chartYScale(domain: 0...((viewModel.ocupacionTaller.map { $0.cantidad }.max() ?? 5) + 1))
+            .chartYScale(domain: 0...((item.datos.map { $0.cantidad }.max() ?? 5) + 1))
             .padding()
             .background(Color(.systemBackground))
             .cornerRadius(12)
             .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-            .padding(.horizontal)
         }
     }
 }
