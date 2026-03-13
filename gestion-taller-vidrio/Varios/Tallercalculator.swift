@@ -57,39 +57,23 @@ struct TallerCalculator {
      * Se usará en `DashboardViewModel` para el gráfico de barras.
      * Devuelve solo las horas donde la ocupación es > 0.
      */
-    // MARK: - Tarea 5.1: Cálculo de Ocupación por Hora (Rango Dinámico)
+    // MARK: - Tarea 5.1: Cálculo de Ocupación por Hora (Rango Fijo 13–21)
 
         static func calcularOcupacionPorHora(para inscripciones: [Inscripcion]) -> [OcupacionHoraDato] {
+            let rangoFijo = 13...21
 
-            // 1. Determinar el rango dinámico a partir de las inscripciones reales
-            var horaMin = Int.max
-            var horaMax = Int.min
-            for ins in inscripciones {
-                guard let inicioMinutos = minutosDesdeMedianoche(from: ins.horario_inicio) else { continue }
-                let horaInicio = inicioMinutos / 60
-                let turnos = ins.turnos ?? 1
-                horaMin = min(horaMin, horaInicio)
-                horaMax = max(horaMax, horaInicio + turnos - 1)
-            }
-
-            // Si ninguna inscripción tiene horario válido, no hay datos que mostrar
-            guard horaMin <= horaMax else { return [] }
-
-            let rangoHorario = horaMin...horaMax
-
-            // 2. Inicializar "cubetas" en 0 para todas las horas del rango
+            // 1. Inicializar cubetas en 0 para el rango fijo
             var ocupacionPorHora: [Int: Int] = [:]
-            for hora in rangoHorario {
+            for hora in rangoFijo {
                 ocupacionPorHora[hora] = 0
             }
 
-            // 3. Procesar Inscripciones
+            // 2. Procesar inscripciones
             for inscripcion in inscripciones {
                 guard let inicioMinutos = minutosDesdeMedianoche(from: inscripcion.horario_inicio) else { continue }
                 let horaInicio = inicioMinutos / 60
                 let cantidadTurnos = inscripcion.turnos ?? 1
 
-                // 4. Llenar las cubetas según la duración
                 for i in 0..<cantidadTurnos {
                     let horaAfectada = horaInicio + i
                     if ocupacionPorHora[horaAfectada] != nil {
@@ -98,14 +82,10 @@ struct TallerCalculator {
                 }
             }
 
-            // 5. Convertir a Array ordenado para el Gráfico
-            return ocupacionPorHora.map { (hora, cantidad) in
-                OcupacionHoraDato(
-                    hora: hora,
-                    horaString: "\(hora)",
-                    cantidad: cantidad
-                )
-            }.sorted(by: { $0.hora < $1.hora })
+            // 3. Convertir a Array ordenado para el gráfico
+            return rangoFijo.map { hora in
+                OcupacionHoraDato(hora: hora, horaString: "\(hora)", cantidad: ocupacionPorHora[hora] ?? 0)
+            }
         }
 
     /**

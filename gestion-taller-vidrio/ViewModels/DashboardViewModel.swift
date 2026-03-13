@@ -38,6 +38,8 @@ class DashboardViewModel: ObservableObject {
     private var pagosListener: ListenerRegistration?
     private var cronogramaListener: ListenerRegistration?
     private var anualListener: ListenerRegistration?
+    private var inscripcionListeners: [String: ListenerRegistration] = [:]
+    private var currentTalleres: [String: CronogramaItem] = [:]
     private let taskTracker = TaskTracker()
     
     // MARK: - Inyección de Dependencias
@@ -57,6 +59,7 @@ class DashboardViewModel: ObservableObject {
         pagosListener?.remove()
         cronogramaListener?.remove()
         anualListener?.remove()
+        inscripcionListeners.values.forEach { $0.remove() }
     }
     
     func setupListeners() {
@@ -111,23 +114,36 @@ class DashboardViewModel: ObservableObject {
 
             switch result {
             case .success(let proximos):
-                let previousTalleres = self.proximasClases.filter { $0.cursoTipo == .taller }
                 self.proximasClases = Array(proximos.prefix(2))
 
                 let talleres = proximos.prefix(2).filter { $0.cursoTipo == .taller }
                 let tallerIDs = Set(talleres.compactMap { $0.id })
                 self.ocupacionesTaller.removeAll { !tallerIDs.contains($0.id) }
 
+                // Actualizar mapa de talleres actuales
+                self.currentTalleres = [:]
+                for t in talleres { if let id = t.id { self.currentTalleres[id] = t } }
+
+                // Actualizar títulos de items existentes
+                for (idx, item) in self.ocupacionesTaller.enumerated() {
+                    if let taller = self.currentTalleres[item.id] {
+                        let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
+                        if item.titulo != titulo {
+                            self.ocupacionesTaller[idx] = OcupacionTallerItem(id: item.id, titulo: titulo, datos: item.datos)
+                        }
+                    }
+                }
+
                 if talleres.isEmpty {
-                    self.ocupacionesTaller = []
+                    self.cleanupInscripcionListeners(keepIDs: [])
                 } else {
                     for taller in talleres {
                         guard let id = taller.id else { continue }
-                        let prev = previousTalleres.first { $0.id == id }
-                        if prev == nil || prev?.cant_inscriptos != taller.cant_inscriptos {
-                            self.taskTracker.track(Task { await self.loadOcupacion(for: taller) })
+                        if self.inscripcionListeners[id] == nil {
+                            self.setupInscripcionListener(for: id)
                         }
                     }
+                    self.cleanupInscripcionListeners(keepIDs: tallerIDs)
                 }
                 self.isLoading = false
 
@@ -138,21 +154,31 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    private func loadOcupacion(for taller: CronogramaItem) async {
-        guard let id = taller.id else { return }
-        let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
-        do {
-            let inscripciones = try await tallerRepo.fetchInscripciones(cronogramaID: id)
-            let datos = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
-            let item = OcupacionTallerItem(id: id, titulo: titulo, datos: datos)
-            if let idx = self.ocupacionesTaller.firstIndex(where: { $0.id == id }) {
-                self.ocupacionesTaller[idx] = item
-            } else {
-                self.ocupacionesTaller.append(item)
+    private func setupInscripcionListener(for cronogramaID: String) {
+        inscripcionListeners[cronogramaID] = tallerRepo.listenToInscripciones(cronogramaID: cronogramaID) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let inscripciones):
+                guard let taller = self.currentTalleres[cronogramaID] else { return }
+                let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
+                let datos = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
+                let item = OcupacionTallerItem(id: cronogramaID, titulo: titulo, datos: datos)
+                if let idx = self.ocupacionesTaller.firstIndex(where: { $0.id == cronogramaID }) {
+                    self.ocupacionesTaller[idx] = item
+                } else {
+                    self.ocupacionesTaller.append(item)
+                }
+            case .failure(let error):
+                self.errorMessage = "Error calculando ocupación: \(error.localizedDescription)"
+                self.ocupacionesTaller.removeAll { $0.id == cronogramaID }
             }
-        } catch {
-            self.errorMessage = "Error calculando ocupación: \(error.localizedDescription)"
-            self.ocupacionesTaller.removeAll { $0.id == id }
+        }
+    }
+
+    private func cleanupInscripcionListeners(keepIDs: Set<String>) {
+        for (id, listener) in inscripcionListeners where !keepIDs.contains(id) {
+            listener.remove()
+            inscripcionListeners.removeValue(forKey: id)
         }
     }
     
