@@ -102,7 +102,7 @@ struct TallerCalculator {
             return ocupacionPorHora.map { (hora, cantidad) in
                 OcupacionHoraDato(
                     hora: hora,
-                    horaString: "\(hora)hs",
+                    horaString: "\(hora)",
                     cantidad: cantidad
                 )
             }.sorted(by: { $0.hora < $1.hora })

@@ -368,8 +368,14 @@ struct DashboardView: View {
                 }
             }
             .chartXAxis {
-                AxisMarks(values: .automatic) { _ in
-                    AxisValueLabel().font(.caption2).foregroundStyle(.primary)
+                AxisMarks(values: .automatic) { value in
+                    AxisValueLabel {
+                        if let s = value.as(String.self) {
+                            Text(s.components(separatedBy: ":").first ?? s)
+                                .font(.caption2)
+                                .foregroundStyle(.primary)
+                        }
+                    }
                 }
             }
             .chartYScale(domain: 0...((item.datos.map { $0.cantidad }.max() ?? 5) + 1))
