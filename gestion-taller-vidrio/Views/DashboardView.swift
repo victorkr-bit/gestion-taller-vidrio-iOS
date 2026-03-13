@@ -78,8 +78,7 @@ struct DashboardView: View {
                 HStack(spacing: 12) {
                     ForEach(viewModel.proximasClases) { actividad in
                         Button {
-                            navManager.selectedTab = .cronograma
-                            navManager.cronogramaPath.append(actividad)
+                            navManager.navigateToCourseDetail(actividad)
                         } label: {
                             ProximaActividadCard(actividad: actividad)
                                 .frame(maxWidth: .infinity)
