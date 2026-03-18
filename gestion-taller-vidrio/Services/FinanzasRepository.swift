@@ -180,6 +180,7 @@ final class FinanzasRepository {
             "notas": pago.notas ?? "",
             "fecha": Formatters.iso8601.string(from: pago.fecha),
             "cliente_nombre": pago.cliente_nombre,
+            "cliente_id": pago.cliente_id,
             "tipo_venta": pago.tipo_venta.rawValue
         ]
         

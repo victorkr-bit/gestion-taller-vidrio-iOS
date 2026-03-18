@@ -117,7 +117,11 @@ struct ContactoFormView: View {
 
         Task {
             do {
-                try await viewModel.saveContactoAsync(datos: contactoData, id: targetID)
+                if contactoToEdit != nil {
+                    try await viewModel.updateContactoAsync(datos: contactoData, id: targetID)
+                } else {
+                    try await viewModel.saveContactoAsync(datos: contactoData, id: targetID)
+                }
 
                 var contactoParaUI = contactoData
                 contactoParaUI.id = targetID

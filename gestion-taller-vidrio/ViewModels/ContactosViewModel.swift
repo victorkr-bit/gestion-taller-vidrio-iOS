@@ -69,6 +69,11 @@ class ContactosViewModel: ObservableObject {
         try await repository.saveContacto(datos, uid: id)
         fetchContactos()
     }
+
+    func updateContactoAsync(datos: Contacto, id: String) async throws {
+        try await repository.updateContacto(datos, id: id)
+        fetchContactos()
+    }
     
     // --- MODIFICADO: Borrado Seguro con Filtros ---
     func deleteContacto(at offsets: IndexSet) {

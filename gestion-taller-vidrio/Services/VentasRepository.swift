@@ -114,8 +114,31 @@ final class VentasRepository {
         }
     }
 
+    /// Actualiza un contacto existente y propaga el nombre a pedidos, inscripciones y pagos.
+    func updateContacto(_ contacto: Contacto, id: String) async throws {
+        let payload: [String: Any] = [
+            "id": id,
+            "nuevosDatos": [
+                "nombre": contacto.nombre,
+                "apellido": contacto.apellido,
+                "email": contacto.email as Any,
+                "telefono": contacto.telefono as Any,
+                "direccion": contacto.direccion as Any,
+                "redes_sociales": contacto.redes_sociales as Any,
+                "cuit": contacto.cuit as Any,
+                "notas": contacto.notas as Any
+            ]
+        ]
+        do {
+            _ = try await functions.httpsCallable("actualizarContacto").call(payload)
+        } catch {
+            throw FirestoreManager.shared.mapCloudError(error)
+        }
+        contactosCache = nil
+    }
+
     // MARK: - Helpers Privados (Cloud Functions)
-    
+
     private func createPedidoRemote(_ pedido: Pedido) async throws {
          let data = pedido.asCloudPayload
          _ = try await functions.httpsCallable("crearPedido").call(data)
