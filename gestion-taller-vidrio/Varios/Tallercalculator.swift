@@ -73,8 +73,10 @@ struct TallerCalculator {
                 guard let inicioMinutos = minutosDesdeMedianoche(from: inscripcion.horario_inicio) else { continue }
                 let horaInicio = inicioMinutos / 60
                 let cantidadTurnos = inscripcion.turnos ?? 1
+                let minutosExtra = inicioMinutos % 60
+                let horasAfectadas = minutosExtra > 0 ? cantidadTurnos + 1 : cantidadTurnos
 
-                for i in 0..<cantidadTurnos {
+                for i in 0..<horasAfectadas {
                     let horaAfectada = horaInicio + i
                     if ocupacionPorHora[horaAfectada] != nil {
                         ocupacionPorHora[horaAfectada]! += 1
