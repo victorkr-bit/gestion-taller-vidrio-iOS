@@ -10,11 +10,12 @@ struct GestionView: View {
     let ventasRepo: VentasRepository
     let tallerRepo: TallerRepository
     let deudoresVM: DeudoresViewModel
+    let contactoDetailVM: ContactoDetailViewModel
 
     var body: some View {
         List {
             Section("Datos Maestros") {
-                NavigationLink(destination: ContactosView(ventasRepo: ventasRepo)) {
+                NavigationLink(destination: ContactosView(ventasRepo: ventasRepo, detailVM: contactoDetailVM)) {
                     Label("Contactos", systemImage: "person.2.fill")
                 }
 
@@ -50,6 +51,6 @@ struct GestionView: View {
 
 #Preview {
     NavigationStack {
-        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel())
+        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel(), contactoDetailVM: ContactoDetailViewModel())
     }
 }

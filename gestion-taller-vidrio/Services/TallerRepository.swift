@@ -304,6 +304,14 @@ final class TallerRepository {
         }
     }
     
+    /// Obtiene todas las inscripciones de un alumno específico.
+    func fetchInscripcionesByAlumno(alumnoId: String) async throws -> [Inscripcion] {
+        let snapshot = try await db.collection("inscripciones")
+            .whereField("alumnoId", isEqualTo: alumnoId)
+            .getDocuments()
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
+    }
+
     /// Obtiene inscripciones cuya `fecha_curso` cae dentro del rango dado.
     func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion] {
         let snapshot = try await db.collection("inscripciones")

@@ -2,7 +2,7 @@ import Foundation
 import FirebaseFirestore
 
 // Modelo para la coleccion "contactos"
-struct Contacto: Codable, Identifiable {
+struct Contacto: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     var nombre: String
     var apellido: String

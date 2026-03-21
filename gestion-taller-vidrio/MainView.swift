@@ -15,18 +15,18 @@ struct MainView: View {
             .tabItem { Label("Inicio", systemImage: "house") }
             .tag(AppTab.inicio)
 
-            // Pestaña 2: Cronograma
-            CronogramaView(agendaVM: container.agendaVM, inscripcionesVM: container.inscripcionesVM, catalogoOnlineVM: container.catalogoOnlineVM)
-                .tabItem { Label("Cronograma", systemImage: "calendar") }
-                .tag(AppTab.cronograma)
-
-            // Pestaña 3: Pedidos
+            // Pestaña 2: Pedidos
             NavigationStack {
                 PedidosView(viewModel: container.pedidosVM)
             }
             .tabItem { Label("Pedidos", systemImage: "tray.and.arrow.down.fill") }
             .tag(AppTab.pedidos)
 
+            // Pestaña 3: Cronograma
+            CronogramaView(agendaVM: container.agendaVM, inscripcionesVM: container.inscripcionesVM, catalogoOnlineVM: container.catalogoOnlineVM)
+                .tabItem { Label("Cronograma", systemImage: "calendar") }
+                .tag(AppTab.cronograma)
+            
             // Pestaña 4: Caja
             NavigationStack {
                 CajaView(viewModel: container.cajaVM)
@@ -36,7 +36,7 @@ struct MainView: View {
 
             // Pestaña 5: Gestión
             NavigationStack {
-                GestionView(ventasRepo: container.ventasRepo, tallerRepo: container.tallerRepo, deudoresVM: container.deudoresVM)
+                GestionView(ventasRepo: container.ventasRepo, tallerRepo: container.tallerRepo, deudoresVM: container.deudoresVM, contactoDetailVM: container.contactoDetailVM)
             }
             .tabItem { Label("Gestión", systemImage: "gearshape") }
             .tag(AppTab.gestion)
