@@ -10,8 +10,20 @@ struct DeudoresView: View {
     
     var body: some View {
         ZStack {
+            VStack(spacing: 0) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Buscar cliente o descripción...", text: $viewModel.searchText)
+                }
+                .padding(10)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+                .padding(.horizontal)
+                .padding(.top, 8)
+
             List {
-                ForEach(viewModel.deudores) { deudor in
+                ForEach(viewModel.deudoresFiltrados) { deudor in
                     CardView {
                         GenericRowView(
                             titulo: deudor.nombreCliente,
@@ -50,18 +62,21 @@ struct DeudoresView: View {
             .overlay {
                 if viewModel.isLoading && viewModel.deudores.isEmpty {
                     ProgressView("Cargando deudores...")
-                } else if !viewModel.isLoading && viewModel.deudores.isEmpty {
+                } else if !viewModel.isLoading && viewModel.deudoresFiltrados.isEmpty {
                     VStack(spacing: 10) {
-                        Image(systemName: "checkmark.circle")
+                        Image(systemName: viewModel.deudores.isEmpty ? "checkmark.circle" : "magnifyingglass")
                             .font(.largeTitle)
-                            .foregroundStyle(.green)
-                        Text("¡No hay deudas pendientes!")
+                            .foregroundStyle(viewModel.deudores.isEmpty ? Color.green : Color.secondary)
+                        Text(viewModel.deudores.isEmpty
+                             ? "¡No hay deudas pendientes!"
+                             : "Sin resultados para \"\(viewModel.searchText)\"")
                             .font(.headline)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
-            
+            } // VStack
+
             if viewModel.isLoading && !viewModel.deudores.isEmpty {
                 ProgressView()
                     .padding()

@@ -51,6 +51,6 @@ struct GestionView: View {
 
 #Preview {
     NavigationStack {
-        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel(), contactoDetailVM: ContactoDetailViewModel())
+        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel(), contactoDetailVM: ContactoDetailViewModel(tallerRepo: TallerRepository()))
     }
 }

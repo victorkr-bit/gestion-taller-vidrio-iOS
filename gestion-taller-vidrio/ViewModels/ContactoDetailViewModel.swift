@@ -10,7 +10,7 @@ final class ContactoDetailViewModel: ObservableObject {
 
     private let tallerRepo: TallerRepository
 
-    init(tallerRepo: TallerRepository = TallerRepository()) {
+    init(tallerRepo: TallerRepository) {
         self.tallerRepo = tallerRepo
     }
 
