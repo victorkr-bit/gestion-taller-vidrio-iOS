@@ -19,7 +19,7 @@ struct CajaView: View {
                 }
                 .padding(10)
                 .background(Color(.systemBackground))
-                .cornerRadius(8)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
 
                 HStack {
                     Text("Total Filtrado:")

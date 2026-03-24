@@ -18,7 +18,7 @@ struct DeudoresView: View {
                 }
                 .padding(10)
                 .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
                 .padding(.horizontal)
                 .padding(.top, 8)
 
@@ -78,7 +78,7 @@ struct DeudoresView: View {
                 ProgressView()
                     .padding()
                     .background(.regularMaterial)
-                    .cornerRadius(10)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
             }
         }
         .navigationTitle("Panel de Deudores")

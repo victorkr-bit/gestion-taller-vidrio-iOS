@@ -56,7 +56,7 @@ struct FiltroMesAñoView: View {
             filtrRow(label: "Hasta", mes: $hasta.mes, año: $hasta.año)
         }
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if !esMesActual {

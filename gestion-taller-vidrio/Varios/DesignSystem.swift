@@ -8,9 +8,11 @@ enum DesignSystem {
 
     // MARK: - Radio de esquinas
     enum Radio {
-        static let tarjeta:  CGFloat = 12   // CardView, paneles del Dashboard
-        static let input:    CGFloat = 10   // TextFields, buscadores, LoginView
-        static let etiqueta: CGFloat = 6    // FilterLabel badges, tipo-curso badges
+        static let tarjeta:   CGFloat = 12  // CardView, paneles del Dashboard
+        static let input:     CGFloat = 10  // TextFields, buscadores, LoginView
+        static let etiqueta:  CGFloat = 6   // FilterLabel badges, tipo-curso badges
+        static let grafico:   CGFloat = 4   // BarMark en Charts, barras de progreso
+        static let indicador: CGFloat = 2   // Puntos de leyenda en gráficos
     }
 
     // MARK: - Sombras

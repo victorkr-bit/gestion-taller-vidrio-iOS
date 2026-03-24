@@ -157,8 +157,8 @@ struct DashboardView: View {
                 }
                 .padding()
                 .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+                .sombraTarjeta(DesignSystem.Sombra.panel)
                 .padding(.horizontal)
             }
         }
@@ -229,8 +229,8 @@ struct DashboardView: View {
                 }
             }
             .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+            .sombraTarjeta(DesignSystem.Sombra.panel)
             .padding(.horizontal)
         }
     }
@@ -263,7 +263,7 @@ struct DashboardView: View {
                             dato.esMesActual ? Color.blue :
                             dato.esAñoAnterior ? Color.blue.opacity(0.25) : Color.blue.opacity(0.6)
                         )
-                        .cornerRadius(5)
+                        .cornerRadius(DesignSystem.Radio.grafico)
                         .annotation(position: .top, alignment: .center) {
                             if dato.total > 0 {
                                 Text(Formatters.compactMoney(dato.total))
@@ -302,17 +302,17 @@ struct DashboardView: View {
                     // Leyenda de años
                     HStack(spacing: 16) {
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 2).fill(Color.blue.opacity(0.25))
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.25))
                                 .frame(width: 16, height: 8)
                             Text(String(añoActual - 1)).font(.caption2).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 2).fill(Color.blue.opacity(0.6))
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.6))
                                 .frame(width: 16, height: 8)
                             Text(String(añoActual)).font(.caption2).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 2).fill(Color.blue)
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue)
                                 .frame(width: 16, height: 8)
                             Text("Mes actual").font(.caption2).foregroundStyle(.secondary)
                         }
@@ -320,8 +320,8 @@ struct DashboardView: View {
                 }
                 .padding()
                 .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+                .sombraTarjeta(DesignSystem.Sombra.panel)
                 .padding(.horizontal)
             }
         }
@@ -342,13 +342,13 @@ struct DashboardView: View {
                     y: .value("Cantidad", dato.cantidad)
                 )
                 .foregroundStyle(Color.blue.gradient)
-                .cornerRadius(4)
+                .cornerRadius(DesignSystem.Radio.grafico)
                 .annotation(position: .top) {
                     if dato.cantidad > 0 {
                         Text("\(dato.cantidad)")
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -372,8 +372,8 @@ struct DashboardView: View {
             .chartYScale(domain: 0...((item.datos.map { $0.cantidad }.max() ?? 5) + 1))
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+            .sombraTarjeta(DesignSystem.Sombra.panel)
         }
     }
 }
@@ -414,7 +414,7 @@ private struct ProximaActividadCard: View {
                     .foregroundStyle(tipoColor)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(tipoColor.opacity(0.15))
-                    .cornerRadius(4)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.grafico))
                 Spacer()
             }
 
@@ -444,8 +444,8 @@ private struct ProximaActividadCard: View {
         .padding(14)
         .frame(height: 130)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+        .sombraTarjeta(DesignSystem.Sombra.actividad)
     }
 }
 
@@ -460,7 +460,7 @@ private struct IngresoBarRow: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
                 HStack(spacing: 6) {
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador)
                         .fill(barColor)
                         .frame(width: 10, height: 10)
                     Text(dato.tipo)
@@ -477,10 +477,10 @@ private struct IngresoBarRow: View {
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radio.grafico)
                         .fill(barColor.opacity(0.12))
                         .frame(height: 8)
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radio.grafico)
                         .fill(barColor)
                         .frame(width: max(4, geo.size.width * CGFloat(dato.porcentaje) / 100), height: 8)
                 }
@@ -599,7 +599,7 @@ struct KpiCardView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.systemGray6))
-        .cornerRadius(10)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
+        .sombraTarjeta(DesignSystem.Sombra.panel)
     }
 }
