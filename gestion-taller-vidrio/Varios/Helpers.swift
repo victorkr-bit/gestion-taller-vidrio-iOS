@@ -141,6 +141,29 @@ extension View {
     }
 }
 
+// MARK: - Estado Vacío Reutilizable
+
+struct EstadoVacioView: View {
+    let icono: String
+    let mensaje: String
+    var colorIcono: Color = .secondary
+
+    var body: some View {
+        VStack(spacing: DesignSystem.Espaciado.s) {
+            Image(systemName: icono)
+                .font(.largeTitle)
+                .foregroundStyle(colorIcono)
+            Text(mensaje)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, DesignSystem.Espaciado.l)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DesignSystem.Espaciado.xl)
+    }
+}
+
 // MARK: - Error Alert Reutilizable
 extension View {
     func errorAlert(_ errorMessage: Binding<String?>) -> some View {

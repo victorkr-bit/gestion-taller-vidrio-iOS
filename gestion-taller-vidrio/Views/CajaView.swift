@@ -14,7 +14,7 @@ struct CajaView: View {
             VStack(spacing: 12) {
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                     TextField("Buscar cliente, nota...", text: $viewModel.searchText)
                 }
                 .padding(10)
@@ -42,17 +42,12 @@ struct CajaView: View {
                 Spacer()
             } else if viewModel.pagosFiltrados.isEmpty {
                 Spacer()
-                VStack(spacing: 15) {
-                    Image(systemName: "tray")
-                        .font(.largeTitle)
-                        .foregroundColor(.gray)
-                    Text(viewModel.searchText.isEmpty
-                         ? "No hay movimientos en el período seleccionado"
-                         : "No hay movimientos que coincidan con \"\(viewModel.searchText)\"")
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                EstadoVacioView(
+                    icono: "tray",
+                    mensaje: viewModel.searchText.isEmpty
+                        ? "No hay movimientos en el período seleccionado"
+                        : "No hay movimientos que coincidan con \"\(viewModel.searchText)\""
+                )
                 Spacer()
             } else {
                 List {

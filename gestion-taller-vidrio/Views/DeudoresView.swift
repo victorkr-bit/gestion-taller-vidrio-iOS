@@ -13,7 +13,7 @@ struct DeudoresView: View {
             VStack(spacing: 0) {
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                     TextField("Buscar cliente o descripción...", text: $viewModel.searchText)
                 }
                 .padding(10)
@@ -63,16 +63,13 @@ struct DeudoresView: View {
                 if viewModel.isLoading && viewModel.deudores.isEmpty {
                     ProgressView("Cargando deudores...")
                 } else if !viewModel.isLoading && viewModel.deudoresFiltrados.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: viewModel.deudores.isEmpty ? "checkmark.circle" : "magnifyingglass")
-                            .font(.largeTitle)
-                            .foregroundStyle(viewModel.deudores.isEmpty ? Color.green : Color.secondary)
-                        Text(viewModel.deudores.isEmpty
-                             ? "¡No hay deudas pendientes!"
-                             : "Sin resultados para \"\(viewModel.searchText)\"")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                    }
+                    EstadoVacioView(
+                        icono: viewModel.deudores.isEmpty ? "checkmark.circle" : "magnifyingglass",
+                        mensaje: viewModel.deudores.isEmpty
+                            ? "¡No hay deudas pendientes!"
+                            : "Sin resultados para \"\(viewModel.searchText)\"",
+                        colorIcono: viewModel.deudores.isEmpty ? .green : .secondary
+                    )
                 }
             }
             } // VStack

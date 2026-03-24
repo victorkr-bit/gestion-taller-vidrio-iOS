@@ -62,18 +62,10 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
             if viewModel.proximasClases.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.largeTitle)
-                            .foregroundStyle(.tertiary)
-                        Text("No hay actividades próximas.")
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 20)
-                    Spacer()
-                }
+                EstadoVacioView(
+                    icono: "calendar.badge.clock",
+                    mensaje: "No hay actividades próximas."
+                )
             } else {
                 HStack(spacing: 12) {
                     ForEach(viewModel.proximasClases) { actividad in
