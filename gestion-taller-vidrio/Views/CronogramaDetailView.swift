@@ -19,6 +19,9 @@ struct CronogramaDetailView: View {
     @State private var localItem: CronogramaItem?
     private var displayItem: CronogramaItem { localItem ?? cronogramaItem }
 
+    var totalAbonado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_abonado } }
+    var totalAdeudado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_adeudado } }
+
     var inscripcionesOrdenadas: [Inscripcion] {
         let lista = inscripcionesVM.inscripciones
 
@@ -55,13 +58,42 @@ struct CronogramaDetailView: View {
                                         .foregroundStyle(.secondary)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                Divider()
+                                HStack {
+                                    VStack(alignment: .center, spacing: 2) {
+                                        Text("\(inscripcionesVM.inscripciones.count)")
+                                            .font(.headline).fontWeight(.bold)
+                                        Text("inscriptos")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Divider()
+                                    Spacer()
+                                    VStack(alignment: .center, spacing: 2) {
+                                        Text(Formatters.money(totalAbonado))
+                                            .font(.headline).fontWeight(.semibold).foregroundStyle(.green)
+                                        Text("cobrado")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Divider()
+                                    Spacer()
+                                    VStack(alignment: .center, spacing: 2) {
+                                        Text(Formatters.money(totalAdeudado))
+                                            .font(.headline).fontWeight(.semibold)
+                                            .foregroundStyle(totalAdeudado > 0 ? .orange : .secondary)
+                                        Text("adeudado")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                }
+                                .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
                     .listRowSeparator(.hidden)
 
                     // --- Sección 2: Lista de Inscriptos ---
-                    Section(header: Text("Inscriptos (\(inscripcionesVM.inscripciones.count))")) {
+                    Section(header: Text("Inscriptos")) {
                         ForEach(inscripcionesOrdenadas) { inscripcion in
                             InscripcionRowView(
                                 inscripcion: inscripcion,
