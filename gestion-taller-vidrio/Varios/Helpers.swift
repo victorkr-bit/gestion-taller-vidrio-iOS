@@ -164,6 +164,34 @@ struct EstadoVacioView: View {
     }
 }
 
+// MARK: - Botón Primario Reutilizable
+
+struct BotonPrimario: View {
+    let titulo: String
+    let accion: () -> Void
+    var estaDeshabilitado: Bool = false
+    var estaCargando: Bool = false
+
+    var body: some View {
+        Button(action: accion) {
+            if estaCargando {
+                ProgressView()
+                    .tint(.white)
+                    .frame(maxWidth: .infinity)
+            } else {
+                Text(titulo)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding()
+        .background(estaDeshabilitado ? Color.secondary.opacity(0.3) : Color.accentColor)
+        .foregroundStyle(.white)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
+        .disabled(estaDeshabilitado || estaCargando)
+    }
+}
+
 // MARK: - Error Alert Reutilizable
 extension View {
     func errorAlert(_ errorMessage: Binding<String?>) -> some View {

@@ -98,7 +98,7 @@ struct VentaDirectaFormView: View {
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     }
                     .buttonStyle(.borderless) // Importante para que no capture el tap de la celda entera
                     .padding(.leading, 8)

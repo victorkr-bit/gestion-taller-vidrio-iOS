@@ -113,7 +113,7 @@ struct InscripcionFormView: View {
                         }) {
                             Image(systemName: "person.badge.plus")
                                 .font(.title2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                         .buttonStyle(.borderless) // Evita que se active el NavigationLink al tocar esto
                         .padding(.leading, 8)

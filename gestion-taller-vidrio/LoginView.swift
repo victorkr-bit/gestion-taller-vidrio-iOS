@@ -52,26 +52,13 @@ struct LoginView: View {
                 }
                 
                 // Botón de Login
-                if isLoading {
-                    ProgressView()
-                        .padding()
-                } else {
-                    Button(action: loginUser) {
-                        Text("Ingresar")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                }
+                BotonPrimario(titulo: "Ingresar", accion: loginUser, estaCargando: isLoading)
                 
                 // Mensaje de Error
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
                         .font(.caption)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 
                 Spacer()
