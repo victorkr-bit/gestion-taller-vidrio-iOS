@@ -44,10 +44,10 @@ struct GenericRowView: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            
+        HStack(alignment: .top, spacing: DesignSystem.Espaciado.m) {
+
             // --- COLUMNA IZQUIERDA ---
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                 Text(titulo)
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -75,7 +75,7 @@ struct GenericRowView: View {
             Spacer()
             
             // --- COLUMNA DERECHA ---
-            VStack(alignment: .trailing, spacing: 4) { // Spacing reducido para agrupar Fecha/Hora
+            VStack(alignment: .trailing, spacing: DesignSystem.Espaciado.xs) {
                 
                 // 1. Info Superior (FECHA + Icono)
                 if let info = infoSuperior {
@@ -100,23 +100,23 @@ struct GenericRowView: View {
                 
                 // 3. Tags (Dejamos un espacio extra arriba si hay tags)
                 if !tags.isEmpty {
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: .trailing, spacing: DesignSystem.Espaciado.xs) {
                         ForEach(tags) { tag in
                             Text(tag.text)
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, DesignSystem.Espaciado.s)
+                                .padding(.vertical, DesignSystem.Espaciado.xs)
                                 .background(tag.color.opacity(0.15))
                                 .foregroundStyle(tag.color)
                                 .clipShape(Capsule())
                         }
                     }
-                    .padding(.top, 4)
+                    .padding(.top, DesignSystem.Espaciado.xs)
                 }
             }
             .layoutPriority(1)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DesignSystem.Espaciado.s)
     }
 }
