@@ -178,12 +178,13 @@ final class FinanzasRepository {
             "monto": pago.monto,
             "medio_de_pago": pago.medio_de_pago.rawValue,
             "notas": pago.notas ?? "",
-            "fecha": Formatters.iso8601.string(from: pago.fecha),
+            "fecha": Formatters.dateOnly(pago.fecha),
             "cliente_nombre": pago.cliente_nombre,
             "cliente_id": pago.cliente_id,
-            "tipo_venta": pago.tipo_venta.rawValue
+            "tipo_venta": pago.tipo_venta.rawValue,
+            "descripcion": pago.descripcion_origen
         ]
-        
+
         do {
             _ = try await functions.httpsCallable("registrarPago").call(data)
         } catch {

@@ -91,6 +91,18 @@ struct Formatters {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+
+    // Solo fecha yyyy-MM-dd (para Cloud Functions que concatenan hora)
+    private static let dateOnlyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
+        return formatter
+    }()
+
+    static func dateOnly(_ date: Date) -> String {
+        return dateOnlyFormatter.string(from: date)
+    }
 }
 
 // MARK: - Binding de texto numérico
