@@ -18,7 +18,8 @@ struct VentaDirectaFormView: View {
     @StateObject private var contactosViewModel = ContactosViewModel()
     
     // --- Estado del Formulario ---
-    @State private var monto: Double = 0.0
+    @State private var montoTexto: String = ""
+    private var monto: Double { Double(montoTexto.replacingOccurrences(of: ",", with: ".")) ?? 0 }
     @State private var medio_de_pago: MedioDePago = .efectivo
     @State private var fecha: Date = Date()
     @State private var notas: String = ""
@@ -45,7 +46,7 @@ struct VentaDirectaFormView: View {
             // SECCIÓN 1: DATOS FINANCIEROS
             // -----------------------------------------------------------
             Section("Datos de la Venta") {
-                TextField("Monto*", value: $monto, formatter: Formatters.currencyFormatter)
+                TextField("Monto*", text: $montoTexto)
                     .keyboardType(.decimalPad)
                     .foregroundStyle(.blue)
                     .font(.headline)

@@ -93,7 +93,7 @@ struct CronogramaDetailView: View {
                     .listRowSeparator(.hidden)
 
                     // --- Sección 2: Lista de Inscriptos ---
-                    Section(header: Text("Inscriptos")) {
+                    Section {
                         ForEach(inscripcionesOrdenadas) { inscripcion in
                             InscripcionRowView(
                                 inscripcion: inscripcion,
