@@ -149,7 +149,8 @@ struct CronogramaDetailView: View {
                     inscripcionesVM: inscripcionesVM,
                     inscripcionToEdit: inscripcion,
                     cronogramaItem: displayItem,
-                    curso: nil
+                    curso: nil,
+                    cronogramasDisponibles: agendaVM.cursosProximos.filter { $0.id != inscripcion.cronogramaId }
                 )
             }
         }

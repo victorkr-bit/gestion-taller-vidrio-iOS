@@ -13,6 +13,9 @@ struct MoverInscripcionView: View {
 
     @Environment(\.dismiss) var dismiss
 
+    /// Callback invocado tras un traslado exitoso (útil cuando la vista se presenta como destino de NavigationLink).
+    var onMoved: (() -> Void)? = nil
+
     @State private var destinoSeleccionado: CronogramaItem? = nil
     @State private var adoptarPrecio = true
     @State private var isSubmitting = false
@@ -145,6 +148,7 @@ struct MoverInscripcionView: View {
                     adoptarPrecio: adoptarPrecio
                 )
                 dismiss()
+                onMoved?()
             } catch {
                 errorMessage = "Error al mover inscripción: \(error.localizedDescription)"
                 isSubmitting = false

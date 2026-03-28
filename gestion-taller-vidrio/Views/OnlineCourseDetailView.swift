@@ -81,6 +81,16 @@ struct OnlineCourseDetailView: View {
                 )
             }
         }
+        .sheet(item: $inscripcionToEdit) { inscripcion in
+            NavigationStack {
+                InscripcionFormView(
+                    inscripcionesVM: inscripcionesVM,
+                    inscripcionToEdit: inscripcion,
+                    cronogramaItem: nil,
+                    curso: curso
+                )
+            }
+        }
         .sheet(item: $inscripcionParaPagar) { inscripcion in
             NavigationStack {
                 RegistrarPagoView(
