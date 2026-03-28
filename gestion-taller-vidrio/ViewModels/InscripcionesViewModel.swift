@@ -162,4 +162,13 @@ class InscripcionesViewModel: ObservableObject {
         errorMessage = nil
         try await finanzasRepo.registrarPago(pago: pago, origen: origen)
     }
+
+    func moverInscripcion(inscripcionId: String, destinoCronogramaId: String, adoptarPrecio: Bool) async throws {
+        errorMessage = nil
+        try await tallerRepo.moverInscripcion(
+            inscripcionId: inscripcionId,
+            destinoCronogramaId: destinoCronogramaId,
+            adoptarPrecio: adoptarPrecio
+        )
+    }
 }

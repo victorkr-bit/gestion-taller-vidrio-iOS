@@ -11,6 +11,7 @@ struct CronogramaDetailView: View {
     @State private var isCreatingNew = false
     @State private var inscripcionParaPagar: Inscripcion?
     @State private var isEditingCronograma = false
+    @State private var inscripcionAMover: Inscripcion?
 
     // Control de expansión
     @State private var expandedInscripcionID: String?
@@ -100,7 +101,8 @@ struct CronogramaDetailView: View {
                                 inscripcionesVM: inscripcionesVM,
                                 expandedInscripcionID: $expandedInscripcionID,
                                 inscripcionParaPagar: $inscripcionParaPagar,
-                                inscripcionToEdit: $inscripcionToEdit
+                                inscripcionToEdit: $inscripcionToEdit,
+                                inscripcionAMover: $inscripcionAMover
                             )
                         }
                     }
@@ -161,6 +163,15 @@ struct CronogramaDetailView: View {
                 )
             }
         }
+        .sheet(item: $inscripcionAMover) { inscripcion in
+            NavigationStack {
+                MoverInscripcionView(
+                    inscripcionesVM: inscripcionesVM,
+                    inscripcion: inscripcion,
+                    cronogramasDisponibles: agendaVM.cursosProximos.filter { $0.id != inscripcion.cronogramaId }
+                )
+            }
+        }
         .onReceive(agendaVM.$cursosProximos) { items in
             if let id = cronogramaItem.id,
                let fresh = items.first(where: { $0.id == id }) {
@@ -198,6 +209,7 @@ struct InscripcionRowView: View {
     @Binding var expandedInscripcionID: String?
     @Binding var inscripcionParaPagar: Inscripcion?
     @Binding var inscripcionToEdit: Inscripcion?
+    @Binding var inscripcionAMover: Inscripcion?
 
     @State private var showDeleteAlert = false
 
@@ -265,6 +277,13 @@ struct InscripcionRowView: View {
                 Label("Editar", systemImage: "pencil")
             }
             .tint(.blue)
+
+            Button {
+                self.inscripcionAMover = inscripcion
+            } label: {
+                Label("Mover", systemImage: "arrow.right.circle.fill")
+            }
+            .tint(.orange)
         }
         .contextMenu {
             Button {
@@ -277,6 +296,12 @@ struct InscripcionRowView: View {
                 self.inscripcionToEdit = inscripcion
             } label: {
                 Label("Editar Inscripción", systemImage: "pencil")
+            }
+
+            Button {
+                self.inscripcionAMover = inscripcion
+            } label: {
+                Label("Mover a otro cronograma", systemImage: "arrow.right.circle")
             }
 
             Divider()

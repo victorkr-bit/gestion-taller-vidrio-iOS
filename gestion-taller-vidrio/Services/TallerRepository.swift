@@ -288,6 +288,20 @@ final class TallerRepository {
         }
     }
     
+    /// Mueve una inscripción a otro cronograma vía Cloud Function.
+    func moverInscripcion(inscripcionId: String, destinoCronogramaId: String, adoptarPrecio: Bool) async throws {
+        let data: [String: Any] = [
+            "inscripcionId": inscripcionId,
+            "destinoCronogramaId": destinoCronogramaId,
+            "adoptarPrecio": adoptarPrecio
+        ]
+        do {
+            _ = try await functions.httpsCallable("moverInscripcion").call(data)
+        } catch {
+            throw FirestoreManager.shared.mapCloudError(error)
+        }
+    }
+
     /// Borra una inscripción.
     func deleteInscripcion(inscripcion: Inscripcion) async throws {
         guard let id = inscripcion.id else { throw URLError(.cannotRemoveFile) }
