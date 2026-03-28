@@ -55,7 +55,7 @@ struct PagoFormView: View {
                     }
                 }
                 
-                DatePicker("Fecha", selection: $fecha)
+                DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
             }
             
             Section("Información Adicional") {

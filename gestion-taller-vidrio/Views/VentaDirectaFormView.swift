@@ -21,7 +21,6 @@ struct VentaDirectaFormView: View {
     @State private var montoTexto: String = ""
     private var monto: Double { Double(montoTexto.replacingOccurrences(of: ",", with: ".")) ?? 0 }
     @State private var medio_de_pago: MedioDePago = .efectivo
-    @State private var fecha: Date = Date()
     @State private var notas: String = ""
     @State private var cliente_id: String = ""
     @State private var cliente_nombre: String = "Cliente Ocasional"
@@ -62,8 +61,6 @@ struct VentaDirectaFormView: View {
                         Text(tipo.rawValue).tag(tipo)
                     }
                 }
-                
-                DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
             }
             
             // -----------------------------------------------------------
@@ -173,7 +170,7 @@ struct VentaDirectaFormView: View {
     
     private func guardarVenta() {
         let pago = Pago(
-            fecha: fecha,
+            fecha: Date(), // placeholder; el servidor establece la fecha con serverTimestamp()
             monto: monto,
             medio_de_pago: medio_de_pago,
             cliente_id: cliente_id.isEmpty ? "default" : cliente_id,
