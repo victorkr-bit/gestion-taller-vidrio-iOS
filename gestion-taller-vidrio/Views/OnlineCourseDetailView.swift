@@ -8,6 +8,7 @@ struct OnlineCourseDetailView: View {
     @State private var expandedInscripcionID: String?
     @State private var inscripcionParaPagar: Inscripcion?
     @State private var inscripcionToEdit: Inscripcion?
+    @State private var inscripcionAMover: Inscripcion?
     @State private var isSelling = false
 
     var body: some View {
@@ -45,7 +46,8 @@ struct OnlineCourseDetailView: View {
                             inscripcionesVM: inscripcionesVM,
                             expandedInscripcionID: $expandedInscripcionID,
                             inscripcionParaPagar: $inscripcionParaPagar,
-                            inscripcionToEdit: $inscripcionToEdit
+                            inscripcionToEdit: $inscripcionToEdit,
+                            inscripcionAMover: $inscripcionAMover
                         )
                     }
                 }
@@ -86,6 +88,16 @@ struct OnlineCourseDetailView: View {
                     onSave: { (pago, origen) in
                         try await inscripcionesVM.registrarPago(pago: pago, origen: origen)
                     }
+                )
+            }
+        }
+        .sheet(item: $inscripcionAMover) { inscripcion in
+            NavigationStack {
+                // Los cursos online no tienen cronogramaId, la lista de destinos queda vacía
+                MoverInscripcionView(
+                    inscripcionesVM: inscripcionesVM,
+                    inscripcion: inscripcion,
+                    cronogramasDisponibles: []
                 )
             }
         }
