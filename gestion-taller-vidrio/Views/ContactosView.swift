@@ -12,6 +12,7 @@ struct ContactosView: View {
 
     @State private var isCreatingNew = false
     @State private var contactoToDelete: Contacto?
+    @State private var contactoToEdit: Contacto?
 
     var body: some View {
         ZStack {
@@ -52,6 +53,21 @@ struct ContactosView: View {
                             }
                         }
                         .listRowSeparator(.hidden)
+                        .contextMenu {
+                            Button {
+                                contactoToEdit = contacto
+                            } label: {
+                                Label("Editar Contacto", systemImage: "pencil")
+                            }
+
+                            Divider()
+
+                            Button(role: .destructive) {
+                                contactoToDelete = contacto
+                            } label: {
+                                Label("Eliminar Contacto", systemImage: "trash")
+                            }
+                        }
                     }
                     .onDelete { offsets in
                         if let index = offsets.first {
@@ -95,6 +111,11 @@ struct ContactosView: View {
                     viewModel: viewModel,
                     contactoToEdit: nil
                 )
+            }
+        }
+        .sheet(item: $contactoToEdit) { contacto in
+            NavigationStack {
+                ContactoFormView(viewModel: viewModel, contactoToEdit: contacto)
             }
         }
         .errorAlert($viewModel.errorMessage)
