@@ -420,7 +420,6 @@ private struct ProximaActividadCard: View {
 
             Text(actividad.cursoNombre)
                 .font(.subheadline).fontWeight(.semibold)
-                .lineLimit(2)
 
             Spacer()
 
@@ -442,7 +441,6 @@ private struct ProximaActividadCard: View {
             }
         }
         .padding(14)
-        .frame(height: 130)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
         .sombraTarjeta(DesignSystem.Sombra.actividad)
