@@ -25,7 +25,7 @@ struct CronogramaItem: Codable, Identifiable, Hashable {
     }
 
     static func == (lhs: CronogramaItem, rhs: CronogramaItem) -> Bool {
-        return lhs.id == rhs.id && lhs.cursoId == rhs.cursoId && lhs.fecha == rhs.fecha
+        return lhs.id == rhs.id && lhs.cursoId == rhs.cursoId && lhs.fecha == rhs.fecha && lhs.cursoNombre == rhs.cursoNombre && lhs.cant_inscriptos == rhs.cant_inscriptos
     }
 }
 

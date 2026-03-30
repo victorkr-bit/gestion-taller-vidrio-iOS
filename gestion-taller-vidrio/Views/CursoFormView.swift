@@ -11,6 +11,9 @@ struct CursoFormView: View {
     @State private var nombre: String = ""
     @State private var tipo: TipoCurso = .presencial // Valor default
     @State private var precio: Double = 0.0
+
+    @State private var actualizacionInfo: (cronogramas: Int, inscripciones: Int)?
+    @State private var mostrarAlertaActualizacion = false
     
     /// Formateador de moneda para el TextField de Precio.
     /// Respeta la configuración regional de Argentina [user_memory].
@@ -34,11 +37,14 @@ struct CursoFormView: View {
             Section("Detalles del Curso") {
                 TextField("Nombre del Curso*", text: $nombre)
                 
-                // Tarea 2.2: Picker usando TipoCurso.allCases
-                Picker("Tipo de Curso", selection: $tipo) {
-                    ForEach(TipoCurso.allCases) { tipoCurso in
-                        Text(tipoCurso.descripcion).tag(tipoCurso)
+                if cursoToEdit == nil {
+                    Picker("Tipo de Curso", selection: $tipo) {
+                        ForEach(TipoCurso.allCases) { tipoCurso in
+                            Text(tipoCurso.descripcion).tag(tipoCurso)
+                        }
                     }
+                } else {
+                    LabeledContent("Tipo de Curso", value: tipo.descripcion)
                 }
                 
                 // Tarea 2.2: TextField para Double (precio)
@@ -47,13 +53,24 @@ struct CursoFormView: View {
             }
             
             Section {
-                Button(action: guardarCurso) {
+                Button {
+                    Task { await guardarCurso() }
+                } label: {
                     Text("Guardar Curso")
                 }
-                .disabled(!isFormValid)
+                .disabled(!isFormValid || viewModel.isLoading)
             }
         }
         .dismissibleKeyboard()
+        .alert("Curso actualizado", isPresented: $mostrarAlertaActualizacion) {
+            Button("Entendido") { dismiss() }
+        } message: {
+            if let info = actualizacionInfo {
+                let cronText = info.cronogramas == 1 ? "1 cronograma" : "\(info.cronogramas) cronogramas"
+                let inscText = info.inscripciones == 1 ? "1 inscripción" : "\(info.inscripciones) inscripciones"
+                Text("Nombre propagado a \(cronText) y \(inscText).")
+            }
+        }
         .navigationTitle(cursoToEdit == nil ? "Nuevo Curso" : "Editar Curso")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -73,19 +90,29 @@ struct CursoFormView: View {
         }
     }
     
-    private func guardarCurso() {
+    private func guardarCurso() async {
         var curso = cursoToEdit ?? Curso(
             nombre: "", // Se sobreescribe abajo
             tipo: .presencial,
             precio: 0.0
         )
-        
+
         curso.nombre = nombre.trimmingCharacters(in: .whitespaces)
         curso.tipo = tipo
         curso.precio = precio
-        
-        viewModel.saveCurso(curso: curso)
-        
-        dismiss()
+
+        let resultado = await viewModel.saveCurso(curso: curso)
+
+        if viewModel.errorMessage != nil {
+            return // El error queda visible en el formulario
+        }
+
+        if let info = resultado {
+            // Actualización: mostrar alerta con conteo antes de cerrar
+            actualizacionInfo = info
+            mostrarAlertaActualizacion = true
+        } else {
+            dismiss()
+        }
     }
 }

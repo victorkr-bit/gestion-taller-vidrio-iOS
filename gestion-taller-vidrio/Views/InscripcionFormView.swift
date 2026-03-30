@@ -185,7 +185,7 @@ struct InscripcionFormView: View {
                         )
                     } label: {
                         HStack {
-                            Text("Mover a otro cronograma")
+                            Text("Mover la inscripción")
                             Spacer()
                             Text(origenNombre)
                                 .foregroundStyle(.secondary)

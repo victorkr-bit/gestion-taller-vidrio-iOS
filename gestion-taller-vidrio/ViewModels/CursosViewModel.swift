@@ -42,17 +42,16 @@ class CursosViewModel: ObservableObject {
         }
     }
 
-    func saveCurso(curso: Curso) {
+    func saveCurso(curso: Curso) async -> (cronogramas: Int, inscripciones: Int)? {
         isLoading = true
         errorMessage = nil
-        taskTracker.track(Task {
-            do {
-                try await repository.saveCurso(curso: curso)
-            } catch {
-                self.errorMessage = "Error al guardar el curso: \(error.localizedDescription)"
-                self.isLoading = false
-            }
-        })
+        defer { isLoading = false }
+        do {
+            return try await repository.saveCurso(curso: curso)
+        } catch {
+            self.errorMessage = "Error al guardar el curso: \(error.localizedDescription)"
+            return nil
+        }
     }
 
     func deleteCurso(at offsets: IndexSet) {

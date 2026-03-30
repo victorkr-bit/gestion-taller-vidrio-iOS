@@ -302,7 +302,7 @@ struct InscripcionRowView: View {
             Button {
                 self.inscripcionAMover = inscripcion
             } label: {
-                Label("Mover a otro cronograma", systemImage: "arrow.right.circle")
+                Label("Mover la inscripción", systemImage: "arrow.right.circle")
             }
 
             Divider()

@@ -36,16 +36,31 @@ final class TallerRepository {
     }
 
     /// Guarda (crea o actualiza) un documento de Curso.
-    func saveCurso(curso: Curso) async throws {
-        // 1. Codificamos manualmente
-        let data = try Firestore.Encoder().encode(curso)
-        
+    /// Al actualizar devuelve cuántos cronogramas e inscripciones fueron renombrados; al crear devuelve nil.
+    func saveCurso(curso: Curso) async throws -> (cronogramas: Int, inscripciones: Int)? {
         if let id = curso.id {
-            // Actualización (merge: false para sobreescribir estructura si cambió)
-            try await db.collection("cursos").document(id).setData(data, merge: false)
+            // Actualización: llamar CF para propagar cursoNombre a cronograma e inscripciones
+            let payload: [String: Any] = [
+                "id": id,
+                "nuevosDatos": [
+                    "nombre": curso.nombre,
+                    "precio": curso.precio
+                ]
+            ]
+            do {
+                let result = try await functions.httpsCallable("actualizarCurso").call(payload)
+                let data = result.data as? [String: Any] ?? [:]
+                let cronogramas = data["cronogramasActualizados"] as? Int ?? 0
+                let inscripciones = data["inscripcionesActualizadas"] as? Int ?? 0
+                return (cronogramas: cronogramas, inscripciones: inscripciones)
+            } catch {
+                throw FirestoreManager.shared.mapCloudError(error)
+            }
         } else {
             // Creación
+            let data = try Firestore.Encoder().encode(curso)
             _ = try await db.collection("cursos").addDocument(data: data)
+            return nil
         }
     }
     

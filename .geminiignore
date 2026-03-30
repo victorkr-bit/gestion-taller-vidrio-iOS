@@ -1,0 +1,23 @@
+# Dependencias y Entornos (Web)
+node_modules/
+.svelte-kit/
+build/
+dist/
+package-lock.json
+pnpm-lock.yaml
+
+# Dependencias y Compilados (iOS / Apple)
+.build/
+DerivedData/
+Pods/
+Podfile.lock
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Archivos de Sistema macOS
+.DS_Store
+
+# Logs y Cachés
+*.log
+.npm/
+.eslintcache
