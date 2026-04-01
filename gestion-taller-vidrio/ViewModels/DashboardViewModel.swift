@@ -62,6 +62,14 @@ class DashboardViewModel: ObservableObject {
         inscripcionListeners.values.forEach { $0.remove() }
     }
     
+    func sincronizarMesActualSiCambio() {
+        let actual = MesAño.current()
+        if mesInicio != actual || mesFin != actual {
+            mesInicio = actual
+            mesFin = actual
+        }
+    }
+
     func setupListeners() {
         isLoading = true
 

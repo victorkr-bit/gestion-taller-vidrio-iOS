@@ -23,6 +23,9 @@ struct DashboardView: View {
         .navigationTitle("Inicio")
         .background(Color(.systemGroupedBackground))
         .errorAlert($viewModel.errorMessage)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            viewModel.sincronizarMesActualSiCambio()
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showFiltro = true } label: {

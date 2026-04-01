@@ -66,6 +66,9 @@ struct CajaView: View {
             }
         }
         .navigationTitle("Caja")
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            viewModel.sincronizarMesActualSiCambio()
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { showFiltro = true } label: {

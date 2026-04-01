@@ -92,6 +92,14 @@ class CajaViewModel: ObservableObject {
     
     // MARK: - Lógica de Caja
     
+    func sincronizarMesActualSiCambio() {
+        let actual = MesAño.current()
+        if mesInicio != actual || mesFin != actual {
+            mesInicio = actual
+            mesFin = actual
+        }
+    }
+
     func restartListener() {
         isLoading = true
         errorMessage = nil
