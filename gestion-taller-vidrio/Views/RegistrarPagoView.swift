@@ -196,7 +196,7 @@ struct RegistrarPagoView: View {
                 // 4. FALLO -> DESBLOQUEAR
                 // Si hubo error (ej. sin internet), mostramos el mensaje
                 // y devolvemos el control al usuario para que reintente.
-                self.errorMessage = "Error: \(error.localizedDescription)"
+                self.errorMessage = FirestoreManager.mensajeAmigable(error)
                 self.isSaving = false
             }
         }

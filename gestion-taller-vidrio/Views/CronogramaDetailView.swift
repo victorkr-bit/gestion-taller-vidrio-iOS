@@ -257,12 +257,14 @@ struct InscripcionRowView: View {
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button {
-                self.inscripcionParaPagar = inscripcion
-            } label: {
-                Label("Pagar", systemImage: "dollarsign.circle.fill")
+            if inscripcion.monto_adeudado > 0 {
+                Button {
+                    self.inscripcionParaPagar = inscripcion
+                } label: {
+                    Label("Pagar", systemImage: "dollarsign.circle.fill")
+                }
+                .tint(.green)
             }
-            .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {
@@ -287,10 +289,12 @@ struct InscripcionRowView: View {
             .tint(.orange)
         }
         .contextMenu {
-            Button {
-                self.inscripcionParaPagar = inscripcion
-            } label: {
-                Label("Registrar Pago", systemImage: "dollarsign.circle")
+            if inscripcion.monto_adeudado > 0 {
+                Button {
+                    self.inscripcionParaPagar = inscripcion
+                } label: {
+                    Label("Registrar Pago", systemImage: "dollarsign.circle")
+                }
             }
 
             Button {
@@ -302,7 +306,7 @@ struct InscripcionRowView: View {
             Button {
                 self.inscripcionAMover = inscripcion
             } label: {
-                Label("Mover la inscripción", systemImage: "arrow.right.circle")
+                Label("Mover inscripción", systemImage: "arrow.right.circle")
             }
 
             Divider()

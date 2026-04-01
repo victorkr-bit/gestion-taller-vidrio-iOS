@@ -49,7 +49,7 @@ class ContactosViewModel: ObservableObject {
                 self.contactos = fetchedContactos.sorted { $0.nombreCompleto < $1.nombreCompleto }
                 self.isLoading = false // Se me pasó a false aquí
             } catch {
-                self.errorMessage = "Error al cargar contactos: \(error.localizedDescription)"
+                self.errorMessage = "Error al cargar contactos: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })
@@ -60,7 +60,7 @@ class ContactosViewModel: ObservableObject {
             do {
                 try await saveContactoAsync(datos: datos, id: id)
             } catch {
-                self.errorMessage = "Error al guardar contacto: \(error.localizedDescription)"
+                self.errorMessage = "Error al guardar contacto: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -99,7 +99,7 @@ class ContactosViewModel: ObservableObject {
                 self.fetchContactos()
                 
             } catch {
-                self.errorMessage = "Error al borrar el contacto: \(error.localizedDescription)"
+                self.errorMessage = "Error al borrar el contacto: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })

@@ -150,7 +150,7 @@ struct MoverInscripcionView: View {
                 dismiss()
                 onMoved?()
             } catch {
-                errorMessage = "Error al mover inscripción: \(error.localizedDescription)"
+                errorMessage = "Error al mover inscripción: \(FirestoreManager.mensajeAmigable(error))"
                 isSubmitting = false
             }
         }

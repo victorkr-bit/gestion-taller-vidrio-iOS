@@ -73,7 +73,7 @@ class DashboardViewModel: ObservableObject {
             case .success(let metricas):
                 self.totalDeuda = metricas.total_deuda_pedidos + metricas.total_deuda_inscripciones
             case .failure(let error):
-                self.errorMessage = "Error cargando métricas: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando métricas: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
 
@@ -101,7 +101,7 @@ class DashboardViewModel: ObservableObject {
                 self.totalIngresosMes = pagos.reduce(0) { $0 + $1.monto }
                 self.recalcularDatosGraficos(pagos)
             case .failure(let error):
-                self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }
@@ -148,7 +148,7 @@ class DashboardViewModel: ObservableObject {
                 self.isLoading = false
 
             case .failure(let error):
-                self.errorMessage = "Error sincronizando agenda: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando agenda: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         }
@@ -169,7 +169,7 @@ class DashboardViewModel: ObservableObject {
                     self.ocupacionesTaller.append(item)
                 }
             case .failure(let error):
-                self.errorMessage = "Error calculando ocupación: \(error.localizedDescription)"
+                self.errorMessage = "Error calculando ocupación: \(FirestoreManager.mensajeAmigable(error))"
                 self.ocupacionesTaller.removeAll { $0.id == cronogramaID }
             }
         }

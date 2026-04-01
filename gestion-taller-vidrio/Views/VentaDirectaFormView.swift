@@ -190,7 +190,7 @@ struct VentaDirectaFormView: View {
                 try await viewModel.saveVentaDirectaAsync(pago: pago)
                 dismiss()
             } catch {
-                self.errorMessage = "Error guardando venta: \(error.localizedDescription)"
+                self.errorMessage = "Error guardando venta: \(FirestoreManager.mensajeAmigable(error))"
                 self.isSaving = false
             }
         }

@@ -64,9 +64,9 @@ class PedidosViewModel: ObservableObject {
         case .todos:
             filtradosPorPago = filtradosPorTexto
         case .pagados:
-            filtradosPorPago = filtradosPorTexto.filter { $0.estado_pago }
+            filtradosPorPago = filtradosPorTexto.filter { $0.estado_pago && $0.presupuesto > 0 }
         case .pendientes:
-            filtradosPorPago = filtradosPorTexto.filter { !$0.estado_pago }
+            filtradosPorPago = filtradosPorTexto.filter { !$0.estado_pago || $0.presupuesto == 0 }
         }
         
         // 3. Filtrar por Estado de Entrega (AGREGADO)
@@ -126,7 +126,7 @@ class PedidosViewModel: ObservableObject {
             case .success(let pedidos):
                 self.pedidos = pedidos
             case .failure(let error):
-                self.errorMessage = "Error sincronizando pedidos: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando pedidos: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         }
@@ -148,7 +148,7 @@ class PedidosViewModel: ObservableObject {
             do {
                 try await ventasRepo.deletePedido(pedido: pedido)
             } catch {
-                self.errorMessage = "No se pudo eliminar el pedido: \(error.localizedDescription)"
+                self.errorMessage = "No se pudo eliminar el pedido: \(FirestoreManager.mensajeAmigable(error))"
                 self.startListeningOrders()
             }
         })
@@ -172,7 +172,7 @@ class PedidosViewModel: ObservableObject {
                     self.pagosPorPedido[id] = pagos
                 }
             case .failure(let error):
-                self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
         paymentListeners[id] = listener
@@ -200,7 +200,7 @@ class PedidosViewModel: ObservableObject {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {
-                self.errorMessage = "Error al borrar pago: \(error.localizedDescription)"
+                self.errorMessage = "Error al borrar pago: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }

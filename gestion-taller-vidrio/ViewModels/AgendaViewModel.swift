@@ -65,7 +65,7 @@ class AgendaViewModel: ObservableObject {
             case .success(let items):
                 self.cursosProximos = items
             case .failure(let error):
-                self.errorMessage = "Error sincronizando cronograma: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando cronograma: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         }
@@ -75,7 +75,7 @@ class AgendaViewModel: ObservableObject {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
-                self.errorMessage = "Error cargando historial: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando historial: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })
@@ -87,7 +87,7 @@ class AgendaViewModel: ObservableObject {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
             } catch {
-                self.errorMessage = "Error actualizando historial: \(error.localizedDescription)"
+                self.errorMessage = "Error actualizando historial: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -97,7 +97,7 @@ class AgendaViewModel: ObservableObject {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
             } catch {
-                self.errorMessage = "Error al cargar el catálogo de cursos: \(error.localizedDescription)"
+                self.errorMessage = "Error al cargar el catálogo de cursos: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -109,7 +109,7 @@ class AgendaViewModel: ObservableObject {
             do {
                 try await tallerRepo.saveCronogramaItem(item: item)
             } catch {
-                self.errorMessage = "Error al guardar el curso programado: \(error.localizedDescription)"
+                self.errorMessage = "Error al guardar el curso programado: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -161,7 +161,7 @@ class AgendaViewModel: ObservableObject {
             } catch {
                 // Rollback: re-suscribir restaura ambas listas desde el servidor
                 self.subscribeToCronograma()
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = FirestoreManager.mensajeAmigable(error)
             }
         })
     }

@@ -185,7 +185,7 @@ struct InscripcionFormView: View {
                         )
                     } label: {
                         HStack {
-                            Text("Mover la inscripción")
+                            Text("Mover inscripción")
                             Spacer()
                             Text(origenNombre)
                                 .foregroundStyle(.secondary)
@@ -355,7 +355,7 @@ struct InscripcionFormView: View {
             do {
                 self.contactos = try await inscripcionesVM.ventasRepo.fetchContactos()
             } catch {
-                inscripcionesVM.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
+                inscripcionesVM.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }

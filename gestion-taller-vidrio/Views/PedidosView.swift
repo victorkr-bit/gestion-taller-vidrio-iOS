@@ -128,8 +128,14 @@ struct PedidoRowView: View {
                         iconoSuperior: nil,
                         monto: pedido.presupuesto,
                         tags: [
-                            TagConfig(text: pedido.estado_pago ? "Pagado" : "Debe \(Formatters.money(pedido.monto_adeudado))",
-                                      color: pedido.estado_pago ? .green : .orange),
+                            TagConfig(
+                                text: pedido.presupuesto == 0
+                                    ? "Sin presupuesto"
+                                    : (pedido.estado_pago ? "Pagado" : "Debe \(Formatters.money(pedido.monto_adeudado))"),
+                                color: pedido.presupuesto == 0
+                                    ? .gray
+                                    : (pedido.estado_pago ? .green : .orange)
+                            ),
                             TagConfig(text: pedido.estado_entrega ? "Entregado" : "Pendiente",
                                       color: pedido.estado_entrega ? .gray : .purple)
                         ]
@@ -161,10 +167,12 @@ struct PedidoRowView: View {
         }
         
         .contextMenu {
-            Button {
-                self.pedidoParaPagar = pedido
-            } label: {
-                Label("Registrar Pago", systemImage: "dollarsign.circle")
+            if pedido.monto_adeudado > 0 {
+                Button {
+                    self.pedidoParaPagar = pedido
+                } label: {
+                    Label("Registrar Pago", systemImage: "dollarsign.circle")
+                }
             }
             
             Button {
@@ -183,12 +191,14 @@ struct PedidoRowView: View {
         }
 
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button {
-                self.pedidoParaPagar = pedido
-            } label: {
-                Label("Pagar", systemImage: "dollarsign.circle.fill")
+            if pedido.monto_adeudado > 0 {
+                Button {
+                    self.pedidoParaPagar = pedido
+                } label: {
+                    Label("Pagar", systemImage: "dollarsign.circle.fill")
+                }
+                .tint(.green)
             }
-            .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {

@@ -56,7 +56,7 @@ class InscripcionesViewModel: ObservableObject {
                 self.inscripciones = lista
                 self.calcularOcupaciones(para: lista)
             case .failure(let error):
-                self.errorMessage = "Error en inscripciones: \(error.localizedDescription)"
+                self.errorMessage = "Error en inscripciones: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }
@@ -75,7 +75,7 @@ class InscripcionesViewModel: ObservableObject {
             case .success(let lista):
                 self.inscripciones = lista
             case .failure(let error):
-                self.errorMessage = "Error en inscripciones online: \(error.localizedDescription)"
+                self.errorMessage = "Error en inscripciones online: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }
@@ -85,7 +85,7 @@ class InscripcionesViewModel: ObservableObject {
             do {
                 try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
             } catch {
-                self.errorMessage = "Error al guardar la inscripción: \(error.localizedDescription)"
+                self.errorMessage = "Error al guardar la inscripción: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -100,7 +100,7 @@ class InscripcionesViewModel: ObservableObject {
             do {
                 try await tallerRepo.deleteInscripcion(inscripcion: inscripcion)
             } catch {
-                self.errorMessage = "Error al eliminar inscripción: \(error.localizedDescription)"
+                self.errorMessage = "Error al eliminar inscripción: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -131,7 +131,7 @@ class InscripcionesViewModel: ObservableObject {
             case .success(let pagos):
                 self.pagosPorInscripcion[id] = pagos
             case .failure(let error):
-                self.errorMessage = "Error cargando pagos: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
 

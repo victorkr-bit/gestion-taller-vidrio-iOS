@@ -49,7 +49,7 @@ class DeudoresViewModel: ObservableObject {
                 self.deudores = try await repository.fetchDeudores()
                 self.isLoading = false
             } catch {
-                self.errorMessage = "Error al cargar deudores: \(error.localizedDescription)"
+                self.errorMessage = "Error al cargar deudores: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })
@@ -61,7 +61,7 @@ class DeudoresViewModel: ObservableObject {
             try await repository.registrarPago(pago: pago, origen: origen)
             fetchDeudores()
         } catch {
-            errorMessage = "Error al registrar pago: \(error.localizedDescription)"
+            errorMessage = "Error al registrar pago: \(FirestoreManager.mensajeAmigable(error))"
             throw error
         }
     }
@@ -74,7 +74,7 @@ class DeudoresViewModel: ObservableObject {
                 try await repository.condonarDeuda(origen: origen)
                 fetchDeudores()
             } catch {
-                self.errorMessage = "Error al condonar la deuda: \(error.localizedDescription)"
+                self.errorMessage = "Error al condonar la deuda: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })

@@ -61,7 +61,7 @@ class PedidoFormViewModel: ObservableObject {
             do {
                 self.contactos = try await repository.fetchContactos()
             } catch {
-                self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -93,7 +93,7 @@ class PedidoFormViewModel: ObservableObject {
                 self.shouldDismiss = true
                 self.isLoading = false
             } catch {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = FirestoreManager.mensajeAmigable(error)
                 self.isLoading = false
             }
         })

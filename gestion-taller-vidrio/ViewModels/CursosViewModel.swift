@@ -37,7 +37,7 @@ class CursosViewModel: ObservableObject {
             case .success(let cursos):
                 self.cursos = cursos.sorted { $0.nombre < $1.nombre }
             case .failure(let error):
-                self.errorMessage = "Error sincronizando cursos: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando cursos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }
@@ -49,7 +49,7 @@ class CursosViewModel: ObservableObject {
         do {
             return try await repository.saveCurso(curso: curso)
         } catch {
-            self.errorMessage = "Error al guardar el curso: \(error.localizedDescription)"
+            self.errorMessage = "Error al guardar el curso: \(FirestoreManager.mensajeAmigable(error))"
             return nil
         }
     }
@@ -69,7 +69,7 @@ class CursosViewModel: ObservableObject {
                     try await group.waitForAll()
                 }
             } catch {
-                self.errorMessage = "Error al borrar el curso: \(error.localizedDescription)"
+                self.errorMessage = "Error al borrar el curso: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })

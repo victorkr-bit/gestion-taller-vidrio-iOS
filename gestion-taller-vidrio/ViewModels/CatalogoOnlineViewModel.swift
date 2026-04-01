@@ -44,7 +44,7 @@ class CatalogoOnlineViewModel: ObservableObject {
             case .success(let cursos):
                 self.catalogoOnline = cursos.sorted { $0.nombre < $1.nombre }
             case .failure(let error):
-                self.errorMessage = "Error sincronizando catálogo: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando catálogo: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }

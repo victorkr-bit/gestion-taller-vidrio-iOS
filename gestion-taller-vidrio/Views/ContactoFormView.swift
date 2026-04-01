@@ -128,7 +128,7 @@ struct ContactoFormView: View {
                 onSaveSuccess?(contactoParaUI)
                 dismiss()
             } catch {
-                self.errorMessage = "Error al guardar: \(error.localizedDescription)"
+                self.errorMessage = "Error al guardar: \(FirestoreManager.mensajeAmigable(error))"
                 self.isSaving = false
             }
         }

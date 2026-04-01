@@ -84,7 +84,7 @@ struct LoginView: View {
             
             if let error = error {
                 // Si hay un error, lo mostramos
-                errorMessage = "Error: \(error.localizedDescription)"
+                errorMessage = FirestoreManager.mensajeAmigable(error)
             }
             
             // Si el login es exitoso, el 'listener' en la vista principal

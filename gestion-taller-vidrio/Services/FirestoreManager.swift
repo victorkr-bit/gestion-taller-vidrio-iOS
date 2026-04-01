@@ -55,6 +55,41 @@ final class FirestoreManager {
         // 3. Si no es un error de Functions (ej. sin internet), lo pasamos tal cual
         return .transaccionFallida(error.localizedDescription) // [cite: 175]
     }
+
+    /// Devuelve un mensaje amigable en español para errores de red/conexión.
+    /// Si no es un error de red, retorna `error.localizedDescription` tal cual.
+    static func mensajeAmigable(_ error: Error) -> String {
+        let nsError = error as NSError
+
+        switch nsError.domain {
+        case NSURLErrorDomain:
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet:
+                return "Sin conexión a internet. Verificá tu conexión e intentá de nuevo."
+            case NSURLErrorTimedOut:
+                return "La operación tardó demasiado. Intentá de nuevo en unos momentos."
+            case NSURLErrorNetworkConnectionLost:
+                return "Se perdió la conexión. Verificá tu conexión e intentá de nuevo."
+            case NSURLErrorCannotConnectToHost, NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed:
+                return "No se pudo conectar al servidor. Intentá de nuevo más tarde."
+            default:
+                return "Error de conexión. Verificá tu conexión e intentá de nuevo."
+            }
+
+        case "FIRFirestoreErrorDomain":
+            switch nsError.code {
+            case 14: // unavailable
+                return "El servidor no está disponible en este momento. Intentá más tarde."
+            case 4:  // deadline exceeded
+                return "La operación tardó demasiado. Intentá de nuevo en unos momentos."
+            default:
+                return error.localizedDescription
+            }
+
+        default:
+            return error.localizedDescription
+        }
+    }
 }
 
 // MARK: - Decodificación segura con logging

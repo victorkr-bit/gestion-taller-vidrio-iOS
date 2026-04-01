@@ -105,7 +105,7 @@ class CajaViewModel: ObservableObject {
             case .success(let pagosNuevos):
                 self.pagos = pagosNuevos
             case .failure(let error):
-                self.errorMessage = "Error sincronizando caja: \(error.localizedDescription)"
+                self.errorMessage = "Error sincronizando caja: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }
@@ -115,7 +115,7 @@ class CajaViewModel: ObservableObject {
             do {
                 try await finanzasRepo.deletePago(pago: pago)
             } catch {
-                self.errorMessage = "No se pudo borrar el pago: \(error.localizedDescription)"
+                self.errorMessage = "No se pudo borrar el pago: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -128,7 +128,7 @@ class CajaViewModel: ObservableObject {
                 try await finanzasRepo.editPago(pagoActualizado: pago, montoAntiguo: montoAntiguo)
                 self.isLoading = false
             } catch {
-                self.errorMessage = "Error al editar pago: \(error.localizedDescription)"
+                self.errorMessage = "Error al editar pago: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
         })
@@ -145,7 +145,7 @@ class CajaViewModel: ObservableObject {
             do {
                 self.contactos = try await ventasRepo.fetchContactos()
             } catch {
-                self.errorMessage = "Error cargando contactos: \(error.localizedDescription)"
+                self.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
@@ -155,7 +155,7 @@ class CajaViewModel: ObservableObject {
             do {
                 try await saveVentaDirectaAsync(pago: pago)
             } catch {
-                self.errorMessage = "Error al guardar venta directa: \(error.localizedDescription)"
+                self.errorMessage = "Error al guardar venta directa: \(FirestoreManager.mensajeAmigable(error))"
             }
         })
     }
