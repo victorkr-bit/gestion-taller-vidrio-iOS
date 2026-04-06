@@ -11,6 +11,24 @@ struct DeudoresView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                HStack(spacing: 15) {
+                    KpiCardView(
+                        titulo: "Pedidos",
+                        valor: viewModel.totalDeudaPedidos,
+                        icon: "shippingbox.fill",
+                        color: .blue
+                    )
+                    KpiCardView(
+                        titulo: "Inscripciones",
+                        valor: viewModel.totalDeudaInscripciones,
+                        icon: "graduationcap.fill",
+                        color: .purple
+                    )
+                }
+                .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)

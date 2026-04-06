@@ -27,6 +27,14 @@ class DeudoresViewModel: ObservableObject {
         fetchDeudores()
     }
 
+    var totalDeudaPedidos: Double {
+        deudores.filter { $0.tipo == .pedido }.reduce(0) { $0 + $1.montoAdeudado }
+    }
+
+    var totalDeudaInscripciones: Double {
+        deudores.filter { $0.tipo == .inscripcion }.reduce(0) { $0 + $1.montoAdeudado }
+    }
+
     var deudoresFiltrados: [DeudorItem] {
         guard !searchQuery.isEmpty else { return deudores }
         let query = searchQuery.lowercased()
