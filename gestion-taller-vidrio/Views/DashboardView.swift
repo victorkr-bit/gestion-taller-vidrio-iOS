@@ -112,7 +112,7 @@ struct DashboardView: View {
 
     private var kpiGrid: some View {
         HStack(spacing: 15) {
-            Button { navManager.selectedTab = .caja } label: {
+            Button { navManager.selectedTab = .pagos } label: {
                 KpiCardView(
                     titulo: "Ingresos",
                     valor: viewModel.totalIngresosMes,

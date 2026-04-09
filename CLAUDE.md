@@ -31,7 +31,7 @@ App Entry (gestion_taller_vidrioApp.swift)
           ├─ Inicio → DashboardView / DashboardViewModel
           ├─ Cronograma → CronogramaView / AgendaVM + InscripcionesVM + CatalogoOnlineVM
           ├─ Pedidos → PedidosView / PedidosViewModel
-          ├─ Caja → CajaView / CajaViewModel
+          ├─ Pagos → PagosView / PagosViewModel
           └─ Gestión → GestionView (contacts, courses, debtors, logout)
 ```
 
@@ -42,7 +42,7 @@ App Entry (gestion_taller_vidrioApp.swift)
 **Wiring sequence:**
 1. Three repos created: `FinanzasRepository`, `TallerRepository`, `VentasRepository`
 2. `DashboardViewModel` gets all three repos
-3. `CajaViewModel` gets repos + Combine publishers `$fechaInicio`/`$fechaFin` from `DashboardViewModel` for reactive date sync
+3. `PagosViewModel` gets repos + Combine publishers `$fechaInicio`/`$fechaFin` from `DashboardViewModel` for reactive date sync
 4. Remaining VMs get their required repos
 
 All VMs use constructor injection with optional defaults (`repo ?? Repository()`), making them testable.
@@ -85,7 +85,7 @@ All use `@MainActor` and conform to `ObservableObject`.
 | ViewModel | Repo dependencies | Key responsibility |
 |---|---|---|
 | `DashboardViewModel` | All 3 | KPIs, charts, next class, occupation |
-| `CajaViewModel` | Finanzas, Ventas | Payment list, search, date-filtered via Combine |
+| `PagosViewModel` | Finanzas, Ventas | Payment list, search, date-filtered via Combine |
 | `PedidosViewModel` | Ventas, Finanzas | Orders with dual filters (pago/entrega), payment accordions |
 | `AgendaViewModel` | Taller | Schedule (próximos listener + histórico one-shot) |
 | `InscripcionesViewModel` | Taller, Finanzas, Ventas | Enrollments (agenda & online), occupancy calculations |
@@ -143,7 +143,7 @@ gestion-taller-vidrio/
 │   └── VentasRepository.swift       # Pedidos, contactos
 ├── ViewModels/
 │   ├── DashboardViewModel.swift     # KPIs, charts, próxima clase, ocupación
-│   ├── CajaViewModel.swift          # Caja with search + date sync
+│   ├── PagosViewModel.swift         # Pagos with search + date sync
 │   ├── PedidosViewModel.swift       # Orders + dual filters + payment accordions
 │   ├── AgendaViewModel.swift        # Schedule (próximos/histórico)
 │   ├── InscripcionesViewModel.swift # Enrollments + occupancy
@@ -162,7 +162,7 @@ gestion-taller-vidrio/
 │   ├── InscripcionFormView.swift    # Enrollment form
 │   ├── PedidosView.swift            # Orders list + filters
 │   ├── PedidoFormView.swift         # Order form
-│   ├── CajaView.swift               # Cash register + search
+│   ├── PagosView.swift              # Payment list with search + date filter
 │   ├── RegistrarPagoView.swift      # Payment registration
 │   ├── PagoFormView.swift           # Payment edit
 │   ├── VentaDirectaFormView.swift   # Direct sale

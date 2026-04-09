@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct CajaView: View {
-    @ObservedObject var viewModel: CajaViewModel
+struct PagosView: View {
+    @ObservedObject var viewModel: PagosViewModel
     
     @State private var showVentaDirecta = false
     @State private var pagoAEditar: Pago? = nil
@@ -52,7 +52,7 @@ struct CajaView: View {
             } else {
                 List {
                     ForEach(viewModel.pagosFiltrados) { pago in
-                        CajaPagoRow(
+                        PagosRow(
                             pago: pago,
                             viewModel: viewModel,
                             pagoToEdit: $pagoAEditar
@@ -65,7 +65,7 @@ struct CajaView: View {
                 .listStyle(.plain)
             }
         }
-        .navigationTitle("Caja")
+        .navigationTitle("Pagos")
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             viewModel.sincronizarMesActualSiCambio()
         }
@@ -116,9 +116,9 @@ struct CajaView: View {
 }
 
 // MARK: - Subvista de Fila
-private struct CajaPagoRow: View {
+private struct PagosRow: View {
     let pago: Pago
-    @ObservedObject var viewModel: CajaViewModel
+    @ObservedObject var viewModel: PagosViewModel
     @Binding var pagoToEdit: Pago?
 
     @State private var showDeleteAlert = false

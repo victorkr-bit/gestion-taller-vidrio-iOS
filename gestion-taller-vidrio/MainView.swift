@@ -27,12 +27,12 @@ struct MainView: View {
                 .tabItem { Label("Cronograma", systemImage: "calendar") }
                 .tag(AppTab.cronograma)
             
-            // Pestaña 4: Caja
+            // Pestaña 4: Pagos
             NavigationStack {
-                CajaView(viewModel: container.cajaVM)
+                PagosView(viewModel: container.pagosVM)
             }
-            .tabItem { Label("Caja", systemImage: "dollarsign.circle") }
-            .tag(AppTab.caja)
+            .tabItem { Label("Pagos", systemImage: "dollarsign.circle") }
+            .tag(AppTab.pagos)
 
             // Pestaña 5: Gestión
             NavigationStack {

@@ -11,7 +11,7 @@ import SwiftUI
 // Tarea 4.5: Formulario para Editar un Pago (Flujo 3)
 struct PagoFormView: View {
     
-    @ObservedObject var viewModel: CajaViewModel
+    @ObservedObject var viewModel: PagosViewModel
     var pagoToEdit: Pago
     @Environment(\.dismiss) var dismiss
     
@@ -29,7 +29,7 @@ struct PagoFormView: View {
     }
     
     // Inicializador para cargar el estado desde el pago a editar
-    init(viewModel: CajaViewModel, pagoToEdit: Pago) {
+    init(viewModel: PagosViewModel, pagoToEdit: Pago) {
         self.viewModel = viewModel
         self.pagoToEdit = pagoToEdit
         

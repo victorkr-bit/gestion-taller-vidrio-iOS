@@ -11,7 +11,7 @@ final class AppContainer: ObservableObject {
 
     // MARK: - ViewModels
     let dashboardVM: DashboardViewModel
-    let cajaVM: CajaViewModel
+    let pagosVM: PagosViewModel
     let agendaVM: AgendaViewModel
     let inscripcionesVM: InscripcionesViewModel
     let catalogoOnlineVM: CatalogoOnlineViewModel
@@ -36,8 +36,8 @@ final class AppContainer: ObservableObject {
         )
         self.dashboardVM = dashboardVM
 
-        // 3. INYECCIÓN EN CAJA
-        self.cajaVM = CajaViewModel(
+        // 3. INYECCIÓN EN PAGOS
+        self.pagosVM = PagosViewModel(
             finanzasRepo: finanzasRepo,
             ventasRepo: ventasRepo
         )

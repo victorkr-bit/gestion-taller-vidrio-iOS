@@ -4,7 +4,7 @@ import SwiftUI
 import FirebaseFirestore
 
 @MainActor
-class CajaViewModel: ObservableObject {
+class PagosViewModel: ObservableObject {
     
     // MARK: - Estado de Datos (Backend)
     @Published var pagos: [Pago] = []
@@ -90,7 +90,7 @@ class CajaViewModel: ObservableObject {
         listener?.remove()
     }
     
-    // MARK: - Lógica de Caja
+    // MARK: - Lógica de Pagos
     
     func sincronizarMesActualSiCambio() {
         let actual = MesAño.current()
@@ -113,7 +113,7 @@ class CajaViewModel: ObservableObject {
             case .success(let pagosNuevos):
                 self.pagos = pagosNuevos
             case .failure(let error):
-                self.errorMessage = "Error sincronizando caja: \(FirestoreManager.mensajeAmigable(error))"
+                self.errorMessage = "Error sincronizando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }
         }
     }

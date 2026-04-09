@@ -6,7 +6,7 @@ enum AppTab: Int {
     case inicio = 0
     case cronograma = 1
     case pedidos = 2
-    case caja = 3
+    case pagos = 3
     case gestion = 4
 }
 

@@ -11,7 +11,7 @@ import SwiftUI
 // Tarea 4.5: Formulario para Venta Directa (Flujo 4)
 struct VentaDirectaFormView: View {
     
-    @ObservedObject var viewModel: CajaViewModel // ViewModel principal de la caja
+    @ObservedObject var viewModel: PagosViewModel // ViewModel principal de pagos
     @Environment(\.dismiss) var dismiss
     
     // Instancia dedicada para manejar la creación de contactos en el modal
