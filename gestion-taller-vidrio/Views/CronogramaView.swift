@@ -1,8 +1,9 @@
 import SwiftUI
 
-enum ModoVista: String, CaseIterable, Identifiable {
-    case agenda = "Agenda"
-    case online = "Cursos Online"
+enum ModoAgenda: String, CaseIterable, Identifiable {
+    case presenciales = "Presenciales"
+    case online = "Online"
+    case historial = "Historial"
     var id: String { self.rawValue }
 }
 
@@ -14,8 +15,7 @@ struct CronogramaView: View {
     // Acceso al NavigationManager global
     @EnvironmentObject var navManager: NavigationManager
 
-    // Estado bimodal (agenda vs online) — puramente de presentación
-    @State private var modoVista: ModoVista = .agenda
+    @State private var modoAgenda: ModoAgenda = .presenciales
 
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
@@ -23,16 +23,16 @@ struct CronogramaView: View {
     @State private var itemToEdit: CronogramaItem?
 
     private var activeErrorMessage: Binding<String?> {
-        modoVista == .agenda ? $agendaVM.errorMessage : $catalogoOnlineVM.errorMessage
+        modoAgenda == .online ? $catalogoOnlineVM.errorMessage : $agendaVM.errorMessage
     }
 
     var body: some View {
         NavigationStack(path: $navManager.cronogramaPath) {
             VStack(spacing: 0) {
 
-                // --- Selector de Modo (Agenda vs Online) ---
-                Picker("Modo de Vista", selection: $modoVista.animation()) {
-                    ForEach(ModoVista.allCases) { modo in
+                // --- Selector de Modo ---
+                Picker("Modo", selection: $modoAgenda.animation()) {
+                    ForEach(ModoAgenda.allCases) { modo in
                         Text(modo.rawValue).tag(modo)
                     }
                 }
@@ -40,29 +40,18 @@ struct CronogramaView: View {
                 .padding()
 
                 // --- Contenido dinámico según el modo ---
-                if modoVista == .agenda {
-
-                        // Filtro Próximos / Historial
-                    Picker("Filtro Cronograma", selection: $agendaVM.filtroSeleccionado.animation()) {
-                        ForEach(AgendaViewModel.FiltroCronograma.allCases) { filtro in
-                            Text(filtro.rawValue).tag(filtro)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-
+                switch modoAgenda {
+                case .presenciales:
                     agendaListView
-
-                } else {
-
+                case .online:
                     onlineListView
+                case .historial:
+                    agendaListView
                 }
             }
-            .navigationTitle("Gestión Taller")
+            .navigationTitle("Agenda de Cursos")
             .toolbar {
-                // Toolbar solo si estamos en modo Agenda
-                if modoVista == .agenda {
+                if modoAgenda == .presenciales {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button { self.isCreatingAgendaEvent = true } label: {
                             Image(systemName: "plus")
@@ -96,11 +85,16 @@ struct CronogramaView: View {
             } message: {
                 Text("¿Eliminar \"\(itemToDelete?.cursoNombre ?? "")\"? Esta acción no se puede deshacer.")
             }
-            // Recarga al cambiar pestaña
-            .onChange(of: modoVista) { _, newMode in
-                if newMode == .online {
+            .onChange(of: modoAgenda) { _, newMode in
+                switch newMode {
+                case .presenciales:
+                    agendaVM.filtroSeleccionado = .proximos
+                    catalogoOnlineVM.stopListening()
+                    agendaVM.fetchCronograma()
+                case .online:
                     catalogoOnlineVM.subscribeToCatalogoOnline()
-                } else {
+                case .historial:
+                    agendaVM.filtroSeleccionado = .historial
                     catalogoOnlineVM.stopListening()
                     agendaVM.fetchCronograma()
                 }
@@ -113,7 +107,7 @@ struct CronogramaView: View {
 
     // MARK: - Subvistas de Listas
 
-    /// Vista de la lista para la Agenda (Talleres y Cursos con Fecha)
+    /// Vista de la lista para Presenciales e Historial
     private var agendaListView: some View {
         ZStack {
             if agendaVM.isLoading && agendaVM.cursosFiltrados.isEmpty {

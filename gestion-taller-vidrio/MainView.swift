@@ -24,7 +24,7 @@ struct MainView: View {
 
             // Pestaña 3: Cronograma
             CronogramaView(agendaVM: container.agendaVM, inscripcionesVM: container.inscripcionesVM, catalogoOnlineVM: container.catalogoOnlineVM)
-                .tabItem { Label("Cronograma", systemImage: "calendar") }
+                .tabItem { Label("Agenda", systemImage: "calendar") }
                 .tag(AppTab.cronograma)
             
             // Pestaña 4: Pagos

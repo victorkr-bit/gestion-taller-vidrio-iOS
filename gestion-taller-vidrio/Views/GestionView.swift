@@ -26,7 +26,7 @@ struct GestionView: View {
 
             Section("Finanzas") {
                 NavigationLink(destination: DeudoresView(viewModel: deudoresVM)) {
-                    Label("Panel de Deudores", systemImage: "person.crop.circle.badge.xmark")
+                    Label("Deudores", systemImage: "person.crop.circle.badge.xmark")
                 }
             }
             // --- FIN DE LA MODIFICACIÓN ---

@@ -99,7 +99,7 @@ struct DeudoresView: View {
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
             }
         }
-        .navigationTitle("Panel de Deudores")
+        .navigationTitle("Deudores")
         .refreshable {
             viewModel.fetchDeudores()
         }
