@@ -33,9 +33,9 @@ struct CursosView: View {
                                             Text(curso.tipo.descripcion)
                                                 .font(.subheadline)
                                                 .fontWeight(.medium)
-                                                .foregroundStyle(Color.secondary)
+                                                .foregroundStyle(curso.tipo.color)
                                                 .padding(4)
-                                                .background(Color.secondary.opacity(0.1))
+                                                .background(curso.tipo.color.opacity(0.15))
                                                 .cornerRadius(6)
                                         }
                                         

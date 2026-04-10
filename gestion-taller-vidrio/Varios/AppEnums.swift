@@ -16,6 +16,14 @@ enum TipoCurso: String, Codable, CaseIterable, Identifiable {
         case .taller: return "Taller"
         }
     }
+
+    var color: Color {
+        switch self {
+        case .presencial: return .blue
+        case .online:     return .purple
+        case .taller:     return .orange
+        }
+    }
     
     // --- SOLUCIÓN DEL BUG ---
     // Implementamos un decodificador personalizado que perdona las mayúsculas.
