@@ -211,7 +211,17 @@ struct InscripcionRowView: View {
     @State private var showDeleteAlert = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        Button {
+            withAnimation {
+                if expandedInscripcionID == inscripcion.id {
+                    inscripcionesVM.stopListeningPagos(para: inscripcion)
+                    expandedInscripcionID = nil
+                } else {
+                    expandedInscripcionID = inscripcion.id
+                    inscripcionesVM.fetchPagos(para: inscripcion)
+                }
+            }
+        } label: {
             CardView {
                 HStack {
                     let ocupacion = inscripcionesVM.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
@@ -219,16 +229,16 @@ struct InscripcionRowView: View {
                     GenericRowView(
                         titulo: inscripcion.alumno_nombre,
                         subtitulo: inscripcion.notas.flatMap { $0.isEmpty ? nil : $0 },
-                        infoSuperior: inscripcion.horario_inicio, // Ej: "18:00"
+                        infoSuperior: inscripcion.horario_inicio,
                         iconoSuperior: "clock",
-                        monto: nil, // La fila original no mostraba precio base, solo estado de deuda en tags
+                        monto: nil,
                         tags: [
                             TagConfig(text: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? "Pagado" : "Debe \(Formatters.money(inscripcion.monto_adeudado))",
                                       color: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? .green : .orange),
                             inscripcion.turnos ?? 0 > 1 ? TagConfig(text: "\(inscripcion.turnos!) turnos", color: .mint) : nil,
                             (inscripcion.cursoTipo == .taller && ocupacion > 0) ?
                                 TagConfig(text: "Ocup: \(ocupacion)", color: ocupacion >= 4 ? .red : .blue) : nil
-                        ].compactMap { $0 } // Esto elimina los 'nil' de la lista
+                        ].compactMap { $0 }
                     )
 
                     Spacer()
@@ -239,19 +249,8 @@ struct InscripcionRowView: View {
                 }
             }
         }
+        .buttonStyle(.plain)
         .listRowSeparator(.hidden)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation {
-                if expandedInscripcionID == inscripcion.id {
-                    inscripcionesVM.stopListeningPagos(para: inscripcion)
-                    expandedInscripcionID = nil
-                } else {
-                    expandedInscripcionID = inscripcion.id
-                    inscripcionesVM.fetchPagos(para: inscripcion)
-                }
-            }
-        }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             if inscripcion.monto_adeudado > 0 {
                 Button {
