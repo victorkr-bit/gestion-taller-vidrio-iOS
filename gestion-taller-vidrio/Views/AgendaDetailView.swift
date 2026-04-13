@@ -113,24 +113,20 @@ struct AgendaDetailView: View {
         .navigationTitle("Detalle del Curso")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
-                    Button {
+                    Button("Editar curso", systemImage: "pencil") {
                         self.isEditingCronograma = true
-                    } label: {
-                        Image(systemName: "pencil")
                     }
-                    Button {
+                    Button("Nueva inscripción", systemImage: "plus") {
                         self.isCreatingNew = true
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
             }
         }
         .sheet(isPresented: $isEditingCronograma) {
             NavigationStack {
-                EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: displayItem)
+                EditarAgendaView(agendaVM: agendaVM, cronogramaItem: displayItem)
             }
         }
         .sheet(isPresented: $isCreatingNew) {
