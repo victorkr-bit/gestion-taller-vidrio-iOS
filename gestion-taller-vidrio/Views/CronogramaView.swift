@@ -20,6 +20,7 @@ struct AgendaView: View {
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
     @State private var itemToDelete: CronogramaItem?
+    @State private var showDeleteAlert = false
     @State private var itemToEdit: CronogramaItem?
 
     private var activeErrorMessage: Binding<String?> {
@@ -69,10 +70,7 @@ struct AgendaView: View {
                 }
             }
             .errorAlert(activeErrorMessage)
-            .alert("Eliminar Evento", isPresented: Binding<Bool>(
-                get: { itemToDelete != nil },
-                set: { if !$0 { itemToDelete = nil } }
-            )) {
+            .alert("Eliminar Evento", isPresented: $showDeleteAlert) {
                 Button("Eliminar", role: .destructive) {
                     if let item = itemToDelete {
                         agendaVM.deleteCronogramaItem(item)
@@ -83,7 +81,9 @@ struct AgendaView: View {
                     itemToDelete = nil
                 }
             } message: {
-                Text("¿Eliminar \"\(itemToDelete?.cursoNombre ?? "")\"? Esta acción no se puede deshacer.")
+                if let nombre = itemToDelete?.cursoNombre {
+                    Text("¿Eliminar \"\(nombre)\"? Esta acción no se puede deshacer.")
+                }
             }
             .onChange(of: modoAgenda) { _, newMode in
                 switch newMode {
@@ -150,6 +150,7 @@ struct AgendaView: View {
 
                             Button(role: .destructive) {
                                 itemToDelete = item
+                                showDeleteAlert = true
                             } label: {
                                 Label("Eliminar Curso", systemImage: "trash")
                             }
@@ -157,6 +158,7 @@ struct AgendaView: View {
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 itemToDelete = item
+                                showDeleteAlert = true
                             } label: {
                                 Label("Borrar", systemImage: "trash.fill")
                             }
