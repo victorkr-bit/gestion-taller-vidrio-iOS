@@ -7,7 +7,7 @@ enum ModoAgenda: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-struct CronogramaView: View {
+struct AgendaView: View {
     @ObservedObject var agendaVM: AgendaViewModel
     @ObservedObject var inscripcionesVM: InscripcionesViewModel
     @ObservedObject var catalogoOnlineVM: CatalogoOnlineViewModel
@@ -52,20 +52,20 @@ struct CronogramaView: View {
             .navigationTitle("Agenda de Cursos")
             .toolbar {
                 if modoAgenda == .presenciales {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button { self.isCreatingAgendaEvent = true } label: {
-                            Image(systemName: "plus")
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Nuevo evento", systemImage: "plus") {
+                            self.isCreatingAgendaEvent = true
                         }
                     }
                 }
             }
             // Sheet para crear evento
             .sheet(isPresented: $isCreatingAgendaEvent) {
-                NavigationStack { CronogramaFormView(agendaVM: agendaVM) }
+                NavigationStack { AgendaFormView(agendaVM: agendaVM) }
             }
             .sheet(item: $itemToEdit) { item in
                 NavigationStack {
-                    EditarCronogramaView(agendaVM: agendaVM, cronogramaItem: item)
+                    EditarAgendaView(agendaVM: agendaVM, cronogramaItem: item)
                 }
             }
             .errorAlert(activeErrorMessage)
@@ -100,7 +100,7 @@ struct CronogramaView: View {
                 }
             }
             .navigationDestination(for: CronogramaItem.self) { item in
-                CronogramaDetailView(agendaVM: agendaVM, inscripcionesVM: inscripcionesVM, cronogramaItem: item)
+                AgendaDetailView(agendaVM: agendaVM, inscripcionesVM: inscripcionesVM, cronogramaItem: item)
             }
         }
     }
