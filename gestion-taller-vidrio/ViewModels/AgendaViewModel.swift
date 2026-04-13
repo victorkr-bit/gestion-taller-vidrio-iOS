@@ -29,7 +29,7 @@ class AgendaViewModel: ObservableObject {
         }
     }
 
-    // Catálogo de cursos (para picker en CronogramaFormView)
+    // Catálogo de cursos (para picker en AgendaFormView)
     @Published var cursos: [Curso] = []
 
     // Listener
@@ -44,7 +44,7 @@ class AgendaViewModel: ObservableObject {
         subscribeToCronograma()
     }
 
-    deinit {
+    isolated deinit {
         taskTracker.cancelAll()
         cronogramaListener?.remove()
     }
@@ -74,6 +74,8 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
                 self.errorMessage = "Error cargando historial: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
@@ -86,6 +88,8 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
                 self.errorMessage = "Error actualizando historial: \(FirestoreManager.mensajeAmigable(error))"
             }
@@ -96,6 +100,8 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
                 self.errorMessage = "Error al cargar el catálogo de cursos: \(FirestoreManager.mensajeAmigable(error))"
             }
@@ -108,6 +114,8 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 try await tallerRepo.saveCronogramaItem(item: item)
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
                 self.errorMessage = "Error al guardar el curso programado: \(FirestoreManager.mensajeAmigable(error))"
             }
@@ -158,6 +166,8 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 try await tallerRepo.deleteCronogramaItem(item: item)
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
                 // Rollback: re-suscribir restaura ambas listas desde el servidor
                 self.subscribeToCronograma()
