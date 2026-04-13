@@ -58,7 +58,7 @@ class AgendaViewModel: ObservableObject {
         cronogramaListener?.remove()
 
         cronogramaListener = tallerRepo.listenToCursosProximos { [weak self] result in
-            guard let self = self else { return }
+            guard let self else { return }
             self.isLoading = false
 
             switch result {

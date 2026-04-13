@@ -8,13 +8,13 @@ struct EditarAgendaView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var precioInput: String = ""
-    @State private var fecha: Date = Date()
+    @State private var fecha: Date = .now
     @State private var notas: String = ""
     @State private var isSaving = false
 
     private var precioValido: Double? {
-        let valor = Double(precioInput)
-        return (valor != nil && valor! >= 0) ? valor : nil
+        guard let valor = Double(precioInput), valor >= 0 else { return nil }
+        return valor
     }
 
     private var hayCambios: Bool {
@@ -90,7 +90,7 @@ struct EditarAgendaView: View {
                             ProgressView()
                         } else {
                             Text("Guardar Cambios")
-                                .fontWeight(.bold)
+                                .bold()
                         }
                         Spacer()
                     }

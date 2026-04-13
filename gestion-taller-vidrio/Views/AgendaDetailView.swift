@@ -50,7 +50,7 @@ struct AgendaDetailView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(displayItem.cursoNombre)
                                     .font(.title)
-                                    .fontWeight(.bold)
+                                    .bold()
                                 Text(displayItem.fecha, style: .date)
                                     .font(.headline)
                                 if let notas = displayItem.notas, !notas.isEmpty {
@@ -63,7 +63,7 @@ struct AgendaDetailView: View {
                                 HStack {
                                     VStack(alignment: .center, spacing: 2) {
                                         Text("\(inscripcionesVM.inscripciones.count)")
-                                            .font(.headline).fontWeight(.bold)
+                                            .font(.headline).bold()
                                         Text("inscriptos")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
