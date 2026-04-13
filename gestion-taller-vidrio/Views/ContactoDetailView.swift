@@ -53,7 +53,7 @@ struct ContactoDetailView: View {
         .navigationTitle(contacto.nombreCompleto)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("Editar") { isEditing = true }
             }
         }

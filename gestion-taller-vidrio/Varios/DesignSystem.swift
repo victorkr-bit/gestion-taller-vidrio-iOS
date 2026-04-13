@@ -31,6 +31,16 @@ enum DesignSystem {
         static let l:   CGFloat = 16
         static let xl:  CGFloat = 20
     }
+
+    // MARK: - Colores semánticos
+    enum Color {
+        static let accion    = SwiftUI.Color.accentColor   // botones primarios, enlaces
+        static let exito     = SwiftUI.Color.green         // pagado, entregado
+        static let alerta    = SwiftUI.Color.orange        // debe, pendiente de pago
+        static let peligro   = SwiftUI.Color.red           // acciones destructivas
+        static let neutro    = SwiftUI.Color.gray          // sin presupuesto, sin estado
+        static let pendiente = SwiftUI.Color.purple        // pendiente de entrega
+    }
 }
 
 // MARK: - SombraConfig

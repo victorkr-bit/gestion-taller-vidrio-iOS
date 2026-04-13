@@ -20,7 +20,9 @@ struct MainView: View {
             }
 
             Tab("Agenda", systemImage: "calendar", value: AppTab.cronograma) {
-                AgendaView(agendaVM: container.agendaVM, inscripcionesVM: container.inscripcionesVM, catalogoOnlineVM: container.catalogoOnlineVM)
+                NavigationStack {
+                    AgendaView(agendaVM: container.agendaVM, inscripcionesVM: container.inscripcionesVM, catalogoOnlineVM: container.catalogoOnlineVM)
+                }
             }
 
             Tab("Pagos", systemImage: "dollarsign.circle", value: AppTab.pagos) {

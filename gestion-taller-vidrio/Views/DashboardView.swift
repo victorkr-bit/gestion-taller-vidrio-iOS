@@ -10,7 +10,7 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: DesignSystem.Espaciado.xl) {
                 proximasActividadesSection
                 kpiGrid
                 ingresosPorTipoSection
@@ -27,7 +27,7 @@ struct DashboardView: View {
             viewModel.sincronizarMesActualSiCambio()
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button { showFiltro = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
@@ -35,7 +35,7 @@ struct DashboardView: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(DesignSystem.Color.accion)
                 }
             }
         }
@@ -58,7 +58,7 @@ struct DashboardView: View {
     // MARK: - Próximas Actividades
 
     private var proximasActividadesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
             Text("Próximas Actividades")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -67,7 +67,8 @@ struct DashboardView: View {
             if viewModel.proximasClases.isEmpty {
                 EstadoVacioView(
                     icono: "calendar.badge.clock",
-                    mensaje: "No hay actividades próximas."
+                    mensaje: "No hay actividades próximas.",
+                    boton: ("Ir a Agenda", { navManager.selectedTab = .cronograma })
                 )
             } else {
                 HStack(spacing: 12) {
@@ -285,7 +286,7 @@ struct DashboardView: View {
                             AxisGridLine().foregroundStyle(.gray.opacity(0.2))
                             AxisValueLabel {
                                 if let v = value.as(Double.self) {
-                                    Text(Formatters.compactMoney(v)).font(.caption2)
+                                    Text(Formatters.compactMoney(v)).font(.caption)
                                 }
                             }
                         }
@@ -296,7 +297,7 @@ struct DashboardView: View {
                             AxisValueLabel {
                                 if let full = value.as(String.self) {
                                     Text(full.components(separatedBy: " ").first ?? full)
-                                        .font(.caption2)
+                                        .font(.caption)
                                 }
                             }
                         }
@@ -307,17 +308,17 @@ struct DashboardView: View {
                         HStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.25))
                                 .frame(width: 16, height: 8)
-                            Text(String(añoActual - 1)).font(.caption2).foregroundStyle(.secondary)
+                            Text(String(añoActual - 1)).font(.caption).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.6))
                                 .frame(width: 16, height: 8)
-                            Text(String(añoActual)).font(.caption2).foregroundStyle(.secondary)
+                            Text(String(añoActual)).font(.caption).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue)
                                 .frame(width: 16, height: 8)
-                            Text("Mes actual").font(.caption2).foregroundStyle(.secondary)
+                            Text("Mes actual").font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -349,7 +350,7 @@ struct DashboardView: View {
                 .annotation(position: .top) {
                     if dato.cantidad > 0 {
                         Text("\(dato.cantidad)")
-                            .font(.caption2)
+                            .font(.caption)
                             .fontWeight(.bold)
                             .foregroundStyle(.secondary)
                     }
@@ -366,7 +367,7 @@ struct DashboardView: View {
                     AxisValueLabel {
                         if let s = value.as(String.self) {
                             Text(s.components(separatedBy: ":").first ?? s)
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundStyle(.primary)
                         }
                     }
@@ -413,7 +414,7 @@ private struct ProximaActividadCard: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(actividad.cursoTipo.descripcion.uppercased())
-                    .font(.caption2).fontWeight(.bold)
+                    .font(.caption).fontWeight(.bold)
                     .foregroundStyle(tipoColor)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(tipoColor.opacity(0.15))

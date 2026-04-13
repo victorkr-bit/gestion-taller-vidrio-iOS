@@ -65,7 +65,7 @@ struct CursosView: View {
             }
             .navigationTitle("Catálogo de Cursos")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         self.isCreatingNew = true
                     } label: {

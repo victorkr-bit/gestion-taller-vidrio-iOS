@@ -58,7 +58,7 @@ struct FiltroMesAñoView: View {
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 if !esMesActual {
                     Button("Mes actual") {
                         let actual = MesAño.current()
@@ -78,7 +78,7 @@ struct FiltroMesAñoView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .fixedSize()
-                .padding(.leading, 14)
+                .padding(.leading, DesignSystem.Espaciado.m)
 
             Spacer()
 
@@ -147,6 +147,7 @@ struct EstadoVacioView: View {
     let icono: String
     let mensaje: String
     var colorIcono: Color = .secondary
+    var boton: (titulo: String, accion: () -> Void)? = nil
 
     var body: some View {
         VStack(spacing: DesignSystem.Espaciado.s) {
@@ -158,6 +159,11 @@ struct EstadoVacioView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, DesignSystem.Espaciado.l)
+            if let boton {
+                Button(boton.titulo, action: boton.accion)
+                    .font(.subheadline)
+                    .padding(.top, DesignSystem.Espaciado.xs)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DesignSystem.Espaciado.xl)
@@ -171,24 +177,33 @@ struct BotonPrimario: View {
     let accion: () -> Void
     var estaDeshabilitado: Bool = false
     var estaCargando: Bool = false
+    var mensajeValidacion: String? = nil
 
     var body: some View {
-        Button(action: accion) {
-            if estaCargando {
-                ProgressView()
-                    .tint(.white)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Text(titulo)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
+        VStack(spacing: DesignSystem.Espaciado.xs) {
+            if estaDeshabilitado, let mensaje = mensajeValidacion {
+                Text(mensaje)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Button(action: accion) {
+                if estaCargando {
+                    ProgressView()
+                        .tint(.white)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text(titulo)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding()
+            .background(estaDeshabilitado ? Color.secondary.opacity(0.3) : Color.accentColor)
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
+            .disabled(estaDeshabilitado || estaCargando)
         }
-        .padding()
-        .background(estaDeshabilitado ? Color.secondary.opacity(0.3) : Color.accentColor)
-        .foregroundStyle(.white)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
-        .disabled(estaDeshabilitado || estaCargando)
     }
 }
 
@@ -199,7 +214,6 @@ extension View {
             get: { errorMessage.wrappedValue != nil },
             set: { if !$0 { errorMessage.wrappedValue = nil } }
         )) {
-            Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage.wrappedValue ?? "Ocurrió un error desconocido.")
         }

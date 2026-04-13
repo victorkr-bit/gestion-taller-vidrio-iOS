@@ -67,7 +67,7 @@ struct GenericRowView: View {
                     Text(Formatters.money(valor))
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(DesignSystem.Color.accion)
                         .padding(.top, 2)
                 }
             }

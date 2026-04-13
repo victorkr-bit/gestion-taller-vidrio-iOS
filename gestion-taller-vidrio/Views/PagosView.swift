@@ -28,7 +28,7 @@ struct PagosView: View {
                     Text(Formatters.money(viewModel.totalFiltrado))
                         .font(.title3)
                         .bold()
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(DesignSystem.Color.accion)
                     Spacer()
                 }
             }
@@ -70,7 +70,7 @@ struct PagosView: View {
             viewModel.sincronizarMesActualSiCambio()
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button { showFiltro = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")

@@ -13,7 +13,6 @@ class PedidosViewModel: ObservableObject {
     
     // MARK: - Estado de UI (Buscador y Filtros)
     @Published var searchText: String = ""
-    @Published private var searchQuery: String = ""
     @Published var filtroPagoSeleccionado: FiltroEstadoPago = .todos
     // AGREGADO: Estado para el filtro de entregas
     @Published var filtroEntregaSeleccionado: FiltroEstadoEntrega = .pendientes    
@@ -24,7 +23,6 @@ class PedidosViewModel: ObservableObject {
     private var pedidosListener: ListenerRegistration?
     private var paymentListeners: [String: ListenerRegistration] = [:]
     private let taskTracker = TaskTracker()
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Enums de Filtros
     
@@ -45,13 +43,13 @@ class PedidosViewModel: ObservableObject {
     
     // MARK: - Propiedad Computada (Lógica de Filtrado Completa)
     var pedidosVisibles: [Pedido] {
-        // 1. Filtrar por Texto (usa searchQuery debounceado)
+        // 1. Filtrar por Texto
         let filtradosPorTexto: [Pedido]
-        if searchQuery.isEmpty {
+        if searchText.isEmpty {
             filtradosPorTexto = pedidos
         } else {
             filtradosPorTexto = pedidos.filter { pedido in
-                let textoBusqueda = searchQuery.lowercased()
+                let textoBusqueda = searchText.lowercased()
                 return pedido.cliente_nombre.lowercased().contains(textoBusqueda) ||
                        pedido.descripcion.lowercased().contains(textoBusqueda) ||
                        pedido.numero_pedido.lowercased().contains(textoBusqueda)
@@ -89,13 +87,7 @@ class PedidosViewModel: ObservableObject {
     init(ventasRepo: VentasRepository? = nil, finanzasRepo: FinanzasRepository? = nil) {
         self.ventasRepo = ventasRepo ?? VentasRepository()
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
-        
         startListeningOrders()
-
-        $searchText
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .sink { [weak self] text in self?.searchQuery = text }
-            .store(in: &cancellables)
     }
     
     deinit {

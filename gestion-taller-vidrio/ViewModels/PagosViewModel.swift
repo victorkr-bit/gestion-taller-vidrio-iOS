@@ -14,14 +14,12 @@ class PagosViewModel: ObservableObject {
     
     // MARK: - Estado de UI (Buscador y Totales)
     @Published var searchText: String = ""
-    @Published private var searchQuery: String = ""
 
-    /// Filtra los pagos locales por el texto de búsqueda (usa searchQuery debounceado)
     var pagosFiltrados: [Pago] {
-        if searchQuery.isEmpty {
+        if searchText.isEmpty {
             return pagos
         } else {
-            let query = searchQuery.lowercased()
+            let query = searchText.lowercased()
             
             return pagos.filter { pago in
                 // 1. Buscamos en Cliente, Descripción o Notas (Lo que ya tenías)
@@ -63,7 +61,6 @@ class PagosViewModel: ObservableObject {
 
     private var listener: ListenerRegistration?
     private let taskTracker = TaskTracker()
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Inyección de Dependencias
     private let finanzasRepo: FinanzasRepository
@@ -78,11 +75,6 @@ class PagosViewModel: ObservableObject {
         self.ventasRepo = ventasRepo ?? VentasRepository()
         restartListener()
         fetchContactos()
-
-        $searchText
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .sink { [weak self] text in self?.searchQuery = text }
-            .store(in: &cancellables)
     }
     
     deinit {

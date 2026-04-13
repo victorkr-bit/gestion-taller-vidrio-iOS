@@ -124,6 +124,7 @@ struct InscripcionRowView: View {
 
         if expandedInscripcionID == inscripcion.id {
             PagosListView(inscripcion: inscripcion, inscripcionesVM: inscripcionesVM)
+                .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 }

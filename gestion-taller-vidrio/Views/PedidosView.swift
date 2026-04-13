@@ -66,7 +66,7 @@ struct PedidosView: View {
         
         // Toolbar
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     self.isCreatingNew = true
                 } label: {
@@ -133,11 +133,11 @@ struct PedidoRowView: View {
                                     ? "Sin presupuesto"
                                     : (pedido.estado_pago ? "Pagado" : "Debe \(Formatters.money(pedido.monto_adeudado))"),
                                 color: pedido.presupuesto == 0
-                                    ? .gray
-                                    : (pedido.estado_pago ? .green : .orange)
+                                    ? DesignSystem.Color.neutro
+                                    : (pedido.estado_pago ? DesignSystem.Color.exito : DesignSystem.Color.alerta)
                             ),
                             TagConfig(text: pedido.estado_entrega ? "Entregado" : "Pendiente",
-                                      color: pedido.estado_entrega ? .gray : .purple)
+                                      color: pedido.estado_entrega ? DesignSystem.Color.neutro : DesignSystem.Color.pendiente)
                         ]
                     )
                     
@@ -226,6 +226,7 @@ struct PedidoRowView: View {
 
         if expandedPedidoID == pedido.id {
             PagosPedidoListView(pedido: pedido, viewModel: viewModel)
+                .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 }
