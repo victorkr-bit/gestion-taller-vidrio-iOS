@@ -111,9 +111,9 @@ final class TaskTracker {
     func track(_ task: Task<Void, Never>) {
         let id = UUID()
         tasks[id] = task
-        Task {
+        Task { [weak self] in
             _ = await task.result
-            self.tasks.removeValue(forKey: id)
+            self?.tasks.removeValue(forKey: id)
         }
     }
 

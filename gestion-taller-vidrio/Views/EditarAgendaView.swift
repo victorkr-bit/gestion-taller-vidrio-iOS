@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct EditarCronogramaView: View {
+struct EditarAgendaView: View {
 
     @ObservedObject var agendaVM: AgendaViewModel
     let cronogramaItem: CronogramaItem
@@ -128,6 +128,8 @@ struct EditarCronogramaView: View {
             do {
                 try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas)
                 dismiss()
+            } catch is CancellationError {
+                isSaving = false
             } catch {
                 agendaVM.errorMessage = error.localizedDescription
                 isSaving = false
@@ -135,7 +137,7 @@ struct EditarCronogramaView: View {
         }
     }
 
-    /// Fija la hora a las 13:00 para mantener consistencia con CronogramaFormView.
+    /// Fija la hora a las 13:00 para mantener consistencia con AgendaFormView.
     private func ajustarHora(_ date: Date) -> Date {
         let calendar = Calendar.current
         var components = calendar.dateComponents([.year, .month, .day], from: date)

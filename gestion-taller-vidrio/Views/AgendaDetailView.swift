@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CronogramaDetailView: View {
+struct AgendaDetailView: View {
 
     @ObservedObject var agendaVM: AgendaViewModel
     @ObservedObject var inscripcionesVM: InscripcionesViewModel
