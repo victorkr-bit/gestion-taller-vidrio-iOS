@@ -11,7 +11,7 @@ struct DeudoresView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                HStack(spacing: 15) {
+                HStack(spacing: DesignSystem.Espaciado.l) {
                     KpiCardView(
                         titulo: "Pedidos",
                         valor: viewModel.totalDeudaPedidos,
@@ -34,7 +34,7 @@ struct DeudoresView: View {
                         .foregroundStyle(.secondary)
                     TextField("Buscar cliente o descripción...", text: $viewModel.searchText)
                 }
-                .padding(10)
+                .padding(DesignSystem.Espaciado.s)
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
                 .padding(.horizontal)

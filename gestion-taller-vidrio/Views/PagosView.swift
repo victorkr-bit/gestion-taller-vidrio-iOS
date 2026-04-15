@@ -17,7 +17,7 @@ struct PagosView: View {
                         .foregroundStyle(.secondary)
                     TextField("Buscar cliente, nota...", text: $viewModel.searchText)
                 }
-                .padding(10)
+                .padding(DesignSystem.Espaciado.s)
                 .background(Color(.systemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
 
