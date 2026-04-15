@@ -112,7 +112,7 @@ struct DashboardView: View {
     // MARK: - KPI Grid (Ingresos + Deuda)
 
     private var kpiGrid: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: DesignSystem.Espaciado.l) {
             Button { navManager.selectedTab = .pagos } label: {
                 KpiCardView(
                     titulo: "Ingresos",
@@ -142,7 +142,7 @@ struct DashboardView: View {
     // MARK: - Ingresos por Tipo
 
     private var ingresosPorTipoSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
             Text("Ingresos por Tipo")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -171,7 +171,7 @@ struct DashboardView: View {
     // MARK: - Detalle de Clases del Período
 
     private var detalleClasesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
             Text("Detalle de Clases del Período")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -246,7 +246,7 @@ struct DashboardView: View {
         let datosOrdenados = viewModel.facturacionAnual
         let maxTotal = datosOrdenados.map { $0.total }.max() ?? 1
 
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
             Text("Facturación mensual")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -440,7 +440,7 @@ private struct ProximaActividadCard: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .padding(14)
+        .padding(DesignSystem.Espaciado.m)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
         .sombraTarjeta(DesignSystem.Sombra.actividad)
@@ -455,7 +455,7 @@ private struct IngresoBarRow: View {
     private var barColor: Color { TipoVenta.color(forDescripcion: dato.tipo) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.xs) {
             HStack {
                 HStack(spacing: DesignSystem.Espaciado.sm) {
                     RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador)
