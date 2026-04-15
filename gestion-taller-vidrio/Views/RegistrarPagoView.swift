@@ -15,7 +15,7 @@ struct RegistrarPagoView: View {
     @State private var monto: Double = 0.0
     @State private var montoInput: String = "" // Input manual
     
-    @State private var medio_de_pago: MedioDePago = .efectivo
+    @State private var medio_de_pago: MedioDePago = .transferencia
     @State private var fecha: Date = Date()
     @State private var notas: String = ""
     

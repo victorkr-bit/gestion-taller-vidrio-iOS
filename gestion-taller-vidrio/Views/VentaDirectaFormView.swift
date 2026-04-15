@@ -20,7 +20,7 @@ struct VentaDirectaFormView: View {
     // --- Estado del Formulario ---
     @State private var montoTexto: String = ""
     private var monto: Double { Double(montoTexto.replacingOccurrences(of: ",", with: ".")) ?? 0 }
-    @State private var medio_de_pago: MedioDePago = .efectivo
+    @State private var medio_de_pago: MedioDePago = .transferencia
     @State private var notas: String = ""
     @State private var cliente_id: String = ""
     @State private var cliente_nombre: String = "Cliente Ocasional"
