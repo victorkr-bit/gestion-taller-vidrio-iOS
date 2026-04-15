@@ -22,5 +22,8 @@ DerivedData/
 # Swift Package Manager
 .build/
 
+# Claude Code skills
+.claude/skills/
+
 # Logs
 *.log
