@@ -336,7 +336,7 @@ struct FilterLabel: View {
         .foregroundStyle(.primary)
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
-        .background(Color.gray.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+        .background(Color(.systemFill), in: RoundedRectangle(cornerRadius: DesignSystem.Radio.etiqueta))
     }
 }
 

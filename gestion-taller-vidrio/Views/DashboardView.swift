@@ -578,7 +578,7 @@ struct KpiCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
             HStack {
                 Image(systemName: icon).foregroundStyle(color)
                 Text(titulo).font(.caption).foregroundStyle(.secondary)
