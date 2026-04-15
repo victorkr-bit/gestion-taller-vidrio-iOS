@@ -115,11 +115,11 @@ private struct InscripcionHistorialRow: View {
             if inscripcion.estado == .pagado {
                 Label("Pagado", systemImage: "checkmark.circle.fill")
                     .font(.subheadline)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Color.exito)
             } else {
                 Text("Debe \(Formatters.money(inscripcion.monto_adeudado))")
                     .font(.subheadline)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DesignSystem.Color.alerta)
             }
         }
     }

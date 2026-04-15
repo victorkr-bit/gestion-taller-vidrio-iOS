@@ -50,7 +50,7 @@ struct RegistrarPagoView: View {
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .font(.headline)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(DesignSystem.Color.accion)
                         .frame(width: 140)
                         .disabled(isSaving)
                         .onChange(of: montoInput) { _, newValue in
@@ -61,7 +61,7 @@ struct RegistrarPagoView: View {
                 if excedeDeuda {
                     Text("El monto no puede superar la deuda de \(Formatters.money(origen.montoAdeudado))")
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(DesignSystem.Color.peligro)
                 }
 
                 Picker("Medio de Pago", selection: $medio_de_pago) {
@@ -135,7 +135,7 @@ struct RegistrarPagoView: View {
             Spacer()
             Text(Formatters.money(monto))
                 .fontWeight(.bold)
-                .foregroundStyle(monto > 0 ? .orange : .green)
+                .foregroundStyle(monto > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
         }
     }
     

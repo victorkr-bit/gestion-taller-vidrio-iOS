@@ -67,7 +67,7 @@ struct MoverInscripcionView: View {
                                     .foregroundStyle(.secondary)
                                 if destinoSeleccionado?.id == item.id {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.blue)
+                                        .foregroundStyle(DesignSystem.Color.accion)
                                 }
                             }
                         }
@@ -91,7 +91,7 @@ struct MoverInscripcionView: View {
                             Text("Ya abonado:")
                             Spacer()
                             Text(Formatters.money(inscripcion.monto_abonado))
-                                .foregroundStyle(.green)
+                                .foregroundStyle(DesignSystem.Color.exito)
                         }
                         Divider()
                         HStack {

@@ -72,7 +72,7 @@ struct AgendaDetailView: View {
                                     Spacer()
                                     VStack(alignment: .center, spacing: 2) {
                                         Text(Formatters.money(totalAbonado))
-                                            .font(.headline).fontWeight(.semibold).foregroundStyle(.green)
+                                            .font(.headline).fontWeight(.semibold).foregroundStyle(DesignSystem.Color.exito)
                                         Text("cobrado")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
@@ -82,7 +82,7 @@ struct AgendaDetailView: View {
                                     VStack(alignment: .center, spacing: 2) {
                                         Text(Formatters.money(totalAdeudado))
                                             .font(.headline).fontWeight(.semibold)
-                                            .foregroundStyle(totalAdeudado > 0 ? .orange : .secondary)
+                                            .foregroundStyle(totalAdeudado > 0 ? DesignSystem.Color.alerta : Color.secondary)
                                         Text("adeudado")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }

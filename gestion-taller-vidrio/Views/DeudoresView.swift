@@ -16,13 +16,13 @@ struct DeudoresView: View {
                         titulo: "Pedidos",
                         valor: viewModel.totalDeudaPedidos,
                         icon: "shippingbox.fill",
-                        color: .blue
+                        color: DesignSystem.Color.accion
                     )
                     KpiCardView(
                         titulo: "Inscripciones",
                         valor: viewModel.totalDeudaInscripciones,
                         icon: "graduationcap.fill",
-                        color: .purple
+                        color: DesignSystem.Color.pendiente
                     )
                 }
                 .padding(.horizontal)
@@ -50,7 +50,7 @@ struct DeudoresView: View {
                             iconoSuperior: nil,
                             monto: deudor.montoAdeudado,
                             tags: [
-                                TagConfig(text: deudor.tipo.rawValue.capitalized, color: deudor.tipo == .pedido ? .blue : .purple)
+                                TagConfig(text: deudor.tipo.rawValue.capitalized, color: deudor.tipo == .pedido ? DesignSystem.Color.accion : DesignSystem.Color.pendiente)
                             ]
                         )
                     }
@@ -62,7 +62,7 @@ struct DeudoresView: View {
                         } label: {
                             Label("Registrar Pago", systemImage: "plus.circle.fill")
                         }
-                        .tint(.green)
+                        .tint(DesignSystem.Color.exito)
                     }
                     
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -72,7 +72,7 @@ struct DeudoresView: View {
                         } label: {
                             Label("Condonar", systemImage: "hand.thumbsup.fill")
                         }
-                        .tint(.gray)
+                        .tint(DesignSystem.Color.neutro)
                     }
                 }
             }
@@ -86,7 +86,7 @@ struct DeudoresView: View {
                         mensaje: viewModel.deudores.isEmpty
                             ? "¡No hay deudas pendientes!"
                             : "Sin resultados para \"\(viewModel.searchText)\"",
-                        colorIcono: viewModel.deudores.isEmpty ? .green : .secondary
+                        colorIcono: viewModel.deudores.isEmpty ? DesignSystem.Color.exito : Color.secondary
                     )
                 }
             }
