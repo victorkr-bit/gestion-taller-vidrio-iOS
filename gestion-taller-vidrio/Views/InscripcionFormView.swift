@@ -116,7 +116,7 @@ struct InscripcionFormView: View {
                         }) {
                             Image(systemName: "person.badge.plus")
                                 .font(.title2)
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(DesignSystem.Color.accion)
                         }
                         .buttonStyle(.borderless) // Evita que se active el NavigationLink al tocar esto
                         .padding(.leading, 8)
@@ -153,7 +153,7 @@ struct InscripcionFormView: View {
                         Text(Formatters.money(inscripcion.monto_abonado))
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(DesignSystem.Color.accion)
                     }
                     
                     let deudaProyectada = precioTotal - inscripcion.monto_abonado
@@ -164,7 +164,7 @@ struct InscripcionFormView: View {
                         Text(Formatters.money(deudaProyectada))
                             .font(.subheadline)
                             .fontWeight(.bold)
-                            .foregroundStyle(deudaProyectada > 0 ? .orange : .green)
+                            .foregroundStyle(deudaProyectada > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
                     }
                 }
                 .listRowBackground(Color(uiColor: .systemGroupedBackground))
@@ -230,10 +230,10 @@ struct InscripcionFormView: View {
                     }
                     Text(Formatters.money(precioTotal))
                         .font(.headline)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(DesignSystem.Color.accion)
                         .bold()
                 }
-                .listRowBackground(Color.blue.opacity(0.05))
+                .listRowBackground(DesignSystem.Color.accion.opacity(0.05))
             }
             
             // -----------------------------------------------------------

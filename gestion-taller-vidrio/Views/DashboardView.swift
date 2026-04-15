@@ -85,7 +85,7 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
                 if !viewModel.ocupacionesTaller.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                         Text("Ocupación estimada por hora")
                             .font(.callout)
                             .fontWeight(.bold)
@@ -118,7 +118,7 @@ struct DashboardView: View {
                     titulo: "Ingresos",
                     valor: viewModel.totalIngresosMes,
                     icon: "arrow.up.circle.fill",
-                    color: .blue,
+                    color: DesignSystem.Color.accion,
                     tendencia: viewModel.tendenciaPorcentaje != 0 ? viewModel.tendenciaPorcentaje : nil
                 )
             }
@@ -131,7 +131,7 @@ struct DashboardView: View {
                     titulo: "Deuda Total",
                     valor: viewModel.totalDeuda,
                     icon: "exclamationmark.circle.fill",
-                    color: .red
+                    color: DesignSystem.Color.peligro
                 )
             }
             .buttonStyle(.plain)
@@ -264,8 +264,8 @@ struct DashboardView: View {
                             y: .value("Total", dato.total)
                         )
                         .foregroundStyle(
-                            dato.esMesActual ? Color.blue :
-                            dato.esAñoAnterior ? Color.blue.opacity(0.25) : Color.blue.opacity(0.6)
+                            dato.esMesActual ? DesignSystem.Color.accion :
+                            dato.esAñoAnterior ? DesignSystem.Color.accion.opacity(0.25) : DesignSystem.Color.accion.opacity(0.6)
                         )
                         .cornerRadius(DesignSystem.Radio.grafico)
                         .annotation(position: .top, alignment: .center) {
@@ -306,17 +306,17 @@ struct DashboardView: View {
                     // Leyenda de años
                     HStack(spacing: 16) {
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.25))
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion.opacity(0.25))
                                 .frame(width: 16, height: 8)
                             Text(String(añoActual - 1)).font(.caption).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue.opacity(0.6))
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion.opacity(0.6))
                                 .frame(width: 16, height: 8)
                             Text(String(añoActual)).font(.caption).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(Color.blue)
+                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion)
                                 .frame(width: 16, height: 8)
                             Text("Mes actual").font(.caption).foregroundStyle(.secondary)
                         }
@@ -345,7 +345,7 @@ struct DashboardView: View {
                     x: .value("Hora", dato.horaString),
                     y: .value("Cantidad", dato.cantidad)
                 )
-                .foregroundStyle(Color.blue.gradient)
+                .foregroundStyle(DesignSystem.Color.accion.gradient)
                 .cornerRadius(DesignSystem.Radio.grafico)
                 .annotation(position: .top) {
                     if dato.cantidad > 0 {
@@ -403,15 +403,11 @@ private struct ProximaActividadCard: View {
     }
 
     private var tipoColor: Color {
-        switch actividad.cursoTipo {
-        case .taller: return .green
-        case .presencial: return .indigo
-        case .online: return .cyan
-        }
+        actividad.cursoTipo.color
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
             HStack {
                 Text(actividad.cursoTipo.descripcion.uppercased())
                     .font(.caption).fontWeight(.bold)
@@ -435,7 +431,7 @@ private struct ProximaActividadCard: View {
             HStack {
                 Text(countdownText)
                     .font(.caption).fontWeight(.medium)
-                    .foregroundStyle(diasHasta == 0 ? Color.orange : Color.blue)
+                    .foregroundStyle(diasHasta == 0 ? DesignSystem.Color.alerta : DesignSystem.Color.accion)
                 Spacer()
                 HStack(spacing: 2) {
                     Image(systemName: "person.2.fill").font(.caption2)
@@ -461,7 +457,7 @@ private struct IngresoBarRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Espaciado.sm) {
                     RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador)
                         .fill(barColor)
                         .frame(width: 10, height: 10)
@@ -572,7 +568,7 @@ struct KpiCardView: View {
     var tendencia: Double? = nil
 
     private var tendenciaColor: Color {
-        (tendencia ?? 0) >= 0 ? .green : .red
+        (tendencia ?? 0) >= 0 ? DesignSystem.Color.exito : DesignSystem.Color.peligro
     }
 
     private var tendenciaLabel: String {

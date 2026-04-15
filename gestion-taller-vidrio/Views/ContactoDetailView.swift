@@ -82,7 +82,7 @@ private struct InscripcionHistorialRow: View {
     let inscripcion: Inscripcion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
             HStack {
                 Text(inscripcion.cursoNombre)
                     .font(.headline)
@@ -115,11 +115,11 @@ private struct InscripcionHistorialRow: View {
             if inscripcion.estado == .pagado {
                 Label("Pagado", systemImage: "checkmark.circle.fill")
                     .font(.subheadline)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignSystem.Color.exito)
             } else {
                 Text("Debe \(Formatters.money(inscripcion.monto_adeudado))")
                     .font(.subheadline)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DesignSystem.Color.alerta)
             }
         }
     }

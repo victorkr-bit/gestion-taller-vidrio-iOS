@@ -66,7 +66,7 @@ struct PedidoFormView: View {
                 DatePicker("Fecha de Recepción", selection: $viewModel.fecha, displayedComponents: .date)
                 
                 Toggle("¿Trabajo Entregado?", isOn: $viewModel.estadoEntrega)
-                    .tint(.blue)
+                    .tint(DesignSystem.Color.accion)
             }
             
             // -----------------------------------------------------------
@@ -96,7 +96,7 @@ struct PedidoFormView: View {
                         Text(Formatters.money(viewModel.montoAbonadoOriginal))
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(DesignSystem.Color.accion)
                     }
                     
                     // Cálculo visual (no guarda nada, solo muestra)
@@ -109,7 +109,7 @@ struct PedidoFormView: View {
                         Text(Formatters.money(deudaProyectada))
                             .font(.subheadline)
                             .fontWeight(.bold)
-                            .foregroundStyle(deudaProyectada > 0 ? .orange : .green)
+                            .foregroundStyle(deudaProyectada > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
                     }
                 } else {
                     Text("Al guardar se generará una deuda por el total del presupuesto.")

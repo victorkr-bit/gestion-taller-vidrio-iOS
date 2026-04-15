@@ -67,7 +67,7 @@ struct MoverInscripcionView: View {
                                     .foregroundStyle(.secondary)
                                 if destinoSeleccionado?.id == item.id {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.blue)
+                                        .foregroundStyle(DesignSystem.Color.accion)
                                 }
                             }
                         }
@@ -80,7 +80,7 @@ struct MoverInscripcionView: View {
                 Toggle("Adoptar precio del destino", isOn: $adoptarPrecio)
 
                 if adoptarPrecio, let precio = nuevoPrecio, let deuda = nuevaDeuda {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                         HStack {
                             Text("Nuevo precio:")
                             Spacer()
@@ -91,7 +91,7 @@ struct MoverInscripcionView: View {
                             Text("Ya abonado:")
                             Spacer()
                             Text(Formatters.money(inscripcion.monto_abonado))
-                                .foregroundStyle(.green)
+                                .foregroundStyle(DesignSystem.Color.exito)
                         }
                         Divider()
                         HStack {
