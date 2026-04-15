@@ -80,7 +80,7 @@ struct MoverInscripcionView: View {
                 Toggle("Adoptar precio del destino", isOn: $adoptarPrecio)
 
                 if adoptarPrecio, let precio = nuevoPrecio, let deuda = nuevaDeuda {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                         HStack {
                             Text("Nuevo precio:")
                             Spacer()

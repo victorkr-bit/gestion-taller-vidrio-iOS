@@ -278,7 +278,7 @@ struct PedidosFiltersView: View {
     var body: some View {
         HStack {
             // --- BOTÓN FILTRO PAGO ---
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Espaciado.sm) {
                 Button {
                     showFiltroPago = true
                 } label: {
@@ -297,7 +297,7 @@ struct PedidosFiltersView: View {
             Divider().frame(height: 16)
             
             // --- BOTÓN FILTRO ENTREGA ---
-            HStack(spacing: 6) {
+            HStack(spacing: DesignSystem.Espaciado.sm) {
                 Button {
                     showFiltroEntrega = true
                 } label: {

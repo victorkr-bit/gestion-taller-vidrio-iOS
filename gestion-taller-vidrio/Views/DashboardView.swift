@@ -85,7 +85,7 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
                 if !viewModel.ocupacionesTaller.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                         Text("Ocupación estimada por hora")
                             .font(.callout)
                             .fontWeight(.bold)
@@ -411,7 +411,7 @@ private struct ProximaActividadCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
             HStack {
                 Text(actividad.cursoTipo.descripcion.uppercased())
                     .font(.caption).fontWeight(.bold)
@@ -461,7 +461,7 @@ private struct IngresoBarRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignSystem.Espaciado.sm) {
                     RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador)
                         .fill(barColor)
                         .frame(width: 10, height: 10)
