@@ -36,7 +36,7 @@ final class FirestoreManager {
                     return .tienePagos
                 }
                // Backend dice: "No se puede borrar el curso: Tiene alumnos inscriptos." [cite: 172]
-                if message.lowercased().contains("inscriptos") || message.lowercased().contains("alumnos") {
+                if message.lowercased().contains("inscriptos") || message.lowercased().contains("alumnos") || message.lowercased().contains("historial") {
                     return .tieneInscriptos
                 }
                 return .transaccionFallida(message)
