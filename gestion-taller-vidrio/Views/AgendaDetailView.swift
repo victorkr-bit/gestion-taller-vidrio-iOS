@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct AgendaDetailView: View {
 
@@ -22,6 +23,10 @@ struct AgendaDetailView: View {
 
     var totalAbonado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_abonado } }
     var totalAdeudado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_adeudado } }
+
+    private var datosOcupacion: [OcupacionHoraDato] {
+        TallerCalculator.calcularOcupacionPorHora(para: inscripcionesVM.inscripciones)
+    }
 
     var inscripcionesOrdenadas: [Inscripcion] {
         let lista = inscripcionesVM.inscripciones
@@ -93,7 +98,17 @@ struct AgendaDetailView: View {
                     }
                     .listRowSeparator(.hidden)
 
-                    // --- Sección 2: Lista de Inscriptos ---
+                    // --- Sección 2: Gráfico de Ocupación (solo para talleres) ---
+                    if displayItem.cursoTipo == .taller && !inscripcionesVM.inscripciones.isEmpty {
+                        Section {
+                            TallerOcupacionChart(datos: datosOcupacion)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                        }
+                        .listRowSeparator(.hidden)
+                    }
+
+                    // --- Sección 3: Lista de Inscriptos ---
                     Section {
                         ForEach(inscripcionesOrdenadas) { inscripcion in
                             InscripcionRowView(
@@ -195,5 +210,58 @@ struct AgendaDetailView: View {
             inscripcionesVM.cleanupPaymentListeners()
         }
         .errorAlert($inscripcionesVM.errorMessage)
+    }
+}
+
+// MARK: - Gráfico de Ocupación
+
+private struct TallerOcupacionChart: View {
+    let datos: [OcupacionHoraDato]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Ocupación por hora")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, DesignSystem.Espaciado.m)
+
+            Chart(datos) { dato in
+                BarMark(
+                    x: .value("Hora", dato.horaString),
+                    y: .value("Cantidad", dato.cantidad)
+                )
+                .foregroundStyle(DesignSystem.Color.accion.gradient)
+                .cornerRadius(DesignSystem.Radio.grafico)
+                .annotation(position: .top) {
+                    if dato.cantidad > 0 {
+                        Text("\(dato.cantidad)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(height: 120)
+            .chartYAxis(.hidden)
+            .chartYScale(domain: 0...5)
+            .chartXAxis {
+                AxisMarks(values: .automatic) { value in
+                    AxisValueLabel {
+                        if let s = value.as(String.self) {
+                            Text(s)
+                                .font(.caption2)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, DesignSystem.Espaciado.m)
+            .padding(.bottom, DesignSystem.Espaciado.sm)
+        }
+        .padding(.vertical, DesignSystem.Espaciado.sm)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
+        .sombraTarjeta(DesignSystem.Sombra.panel)
+        .padding(.horizontal, DesignSystem.Espaciado.m)
     }
 }
