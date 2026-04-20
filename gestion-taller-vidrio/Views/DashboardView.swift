@@ -86,7 +86,7 @@ struct DashboardView: View {
 
                 if !viewModel.ocupacionesTaller.isEmpty {
                     VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
-                        Text("Ocupación estimada por hora")
+                        Text("Ocupación por hora")
                             .font(.callout)
                             .fontWeight(.bold)
                             .foregroundStyle(.secondary)
@@ -356,12 +356,8 @@ struct DashboardView: View {
                     }
                 }
             }
-            .frame(height: 180)
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) {
-                    AxisGridLine().foregroundStyle(.gray.opacity(0.2))
-                }
-            }
+            .frame(height: 140)
+            .chartYAxis(.hidden)
             .chartXAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisValueLabel {
