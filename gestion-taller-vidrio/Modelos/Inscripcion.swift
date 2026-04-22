@@ -22,7 +22,8 @@ struct Inscripcion: Codable, Identifiable {
     var cursoNombre: String         // Denormalizado
     var cursoTipo: TipoCurso        // Denormalizado
     
-    var fecha_curso: Date           // Copiado
+    var fecha_inscripcion: FechaFlexible? // Timestamp de creación (nil en registros anteriores)
+    var fecha_curso: Date                // Copiado
     var precio_curso: Double        // Copiado
     var monto_abonado: Double
     var monto_adeudado: Double
@@ -33,4 +34,22 @@ struct Inscripcion: Codable, Identifiable {
     var turnos: Int?
 
     var notas: String?
+}
+
+// Wrapper tolerante para fecha_inscripcion: acepta Timestamp, String ISO8601, o ausencia
+// sin lanzar error (lo que descargaría el documento completo al decodificar).
+struct FechaFlexible: Codable {
+    let value: Date?
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let d = try? c.decode(Date.self)   { value = d; return }
+        if let s = try? c.decode(String.self) { value = Formatters.iso8601.date(from: s); return }
+        value = nil
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(value)
+    }
 }

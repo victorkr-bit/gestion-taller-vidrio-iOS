@@ -102,7 +102,7 @@ All use `@MainActor` and conform to `ObservableObject`.
 | File | Firestore collection | Key fields |
 |---|---|---|
 | `Pedido.swift` | `pedidos` | numero_pedido, cliente_id/nombre, presupuesto, monto_abonado/adeudado, estado_pago, estado_entrega, tipo |
-| `Inscripcion.swift` | `inscripciones` | alumnoId/nombre, cronogramaId?, cursoId?, precio_curso, monto_abonado/adeudado, estado, horario_inicio?, turnos? |
+| `Inscripcion.swift` | `inscripciones` | alumnoId/nombre, cronogramaId?, cursoId?, precio_curso, monto_abonado/adeudado, estado, horario_inicio?, turnos?, fecha_inscripcion? (FechaFlexible), fecha_curso |
 | `Pago.swift` | `pagos` | monto, medio_de_pago, cliente_id/nombre, tipo_venta, origen_tipo, origen_id?, descripcion_origen |
 | `Curso.swift` | `cursos` | nombre, tipo (TipoCurso), precio, cant_inscriptos? |
 | `CronogramaItem.swift` | `cronograma` | cursoId, cursoNombre, cursoTipo, precio_curso, fecha, cant_inscriptos? |
@@ -121,6 +121,7 @@ All use `@MainActor` and conform to `ObservableObject`.
 - **Design system** (`Varios/DesignSystem.swift`): `DesignSystem` enum with `Radio`, `Sombra`, and `Espaciado` namespaces. Use these tokens instead of numeric literals. `sombraTarjeta()` View extension applies shadow presets.
 - **Formatters** (`Formatters.swift`): currency `es_AR` locale (0 decimals); dates `es` locale with Argentina timezone; ISO8601 with fractional seconds for Cloud Functions.
 - **Denormalized fields:** Client/student names stored directly on orders/enrollments/payments (`cliente_nombre`, `alumno_nombre`) — consistency maintained by Cloud Functions.
+- **FechaFlexible** (`Modelos/Inscripcion.swift`): wrapper `Codable` usado por `Inscripcion.fecha_inscripcion`. Acepta Firestore Timestamp, String ISO8601, o ausencia sin lanzar error (evita descartar documentos por type mismatch). Nunca usar `init(from:)` manual en structs con `@DocumentID` — rompe la inyección del document ID y genera IDs `nil`.
 
 ## Source Layout
 

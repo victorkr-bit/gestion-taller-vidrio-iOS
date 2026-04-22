@@ -34,7 +34,7 @@ struct DeudorItem: Identifiable {
         self.id = inscripcion.id ?? UUID().uuidString
         self.nombreCliente = inscripcion.alumno_nombre
         self.montoAdeudado = inscripcion.monto_adeudado
-        self.fecha = inscripcion.fecha_curso
+        self.fecha = inscripcion.fecha_inscripcion?.value ?? inscripcion.fecha_curso
         self.descripcion = "Inscripción: \(inscripcion.cursoNombre)"
         self.tipo = .inscripcion
         
