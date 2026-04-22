@@ -41,7 +41,8 @@ class DeudoresViewModel: ObservableObject {
         return deudores.filter { deudor in
             deudor.nombreCliente.lowercased().contains(query) ||
             deudor.descripcion.lowercased().contains(query) ||
-            deudor.tipo.rawValue.lowercased().contains(query)
+            deudor.tipo.rawValue.lowercased().contains(query) ||
+            (deudor.estaVencida && "vencida".contains(query))
         }
     }
 

@@ -49,9 +49,13 @@ struct DeudoresView: View {
                             infoSuperior: Formatters.date(deudor.fecha),
                             iconoSuperior: nil,
                             monto: deudor.montoAdeudado,
-                            tags: [
-                                TagConfig(text: deudor.tipo.rawValue.capitalized, color: deudor.tipo == .pedido ? DesignSystem.Color.accion : DesignSystem.Color.pendiente)
-                            ]
+                            tags: {
+                                var t = [TagConfig(text: deudor.tipo.rawValue.capitalized, color: deudor.tipo == .pedido ? DesignSystem.Color.accion : DesignSystem.Color.pendiente)]
+                                if deudor.estaVencida {
+                                    t.append(TagConfig(text: "Vencida", color: DesignSystem.Color.peligro))
+                                }
+                                return t
+                            }()
                         )
                     }
                     .listRowSeparator(.hidden)

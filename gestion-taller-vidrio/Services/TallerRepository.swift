@@ -297,8 +297,12 @@ final class TallerRepository {
 
         // 4. Guardado
         if let id = inscripcion.id {
+            // Al editar, nunca pisar la fecha de inscripción original.
+            data.removeValue(forKey: "fecha_inscripcion")
             try await db.collection("inscripciones").document(id).setData(data, merge: true)
         } else {
+            // Al crear, sellar la fecha server-side (evita desfases de reloj del cliente).
+            data["fecha_inscripcion"] = FieldValue.serverTimestamp()
             _ = try await db.collection("inscripciones").addDocument(data: data)
         }
     }
