@@ -9,15 +9,12 @@ struct InscripcionFormView: View {
     var inscripcionToEdit: Inscripcion?
     var cronogramaItem: CronogramaItem?
     var curso: Curso?
-    /// Cronogramas disponibles para mover la inscripción (solo relevante en modo edición).
-    var cronogramasDisponibles: [CronogramaItem]
 
-    init(inscripcionesVM: InscripcionesViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil, cronogramasDisponibles: [CronogramaItem] = []) {
+    init(inscripcionesVM: InscripcionesViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil) {
         self.inscripcionesVM = inscripcionesVM
         self.inscripcionToEdit = inscripcionToEdit
         self.cronogramaItem = cronogramaItem
         self.curso = curso
-        self.cronogramasDisponibles = cronogramasDisponibles
         _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: inscripcionesVM.ventasRepo))
     }
     
@@ -175,29 +172,11 @@ struct InscripcionFormView: View {
             // -----------------------------------------------------------
             Section(header: Text("Configuración de Venta")) {
                 
-                if let inscripcion = inscripcionToEdit, !cronogramasDisponibles.isEmpty {
-                    NavigationLink {
-                        MoverInscripcionView(
-                            inscripcionesVM: inscripcionesVM,
-                            inscripcion: inscripcion,
-                            cronogramasDisponibles: cronogramasDisponibles,
-                            onMoved: { dismiss() }
-                        )
-                    } label: {
-                        HStack {
-                            Text("Mover inscripción")
-                            Spacer()
-                            Text(origenNombre)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } else {
-                    HStack {
-                        Text("Producto")
-                        Spacer()
-                        Text(origenNombre)
-                            .foregroundStyle(.secondary)
-                    }
+                HStack {
+                    Text("Producto")
+                    Spacer()
+                    Text(origenNombre)
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack {

@@ -42,7 +42,7 @@ struct MoverInscripcionView: View {
                     .font(.subheadline)
             }
 
-            Section("Cronograma destino") {
+            Section("Agenda destino") {
                 if cronogramasDisponibles.isEmpty {
                     Text("No hay otros cronogramas futuros disponibles.")
                         .foregroundStyle(.secondary)
