@@ -231,6 +231,14 @@ struct DashboardView: View {
                         }
                     }
                 }
+
+                if viewModel.detalleClases.tieneContenido {
+                    Divider().padding(.horizontal)
+                    TotalizadorRow(
+                        clases: viewModel.detalleClases.totalClases,
+                        alumnos: viewModel.detalleClases.totalAlumnos
+                    )
+                }
             }
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
@@ -528,6 +536,22 @@ private struct CategoriaHeaderRow: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .background(color.opacity(0.06))
+    }
+}
+
+private struct TotalizadorRow: View {
+    let clases: Int
+    let alumnos: Int
+
+    var body: some View {
+        HStack {
+            Text("Total período")
+                .font(.subheadline).fontWeight(.semibold)
+            Spacer()
+            Text("\(clases) \(clases == 1 ? "clase" : "clases") · \(alumnos) \(alumnos == 1 ? "alumno" : "alumnos")")
+                .font(.subheadline).fontWeight(.semibold)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
     }
 }
 

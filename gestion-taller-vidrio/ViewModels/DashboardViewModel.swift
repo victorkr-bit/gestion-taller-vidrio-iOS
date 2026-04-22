@@ -323,6 +323,12 @@ struct DetalleClases {
     var presencial: [DetalleCurso]
     var online: [DetalleCurso]
     var tieneContenido: Bool { taller != nil || !presencial.isEmpty || !online.isEmpty }
+    var totalClases: Int {
+        (taller?.clases ?? 0) + presencial.reduce(0) { $0 + ($1.clases ?? 0) }
+    }
+    var totalAlumnos: Int {
+        (taller?.alumnos ?? 0) + presencial.reduce(0) { $0 + $1.alumnos } + online.reduce(0) { $0 + $1.alumnos }
+    }
 }
 
 struct DetalleTaller {
