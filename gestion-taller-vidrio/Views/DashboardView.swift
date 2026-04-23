@@ -562,7 +562,7 @@ private struct TotalizadorRow: View {
                 .padding(.horizontal, 12)
             StatColumna(valor: alumnos, etiqueta: "ALUMNOS", color: .primary)
         }
-        .padding(.horizontal, 16).padding(.vertical, 14)
+        .padding(.horizontal, 30).padding(.vertical, 14)
     }
 }
 
