@@ -186,60 +186,49 @@ struct DashboardView: View {
                         .padding()
                 }
 
-                // TALLER — resumen único (sin desglose por curso)
+                // TALLER — resumen único
                 if let t = viewModel.detalleClases.taller {
-                    TallerSummaryRow(clases: t.clases, alumnos: t.alumnos)
-                    if !viewModel.detalleClases.presencial.isEmpty || !viewModel.detalleClases.online.isEmpty {
-                        Divider().padding(.horizontal)
+                    let color = TipoVenta.taller.color
+                    VStack(spacing: 6) {
+                        CategoriaHeaderRow(label: "Taller", color: color)
+                        CursoDetalleRow(nombre: "Taller", clases: t.clases, alumnos: t.alumnos, color: color)
+                            .padding(.horizontal, 16)
                     }
                 }
 
                 // PRESENCIAL — header + fila por curso
                 if !viewModel.detalleClases.presencial.isEmpty {
-                    let totalCl = viewModel.detalleClases.presencial.reduce(0) { $0 + ($1.clases ?? 0) }
-                    let totalAl = viewModel.detalleClases.presencial.reduce(0) { $0 + $1.alumnos }
-                    CategoriaHeaderRow(
-                        label: "Presencial",
-                        color: TipoVenta.presencial.color,
-                        resumen: "\(totalCl) \(totalCl == 1 ? "clase" : "clases") · \(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")",
-                        icon: "studentdesk"
-                    )
-                    ForEach(viewModel.detalleClases.presencial) { curso in
-                        CursoDetalleRow(curso: curso, mostrarClases: true)
-                        if curso.id != viewModel.detalleClases.presencial.last?.id {
-                            Divider().padding(.leading, 32)
+                    let color = TipoVenta.presencial.color
+                    VStack(spacing: 6) {
+                        CategoriaHeaderRow(label: "Presencial", color: color)
+                        ForEach(viewModel.detalleClases.presencial) { curso in
+                            CursoDetalleRow(nombre: curso.nombre, clases: curso.clases, alumnos: curso.alumnos, color: color)
+                                .padding(.horizontal, 16)
                         }
-                    }
-                    if !viewModel.detalleClases.online.isEmpty {
-                        Divider().padding(.horizontal)
                     }
                 }
 
                 // ONLINE — header + fila por curso
                 if !viewModel.detalleClases.online.isEmpty {
-                    let totalAl = viewModel.detalleClases.online.reduce(0) { $0 + $1.alumnos }
-                    CategoriaHeaderRow(
-                        label: "Online",
-                        color: TipoVenta.online.color,
-                        resumen: "\(totalAl) \(totalAl == 1 ? "alumno" : "alumnos")",
-                        icon: "inset.filled.rectangle.and.person.filled"
-                    )
-                    ForEach(viewModel.detalleClases.online) { curso in
-                        CursoDetalleRow(curso: curso, mostrarClases: false)
-                        if curso.id != viewModel.detalleClases.online.last?.id {
-                            Divider().padding(.leading, 32)
+                    let color = TipoVenta.online.color
+                    VStack(spacing: 6) {
+                        CategoriaHeaderRow(label: "Online", color: color)
+                        ForEach(viewModel.detalleClases.online) { curso in
+                            CursoDetalleRow(nombre: curso.nombre, clases: nil, alumnos: curso.alumnos, color: color)
+                                .padding(.horizontal, 16)
                         }
                     }
                 }
 
                 if viewModel.detalleClases.tieneContenido {
-                    Divider().padding(.horizontal)
+                    Divider().padding(.horizontal).padding(.top, 4)
                     TotalizadorRow(
                         clases: viewModel.detalleClases.totalClases,
                         alumnos: viewModel.detalleClases.totalAlumnos
                     )
                 }
             }
+            .padding(.bottom, viewModel.detalleClases.tieneContenido ? 0 : 0)
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
             .sombraTarjeta(DesignSystem.Sombra.panel)
@@ -494,48 +483,65 @@ private struct IngresoBarRow: View {
 
 // MARK: - Detalle de Clases Subvistas
 
-private struct TallerSummaryRow: View {
-    let clases: Int
-    let alumnos: Int
-
-    var body: some View {
-        HStack {
-            HStack(spacing: 8) {
-                Image(systemName: "hammer.fill")
-                    .font(.caption)
-                    .foregroundStyle(TipoVenta.taller.color)
-                Text("Taller")
-                    .font(.subheadline).fontWeight(.semibold)
-                    .foregroundStyle(TipoVenta.taller.color)
-            }
-            Spacer()
-            Text("\(clases) \(clases == 1 ? "clase" : "clases") · \(alumnos) \(alumnos == 1 ? "alumno" : "alumnos")")
-                .font(.subheadline).foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-    }
-}
-
 private struct CategoriaHeaderRow: View {
     let label: String
     let color: Color
-    let resumen: String
-    let icon: String	
 
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundStyle(color)
+        HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 8, height: 8)
             Text(label.uppercased())
                 .font(.caption).fontWeight(.bold)
                 .foregroundStyle(color)
             Spacer()
-            Text(resumen)
-                .font(.subheadline).foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(color.opacity(0.06))
+        .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 2)
+    }
+}
+
+private struct CursoDetalleRow: View {
+    let nombre: String
+    let clases: Int?
+    let alumnos: Int
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text(nombre)
+                .font(.subheadline).fontWeight(.semibold)
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let cl = clases {
+                StatColumna(valor: cl, etiqueta: "CLASES", color: color)
+                Rectangle()
+                    .fill(color.opacity(0.3))
+                    .frame(width: 1, height: 32)
+                    .padding(.horizontal, 12)
+            }
+            StatColumna(valor: alumnos, etiqueta: "ALUMNOS", color: color)
+        }
+        .padding(14)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+private struct StatColumna: View {
+    let valor: Int
+    let etiqueta: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(valor)")
+                .font(.title2).fontWeight(.bold)
+                .foregroundStyle(color)
+            Text(etiqueta)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(color.opacity(0.65))
+        }
+        .frame(minWidth: 48)
     }
 }
 
@@ -544,36 +550,19 @@ private struct TotalizadorRow: View {
     let alumnos: Int
 
     var body: some View {
-        HStack {
-            Text("Total período")
+        HStack(spacing: 0) {
+            Text("Total del período")
                 .font(.subheadline).fontWeight(.semibold)
-            Spacer()
-            Text("\(clases) \(clases == 1 ? "clase" : "clases") · \(alumnos) \(alumnos == 1 ? "alumno" : "alumnos")")
-                .font(.subheadline).fontWeight(.semibold)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-    }
-}
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-private struct CursoDetalleRow: View {
-    let curso: DetalleCurso
-    let mostrarClases: Bool
-
-    var body: some View {
-        HStack {
-            Text(curso.nombre)
-                .font(.subheadline)
-                .padding(.leading, 32)
-            Spacer()
-            if mostrarClases, let cl = curso.clases {
-                Text("\(cl) \(cl == 1 ? "clase" : "clases") · \(curso.alumnos) \(curso.alumnos == 1 ? "alumno" : "alumnos")")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            } else {
-                Text("\(curso.alumnos) \(curso.alumnos == 1 ? "alumno" : "alumnos")")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
+            StatColumna(valor: clases, etiqueta: "CLASES", color: .primary)
+            Rectangle()
+                .fill(Color.primary.opacity(0.2))
+                .frame(width: 1, height: 32)
+                .padding(.horizontal, 12)
+            StatColumna(valor: alumnos, etiqueta: "ALUMNOS", color: .primary)
         }
-        .padding(.horizontal, 16).padding(.vertical, 8)
+        .padding(.horizontal, 16).padding(.vertical, 14)
     }
 }
 
