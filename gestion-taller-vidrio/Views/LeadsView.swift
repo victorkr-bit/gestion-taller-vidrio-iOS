@@ -278,8 +278,12 @@ private struct PanelNotificacionView: View {
 
     private func chatURL(for lead: Lead) -> URL? {
         let canalLower = lead.canal.lowercased()
+        let contactoLimpio = lead.contacto.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            
         if canalLower.contains("instagram") {
-            return URL(string: "https://www.instagram.com/\(lead.contacto)")
+            return URL(string: "https://www.instagram.com/\(contactoLimpio)/")
         } else if canalLower.contains("whatsapp") {
             let digits = lead.contacto.filter(\.isNumber)
             return URL(string: "https://wa.me/\(digits)")

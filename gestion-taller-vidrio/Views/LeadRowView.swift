@@ -105,8 +105,12 @@ struct LeadRowView: View {
 
     private var chatURL: URL? {
         let canalLower = lead.canal.lowercased()
+        let contactoLimpio = lead.contacto.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+            .replacingOccurrences(of: " ", with: "")
+        
         if canalLower.contains("instagram") {
-            return URL(string: "https://www.instagram.com/\(lead.contacto)")
+            return URL(string: "https://www.instagram.com/\(contactoLimpio)/")
         } else if canalLower.contains("whatsapp") {
             let digits = lead.contacto.filter(\.isNumber)
             return URL(string: "https://wa.me/\(digits)")
