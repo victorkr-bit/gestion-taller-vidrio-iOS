@@ -9,12 +9,16 @@ struct InscripcionFormView: View {
     var inscripcionToEdit: Inscripcion?
     var cronogramaItem: CronogramaItem?
     var curso: Curso?
+    private let preselectedAlumnoId: String?
+    private let preselectedAlumnoNombre: String?
 
-    init(inscripcionesVM: InscripcionesViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil) {
+    init(inscripcionesVM: InscripcionesViewModel, inscripcionToEdit: Inscripcion? = nil, cronogramaItem: CronogramaItem? = nil, curso: Curso? = nil, preselectedAlumnoId: String? = nil, preselectedAlumnoNombre: String? = nil) {
         self.inscripcionesVM = inscripcionesVM
         self.inscripcionToEdit = inscripcionToEdit
         self.cronogramaItem = cronogramaItem
         self.curso = curso
+        self.preselectedAlumnoId = preselectedAlumnoId
+        self.preselectedAlumnoNombre = preselectedAlumnoNombre
         _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: inscripcionesVM.ventasRepo))
     }
     
@@ -321,6 +325,8 @@ struct InscripcionFormView: View {
                 }
             }
         } else {
+            if let id = preselectedAlumnoId { alumnoId = id }
+            if let nombre = preselectedAlumnoNombre { alumno_nombre = nombre }
             self.valorUnitario = origenPrecioBase
             self.turnos = 1
             recalcularTotal()

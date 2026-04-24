@@ -354,8 +354,34 @@ final class TallerRepository {
         return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
     }
 
+    // MARK: - Leads
+
+    func listenToLeads(completion: @escaping (Result<[Lead], Error>) -> Void) -> ListenerRegistration {
+        return db.collection("leads")
+            .order(by: "fecha_ingreso", descending: true)
+            .addSnapshotListener { querySnapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                let leads = querySnapshot?.documents.compactMap { $0.decodeSafely(as: Lead.self) } ?? []
+                completion(.success(leads))
+            }
+    }
+
+    func actualizarEstadoLeads(ids: [String], estado: EstadoLead) async throws {
+        let batch = db.batch()
+        for id in ids {
+            batch.updateData(
+                ["estado": estado.rawValue],
+                forDocument: db.collection("leads").document(id)
+            )
+        }
+        try await batch.commit()
+    }
+
     // MARK: - Helpers Privados
-    
+
     private func getStartOfTodayInArgentina() -> Date {
         var calendar = Calendar(identifier: .gregorian)
         // Forzamos la zona horaria de Argentina

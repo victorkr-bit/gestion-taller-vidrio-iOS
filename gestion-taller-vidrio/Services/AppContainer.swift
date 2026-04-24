@@ -18,6 +18,7 @@ final class AppContainer: ObservableObject {
     let pedidosVM: PedidosViewModel
     let deudoresVM: DeudoresViewModel
     let contactoDetailVM: ContactoDetailViewModel
+    let leadsVM: LeadsViewModel
 
     init() {
         // 1. CREACIÓN DE LA INFRAESTRUCTURA (REPOSITORIOS COMPARTIDOS)
@@ -62,5 +63,8 @@ final class AppContainer: ObservableObject {
 
         // 7. DETALLE DE CONTACTO
         self.contactoDetailVM = ContactoDetailViewModel(tallerRepo: tallerRepo)
+
+        // 8. LEADS
+        self.leadsVM = LeadsViewModel(tallerRepo: tallerRepo)
     }
 }

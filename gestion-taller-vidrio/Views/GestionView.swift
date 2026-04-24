@@ -11,6 +11,8 @@ struct GestionView: View {
     let tallerRepo: TallerRepository
     let deudoresVM: DeudoresViewModel
     let contactoDetailVM: ContactoDetailViewModel
+    let leadsVM: LeadsViewModel
+    let inscripcionesVM: InscripcionesViewModel
 
     var body: some View {
         List {
@@ -21,6 +23,12 @@ struct GestionView: View {
 
                 NavigationLink(destination: CursosView(tallerRepo: tallerRepo)) {
                     Label("Catálogo de Cursos", systemImage: "books.vertical.fill")
+                }
+            }
+
+            Section("Comercial") {
+                NavigationLink(destination: LeadsView(viewModel: leadsVM, inscripcionesVM: inscripcionesVM)) {
+                    Label("Leads", systemImage: "person.badge.plus")
                 }
             }
 
@@ -50,7 +58,15 @@ struct GestionView: View {
         
 
 #Preview {
+    let tallerRepo = TallerRepository()
     NavigationStack {
-        GestionView(ventasRepo: VentasRepository(), tallerRepo: TallerRepository(), deudoresVM: DeudoresViewModel(), contactoDetailVM: ContactoDetailViewModel(tallerRepo: TallerRepository()))
+        GestionView(
+            ventasRepo: VentasRepository(),
+            tallerRepo: tallerRepo,
+            deudoresVM: DeudoresViewModel(),
+            contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
+            leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
+            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: FinanzasRepository(), ventasRepo: VentasRepository())
+        )
     }
 }

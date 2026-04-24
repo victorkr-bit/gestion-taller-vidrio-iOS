@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-"Taller Cris" — iOS management app for a glass art workshop. Handles orders, payments, course scheduling, enrollments, contacts, and financial dashboards. All data lives in Firebase Firestore; there is no local persistence.
+"Taller Cris" — iOS management app for a glass art workshop. Handles orders, payments, course scheduling, enrollments, contacts, leads, and financial dashboards. All data lives in Firebase Firestore; there is no local persistence.
 
 ## Workflow
 - Before implementing any changes, explain your plan and list the files you'll modify.
@@ -32,7 +32,7 @@ App Entry (gestion_taller_vidrioApp.swift)
           ├─ Agenda → AgendaView / AgendaVM + InscripcionesVM + CatalogoOnlineVM
           ├─ Pedidos → PedidosView / PedidosViewModel
           ├─ Pagos → PagosView / PagosViewModel
-          └─ Gestión → GestionView (contacts, courses, debtors, logout)
+          └─ Gestión → GestionView (contacts, courses, leads, debtors, logout)
 ```
 
 ### Dependency injection — AppContainer
@@ -46,14 +46,14 @@ App Entry (gestion_taller_vidrioApp.swift)
 4. Remaining VMs get their required repos
 5. `ContactoDetailViewModel` gets `tallerRepo`
 
-VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views.
+VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`, `leadsVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views.
 
 ### Data layer
 
 - **FirestoreManager** — singleton (`FirestoreManager.shared`) holding the `Firestore` and `Functions` instances. Contains centralized Cloud Functions error mapping (`mapCloudError`).
 - **Repositories** (3 `final class`es):
   - `FinanzasRepository` — payments (`pagos`), metrics (`metricas`), debtors
-  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`), contacts (read-only)
+  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`), contacts (read-only), leads (`leads`)
   - `VentasRepository` — orders (`pedidos`), contacts (`contactos`)
 - **Write operations** go through Firebase Cloud Functions (region: `southamerica-east1`). Reads use Firestore listeners for real-time sync.
 
@@ -66,12 +66,13 @@ VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesV
 | `registrarPago` | Create payment + update origin balance |
 | `editarPago` | Update payment + recalculate balance |
 | `borrarPago` | Delete payment + revert balance |
-| `borrarEntidad` | Generic delete with validation (checks pagos/inscriptos) |
+| `borrarEntidad` | Generic delete with validation (checks pagos/inscriptos); also supports `leads` collection (no validation needed) |
 | `actualizarCronograma` | Update schedule item + propagate to enrollments |
+| `convertirLead` | Convert lead to contacto; returns `contactoId` |
 
 ### Real-time sync strategy
 
-- **Listeners (real-time):** metrics, pagos (date-filtered), próximos cronograma, pedidos, inscripciones (per cronograma/curso), catálogo online
+- **Listeners (real-time):** metrics, pagos (date-filtered), próximos cronograma, pedidos, inscripciones (per cronograma/curso), catálogo online, leads
 - **One-shot fetches:** histórico cronograma, cursos catalog, contactos, deudores
 - **On-demand listeners:** payment accordions per pedido/inscripción (lazy loaded, cleaned up on collapse)
 
@@ -79,7 +80,7 @@ VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesV
 
 `NavigationManager` (environment object) controls tab selection (`AppTab` enum: `inicio`, `cronograma`, `pedidos`, `pagos`, `gestion`) and cross-tab navigation. Each tab wraps its content in a `NavigationStack`. `cronogramaPath: NavigationPath` enables deep navigation from Dashboard → Cronograma detail. Most forms use `.sheet()` presentation.
 
-## ViewModels (11 total)
+## ViewModels (12 total)
 
 All use `@MainActor` and conform to `ObservableObject`.
 
@@ -96,6 +97,7 @@ All use `@MainActor` and conform to `ObservableObject`.
 | `CursosViewModel` | Taller | Course catalog CRUD | No (local) |
 | `ContactosViewModel` | Ventas | Contacts with search filter | No (local) |
 | `PedidoFormViewModel` | Ventas | Order form (create/edit dual mode) | No (local) |
+| `LeadsViewModel` | Taller | Leads list with real-time listener, filters, marcar notificado, convertir, borrar | Yes |
 
 ## Models (Modelos/)
 
@@ -109,6 +111,7 @@ All use `@MainActor` and conform to `ObservableObject`.
 | `Contacto.swift` | `contactos` | nombre, apellido, email?, telefono?, direccion?, redes_sociales?, cuit?, notas? |
 | `Metricas.swift` | `metricas/finanzas` | total_deuda_pedidos, total_deuda_inscripciones |
 | `DeudorItem.swift` | (computed) | Union of Pedido/Inscripcion for debtors panel |
+| `Lead.swift` | `leads` | nombre, canal, contacto, curso_interes, notas, estado (EstadoLead), fecha_ingreso (FechaFlexible)?, contacto_id? |
 
 `Pedido` and `Inscripcion` have `asCloudPayload` / `updatePayload` methods — keep in sync with backend.
 
@@ -139,7 +142,8 @@ gestion-taller-vidrio/
 │   ├── Contacto.swift               # Customers/students
 │   ├── Metricas.swift               # Financial KPIs
 │   ├── DeudorItem.swift             # Computed debtor (union type)
-│   └── Origen.swift                 # Origen enum (.pedido/.inscripcion) for payment registration
+│   ├── Origen.swift                 # Origen enum (.pedido/.inscripcion) for payment registration
+│   └── Lead.swift                   # Lead + EstadoLead enum (pendiente/notificado/convertido)
 ├── Services/
 │   ├── AppContainer.swift           # DI container (repos + VMs)
 │   ├── FirestoreManager.swift       # Firebase singleton + error mapping
@@ -157,7 +161,8 @@ gestion-taller-vidrio/
 │   ├── ContactoDetailViewModel.swift # Enrollment history for a single contact
 │   ├── CursosViewModel.swift         # Course CRUD (instantiated in view)
 │   ├── ContactosViewModel.swift      # Contacts + search (instantiated in view)
-│   └── PedidoFormViewModel.swift     # Order form create/edit (instantiated in view)
+│   ├── PedidoFormViewModel.swift     # Order form create/edit (instantiated in view)
+│   └── LeadsViewModel.swift          # Leads: real-time listener, filtros, acciones (notificar/convertir/borrar)
 ├── Views/
 │   ├── DashboardView.swift          # KPI cards, charts, próxima actividad
 │   ├── AgendaView.swift             # Dual mode (Agenda/Online)
@@ -180,8 +185,10 @@ gestion-taller-vidrio/
 │   ├── ContactoDetailView.swift     # Contact detail + enrollment history
 │   ├── ContactoFormView.swift       # Create/edit contact form
 │   ├── SelectorContactoView.swift   # Reusable contact picker sheet
-│   └── CursosView.swift             # Course catalog management
-│   └── CursoFormView.swift          # Create/edit course form
+│   ├── CursosView.swift             # Course catalog management
+│   ├── CursoFormView.swift          # Create/edit course form
+│   ├── LeadsView.swift              # Leads list + filtros + panel notificación + modal conversión
+│   └── LeadRowView.swift            # Lead card: checkbox selección, datos, botón acción por estado, trash icon
 └── Varios/
     ├── AppEnums.swift               # TipoCurso, EstadoInscripcion, TipoPedido, TipoVenta, MedioDePago, OrigenTipoPago, TallerError
     ├── Formatters.swift             # Currency (es_AR), dates (es/Argentina), ISO8601

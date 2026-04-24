@@ -33,7 +33,14 @@ struct MainView: View {
 
             Tab("Gestión", systemImage: "gearshape", value: AppTab.gestion) {
                 NavigationStack {
-                    GestionView(ventasRepo: container.ventasRepo, tallerRepo: container.tallerRepo, deudoresVM: container.deudoresVM, contactoDetailVM: container.contactoDetailVM)
+                    GestionView(
+                        ventasRepo: container.ventasRepo,
+                        tallerRepo: container.tallerRepo,
+                        deudoresVM: container.deudoresVM,
+                        contactoDetailVM: container.contactoDetailVM,
+                        leadsVM: container.leadsVM,
+                        inscripcionesVM: container.inscripcionesVM
+                    )
                 }
             }
         }
