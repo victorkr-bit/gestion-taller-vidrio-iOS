@@ -13,6 +13,7 @@ struct GestionView: View {
     let contactoDetailVM: ContactoDetailViewModel
     let leadsVM: LeadsViewModel
     let inscripcionesVM: InscripcionesViewModel
+    let dashboardVM: DashboardViewModel
 
     var body: some View {
         List {
@@ -30,11 +31,17 @@ struct GestionView: View {
                 NavigationLink(destination: LeadsView(viewModel: leadsVM, inscripcionesVM: inscripcionesVM)) {
                     Label("Leads", systemImage: "person.badge.plus")
                 }
+                NavigationLink(destination: ActividadComercialView(viewModel: dashboardVM)) {
+                    Label("Actividad", systemImage: "chart.xyaxis.line")
+                }
             }
 
             Section("Finanzas") {
                 NavigationLink(destination: DeudoresView(viewModel: deudoresVM)) {
                     Label("Deudores", systemImage: "person.crop.circle.badge.xmark")
+                }
+                NavigationLink(destination: FacturacionView(viewModel: dashboardVM)) {
+                    Label("Facturación", systemImage: "chart.bar.xaxis")
                 }
             }
             // --- FIN DE LA MODIFICACIÓN ---
@@ -59,6 +66,7 @@ struct GestionView: View {
 
 #Preview {
     let tallerRepo = TallerRepository()
+    let finanzasRepo = FinanzasRepository()
     NavigationStack {
         GestionView(
             ventasRepo: VentasRepository(),
@@ -66,7 +74,8 @@ struct GestionView: View {
             deudoresVM: DeudoresViewModel(),
             contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
             leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
-            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: FinanzasRepository(), ventasRepo: VentasRepository())
+            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, ventasRepo: VentasRepository()),
+            dashboardVM: DashboardViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo)
         )
     }
 }

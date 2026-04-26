@@ -39,7 +39,8 @@ struct MainView: View {
                         deudoresVM: container.deudoresVM,
                         contactoDetailVM: container.contactoDetailVM,
                         leadsVM: container.leadsVM,
-                        inscripcionesVM: container.inscripcionesVM
+                        inscripcionesVM: container.inscripcionesVM,
+                        dashboardVM: container.dashboardVM
                     )
                 }
             }

@@ -13,9 +13,6 @@ struct DashboardView: View {
             VStack(spacing: DesignSystem.Espaciado.xl) {
                 proximasActividadesSection
                 kpiGrid
-                ingresosPorTipoSection
-                detalleClasesSection
-                facturacionAnualSection
                 Spacer(minLength: 50)
             }
             .padding(.vertical)
@@ -139,195 +136,6 @@ struct DashboardView: View {
         .padding(.horizontal)
     }
 
-    // MARK: - Ingresos por Tipo
-
-    private var ingresosPorTipoSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
-            Text("Ingresos por Tipo")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-
-            if viewModel.datosGraficoPorTipo.isEmpty {
-                Text("No hay ingresos en el período seleccionado")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-            } else {
-                VStack(spacing: 14) {
-                    ForEach(viewModel.datosGraficoPorTipo) { dato in
-                        IngresoBarRow(dato: dato)
-                    }
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
-                .sombraTarjeta(DesignSystem.Sombra.panel)
-                .padding(.horizontal)
-            }
-        }
-    }
-
-    // MARK: - Detalle de Clases del Período
-
-    private var detalleClasesSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
-            Text("Detalle de Clases del Período")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-
-            VStack(spacing: 0) {
-                if !viewModel.detalleClases.tieneContenido {
-                    Text("Sin clases en el período seleccionado")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
-
-                // TALLER — resumen único
-                if let t = viewModel.detalleClases.taller {
-                    let color = TipoVenta.taller.color
-                    VStack(spacing: 6) {
-                        CategoriaHeaderRow(label: "Taller", color: color)
-                        CursoDetalleRow(nombre: "Taller", clases: t.clases, alumnos: t.alumnos, color: color)
-                            .padding(.horizontal, 16)
-                    }
-                }
-
-                // PRESENCIAL — header + fila por curso
-                if !viewModel.detalleClases.presencial.isEmpty {
-                    let color = TipoVenta.presencial.color
-                    VStack(spacing: 6) {
-                        CategoriaHeaderRow(label: "Presencial", color: color)
-                        ForEach(viewModel.detalleClases.presencial) { curso in
-                            CursoDetalleRow(nombre: curso.nombre, clases: curso.clases, alumnos: curso.alumnos, color: color)
-                                .padding(.horizontal, 16)
-                        }
-                    }
-                }
-
-                // ONLINE — header + fila por curso
-                if !viewModel.detalleClases.online.isEmpty {
-                    let color = TipoVenta.online.color
-                    VStack(spacing: 6) {
-                        CategoriaHeaderRow(label: "Online", color: color)
-                        ForEach(viewModel.detalleClases.online) { curso in
-                            CursoDetalleRow(nombre: curso.nombre, clases: nil, alumnos: curso.alumnos, color: color)
-                                .padding(.horizontal, 16)
-                        }
-                    }
-                }
-
-                if viewModel.detalleClases.tieneContenido {
-                    Divider().padding(.horizontal).padding(.top, 4)
-                    TotalizadorRow(
-                        clases: viewModel.detalleClases.totalClases,
-                        alumnos: viewModel.detalleClases.totalAlumnos
-                    )
-                }
-            }
-            .padding(.bottom, viewModel.detalleClases.tieneContenido ? 0 : 0)
-            .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
-            .sombraTarjeta(DesignSystem.Sombra.panel)
-            .padding(.horizontal)
-        }
-    }
-
-    // MARK: - Facturación Mensual (13 meses, YtY)
-
-    private var facturacionAnualSection: some View {
-        let añoActual = Calendar.current.component(.year, from: Date())
-        let datosOrdenados = viewModel.facturacionAnual
-        let maxTotal = datosOrdenados.map { $0.total }.max() ?? 1
-
-        return VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
-            Text("Facturación mensual")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal)
-
-            if datosOrdenados.isEmpty {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding()
-            } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Chart(datosOrdenados) { dato in
-                        BarMark(
-                            x: .value("Mes", dato.label),
-                            y: .value("Total", dato.total)
-                        )
-                        .foregroundStyle(
-                            dato.esMesActual ? DesignSystem.Color.accion :
-                            dato.esAñoAnterior ? DesignSystem.Color.accion.opacity(0.25) : DesignSystem.Color.accion.opacity(0.6)
-                        )
-                        .cornerRadius(DesignSystem.Radio.grafico)
-                        .annotation(position: .top, alignment: .center) {
-                            if dato.total > 0 {
-                                Text(Formatters.compactMoney(dato.total))
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize()
-                            }
-                        }
-                    }
-                    .frame(height: 210)
-                    .chartScrollableAxes(.horizontal)
-                    .chartXVisibleDomain(length: 6)
-                    .chartYScale(domain: 0...(maxTotal * 1.35))
-                    .chartYAxis {
-                        AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
-                            AxisGridLine().foregroundStyle(.gray.opacity(0.2))
-                            AxisValueLabel {
-                                if let v = value.as(Double.self) {
-                                    Text(Formatters.compactMoney(v)).font(.caption)
-                                }
-                            }
-                        }
-                    }
-                    .chartXAxis {
-                        AxisMarks { value in
-                            AxisGridLine()
-                            AxisValueLabel {
-                                if let full = value.as(String.self) {
-                                    Text(full.components(separatedBy: " ").first ?? full)
-                                        .font(.caption)
-                                }
-                            }
-                        }
-                    }
-
-                    // Leyenda de años
-                    HStack(spacing: 16) {
-                        HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion.opacity(0.25))
-                                .frame(width: 16, height: 8)
-                            Text(String(añoActual - 1)).font(.caption).foregroundStyle(.secondary)
-                        }
-                        HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion.opacity(0.6))
-                                .frame(width: 16, height: 8)
-                            Text(String(añoActual)).font(.caption).foregroundStyle(.secondary)
-                        }
-                        HStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador).fill(DesignSystem.Color.accion)
-                                .frame(width: 16, height: 8)
-                            Text("Mes actual").font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
-                .sombraTarjeta(DesignSystem.Sombra.panel)
-                .padding(.horizontal)
-            }
-        }
-    }
-
     // MARK: - Gráfico de Ocupación
 
     private func ocupacionChartPanel(_ item: OcupacionTallerItem) -> some View {
@@ -442,7 +250,7 @@ private struct ProximaActividadCard: View {
 
 // MARK: - Ingresos por Tipo Row
 
-private struct IngresoBarRow: View {
+struct IngresoBarRow: View {
     let dato: DatoGraficoTipo
 
     private var barColor: Color { TipoVenta.color(forDescripcion: dato.tipo) }
@@ -483,7 +291,7 @@ private struct IngresoBarRow: View {
 
 // MARK: - Detalle de Clases Subvistas
 
-private struct CategoriaHeaderRow: View {
+struct CategoriaHeaderRow: View {
     let label: String
     let color: Color
 
@@ -499,7 +307,7 @@ private struct CategoriaHeaderRow: View {
     }
 }
 
-private struct CursoDetalleRow: View {
+struct CursoDetalleRow: View {
     let nombre: String
     let clases: Int?
     let alumnos: Int
@@ -527,7 +335,7 @@ private struct CursoDetalleRow: View {
     }
 }
 
-private struct StatColumna: View {
+struct StatColumna: View {
     let valor: Int
     let etiqueta: String
     let color: Color
@@ -545,7 +353,7 @@ private struct StatColumna: View {
     }
 }
 
-private struct TotalizadorRow: View {
+struct TotalizadorRow: View {
     let clases: Int
     let alumnos: Int
 

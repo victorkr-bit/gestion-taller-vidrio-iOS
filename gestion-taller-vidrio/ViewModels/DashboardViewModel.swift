@@ -27,6 +27,7 @@ class DashboardViewModel: ObservableObject {
     // MARK: - Datos de Gráficos (pre-calculados)
     @Published var datosGraficoPorTipo: [DatoGraficoTipo] = []
     @Published var facturacionAnual: [DatoMensual] = []
+    @Published var clasesAnuales: [DatoMensualClases] = []
 
     // MARK: - KPIs Operativos
     @Published var proximasClases: [CronogramaItem] = []
@@ -96,6 +97,9 @@ class DashboardViewModel: ObservableObject {
 
         // 5. Cargar detalle de clases por período
         loadDetalleClases()
+
+        // 6. Cargar evolución mensual de clases (ventana fija 12 meses)
+        loadClasesAnuales()
     }
 
     private func restartPagosListener() {
@@ -239,6 +243,29 @@ class DashboardViewModel: ObservableObject {
         })
     }
 
+    private func loadClasesAnuales() {
+        taskTracker.track(Task {
+            do {
+                let cal = Calendar.current
+                let ahora = Date()
+                let inicioVentana = cal.date(byAdding: .month, value: -11, to: MesAño.current().fechaInicio)!
+                let ins = try await self.tallerRepo.fetchInscripcionesPorFecha(from: inicioVentana, to: ahora)
+
+                self.clasesAnuales = (0..<12).map { i in
+                    let mesDate = cal.date(byAdding: .month, value: -(11 - i), to: MesAño.current().fechaInicio)!
+                    let m = cal.component(.month, from: mesDate)
+                    let a = cal.component(.year, from: mesDate)
+                    let delMes = ins.filter {
+                        cal.component(.month, from: $0.fecha_curso) == m &&
+                        cal.component(.year, from: $0.fecha_curso) == a
+                    }
+                    let clases = Set(delMes.compactMap { $0.cronogramaId }).count
+                    return DatoMensualClases(mes: m, año: a, clases: clases, alumnos: delMes.count)
+                }
+            } catch { /* fallo silencioso */ }
+        })
+    }
+
     private func computeDetalleClases(_ inscripciones: [Inscripcion]) {
         // Taller
         let tallerIns = inscripciones.filter { $0.cursoTipo == .taller }
@@ -379,5 +406,19 @@ struct DatoMensual: Identifiable {
 
     var esAñoAnterior: Bool {
         año < Calendar.current.component(.year, from: Date())
+    }
+}
+
+struct DatoMensualClases: Identifiable {
+    var id: String { "\(año)-\(mes)" }
+    let mes: Int
+    let año: Int
+    let clases: Int
+    let alumnos: Int
+
+    var label: String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.locale = Locale(identifier: "es_AR")
+        return "\(cal.shortMonthSymbols[mes - 1].capitalized) \(año)"
     }
 }
