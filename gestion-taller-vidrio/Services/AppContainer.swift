@@ -43,7 +43,7 @@ final class AppContainer: ObservableObject {
         // 3. INYECCIÓN EN PAGOS
         self.pagosVM = PagosViewModel(
             finanzasRepo: finanzasRepo,
-            ventasRepo: ventasRepo
+            contactosRepo: contactosRepo
         )
 
         // 4. INYECCIÓN EN CRONOGRAMA (3 VMs)

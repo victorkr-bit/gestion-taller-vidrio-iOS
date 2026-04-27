@@ -64,15 +64,15 @@ class PagosViewModel: ObservableObject {
     
     // MARK: - Inyección de Dependencias
     private let finanzasRepo: FinanzasRepository
-    private let ventasRepo: VentasRepository
-    
+    private let contactosRepo: ContactosRepository
+
     // MARK: - Inicializador
     init(
         finanzasRepo: FinanzasRepository? = nil,
-        ventasRepo: VentasRepository? = nil
+        contactosRepo: ContactosRepository? = nil
     ) {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
-        self.ventasRepo = ventasRepo ?? VentasRepository()
+        self.contactosRepo = contactosRepo ?? ContactosRepository()
         restartListener()
         fetchContactos()
     }
@@ -143,7 +143,7 @@ class PagosViewModel: ObservableObject {
     func fetchContactos() {
         taskTracker.track(Task {
             do {
-                self.contactos = try await ventasRepo.fetchContactos()
+                self.contactos = try await contactosRepo.fetchContactos()
             } catch {
                 self.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }
