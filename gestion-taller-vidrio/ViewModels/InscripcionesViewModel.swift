@@ -25,13 +25,11 @@ class InscripcionesViewModel: ObservableObject {
     // MARK: - Dependencias
     private let tallerRepo: TallerRepository
     private let finanzasRepo: FinanzasRepository
-    let ventasRepo: VentasRepository
     let contactosRepo: ContactosRepository
 
-    init(tallerRepo: TallerRepository, finanzasRepo: FinanzasRepository, ventasRepo: VentasRepository, contactosRepo: ContactosRepository) {
+    init(tallerRepo: TallerRepository, finanzasRepo: FinanzasRepository, contactosRepo: ContactosRepository) {
         self.tallerRepo = tallerRepo
         self.finanzasRepo = finanzasRepo
-        self.ventasRepo = ventasRepo
         self.contactosRepo = contactosRepo
     }
 

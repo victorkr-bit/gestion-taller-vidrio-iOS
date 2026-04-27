@@ -74,7 +74,7 @@ struct GestionView: View {
             deudoresVM: DeudoresViewModel(),
             contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
             leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
-            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, ventasRepo: VentasRepository(), contactosRepo: ContactosRepository()),
+            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, contactosRepo: ContactosRepository()),
             dashboardVM: DashboardViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo)
         )
     }

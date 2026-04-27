@@ -52,7 +52,6 @@ final class AppContainer: ObservableObject {
         self.inscripcionesVM = InscripcionesViewModel(
             tallerRepo: tallerRepo,
             finanzasRepo: finanzasRepo,
-            ventasRepo: ventasRepo,
             contactosRepo: contactosRepo
         )
 
