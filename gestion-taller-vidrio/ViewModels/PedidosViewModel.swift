@@ -82,11 +82,12 @@ class PedidosViewModel: ObservableObject {
     
     private let ventasRepo: VentasRepository
     private let finanzasRepo: FinanzasRepository
-    
-    // Inicializador con Instanciación Perezosa
-    init(ventasRepo: VentasRepository? = nil, finanzasRepo: FinanzasRepository? = nil) {
+    private let contactosRepo: ContactosRepository
+
+    init(ventasRepo: VentasRepository? = nil, finanzasRepo: FinanzasRepository? = nil, contactosRepo: ContactosRepository? = nil) {
         self.ventasRepo = ventasRepo ?? VentasRepository()
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
+        self.contactosRepo = contactosRepo ?? ContactosRepository()
         startListeningOrders()
     }
     
@@ -99,7 +100,7 @@ class PedidosViewModel: ObservableObject {
     // MARK: - Factory
 
     func makePedidoFormViewModel(pedido: Pedido? = nil) -> PedidoFormViewModel {
-        PedidoFormViewModel(pedido: pedido, repository: ventasRepo)
+        PedidoFormViewModel(pedido: pedido, repository: ventasRepo, contactosRepo: contactosRepo)
     }
 
     // MARK: - Gestión de Pedidos (VentasRepository)

@@ -24,15 +24,14 @@ class PedidoFormViewModel: ObservableObject {
         taskTracker.cancelAll()
     }
 
-    // CAMBIO 1: Repo de Ventas
     private let repository: VentasRepository
+    private let contactosRepo: ContactosRepository
     private let editingPedidoID: String?
 
-    // CAMBIO 2: Init actualizado
-    // Notar que 'pedido' es opcional, repository tiene valor por defecto
-    init(pedido: Pedido? = nil, repository: VentasRepository? = nil) {
+    init(pedido: Pedido? = nil, repository: VentasRepository? = nil, contactosRepo: ContactosRepository? = nil) {
         self.repository = repository ?? VentasRepository()
-        
+        self.contactosRepo = contactosRepo ?? ContactosRepository()
+
         if let p = pedido {
             self.editingPedidoID = p.id
             self.clienteId = p.cliente_id
@@ -59,7 +58,7 @@ class PedidoFormViewModel: ObservableObject {
     func fetchContactos() {
         taskTracker.track(Task {
             do {
-                self.contactos = try await repository.fetchContactos()
+                self.contactos = try await contactosRepo.fetchContactos()
             } catch {
                 self.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }

@@ -59,7 +59,8 @@ final class AppContainer: ObservableObject {
         // 5. INYECCIÓN EN PEDIDOS
         self.pedidosVM = PedidosViewModel(
             ventasRepo: ventasRepo,
-            finanzasRepo: finanzasRepo
+            finanzasRepo: finanzasRepo,
+            contactosRepo: contactosRepo
         )
 
         // 6. INYECCIÓN EN DEUDORES
