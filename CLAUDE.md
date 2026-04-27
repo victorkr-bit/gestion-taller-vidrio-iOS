@@ -40,21 +40,23 @@ App Entry (gestion_taller_vidrioApp.swift)
 `AppContainer` (`Services/AppContainer.swift`) is a `@MainActor` singleton that instantiates all repositories and ViewModels once. `MainView` holds it as a `@StateObject`.
 
 **Wiring sequence:**
-1. Three repos created: `FinanzasRepository`, `TallerRepository`, `VentasRepository`
+1. Four repos created: `FinanzasRepository`, `TallerRepository`, `VentasRepository`, `ContactosRepository`
 2. `DashboardViewModel` gets `finanzasRepo` + `tallerRepo`
-3. `PagosViewModel` gets `finanzasRepo` + `ventasRepo`
-4. Remaining VMs get their required repos
-5. `ContactoDetailViewModel` gets `tallerRepo`
+3. `PagosViewModel` gets `finanzasRepo` + `contactosRepo`
+4. `PedidosViewModel` gets `ventasRepo` + `finanzasRepo` + `contactosRepo` (factory de PedidoFormViewModel)
+5. `InscripcionesViewModel` gets `tallerRepo` + `finanzasRepo` + `contactosRepo` (expone `contactosRepo` para `InscripcionFormView`)
+6. `ContactoDetailViewModel` gets `tallerRepo`
 
 VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`, `leadsVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views.
 
 ### Data layer
 
 - **FirestoreManager** — singleton (`FirestoreManager.shared`) holding the `Firestore` and `Functions` instances. Contains centralized Cloud Functions error mapping (`mapCloudError`).
-- **Repositories** (3 `final class`es):
+- **Repositories** (4 `final class`es):
   - `FinanzasRepository` — payments (`pagos`), metrics (`metricas`), debtors
-  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`), contacts (read-only), leads (`leads`)
-  - `VentasRepository` — orders (`pedidos`), contacts (`contactos`)
+  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`), leads (`leads`)
+  - `VentasRepository` — orders (`pedidos`)
+  - `ContactosRepository` — contacts (`contactos`) CRUD + cache en memoria. Única puerta a la colección `contactos`.
 - **Write operations** go through Firebase Cloud Functions (region: `southamerica-east1`). Reads use Firestore listeners for real-time sync.
 
 ### Cloud Functions called
@@ -87,16 +89,16 @@ All use `@MainActor` and conform to `ObservableObject`.
 | ViewModel | Repo dependencies | Key responsibility | In AppContainer |
 |---|---|---|---|
 | `DashboardViewModel` | Finanzas, Taller | KPIs, charts, próxima clase, date filter (MesAño) | Yes |
-| `PagosViewModel` | Finanzas, Ventas | Payment list, search, date filter | Yes |
-| `PedidosViewModel` | Ventas, Finanzas | Orders with dual filters (pago/entrega), payment accordions | Yes |
+| `PagosViewModel` | Finanzas, Contactos | Payment list, search, date filter | Yes |
+| `PedidosViewModel` | Ventas, Finanzas, Contactos | Orders with dual filters (pago/entrega), payment accordions | Yes |
 | `AgendaViewModel` | Taller | Schedule (próximos listener + histórico one-shot) | Yes |
-| `InscripcionesViewModel` | Taller, Finanzas, Ventas | Enrollments (agenda & online), occupancy calculations | Yes |
+| `InscripcionesViewModel` | Taller, Finanzas, Contactos | Enrollments (agenda & online), occupancy calculations | Yes |
 | `CatalogoOnlineViewModel` | Taller | Online course catalog listener | Yes |
 | `DeudoresViewModel` | Finanzas | Debtors panel, pay/forgive actions | Yes |
 | `ContactoDetailViewModel` | Taller | Contact detail: enrollment history for a student | Yes |
 | `CursosViewModel` | Taller | Course catalog CRUD | No (local) |
-| `ContactosViewModel` | Ventas | Contacts with search filter | No (local) |
-| `PedidoFormViewModel` | Ventas | Order form (create/edit dual mode) | No (local) |
+| `ContactosViewModel` | Contactos | Contacts with search filter | No (local) |
+| `PedidoFormViewModel` | Ventas, Contactos | Order form (create/edit dual mode) | No (local) |
 | `LeadsViewModel` | Taller | Leads list with real-time listener, filters, marcar notificado, convertir, borrar | Yes |
 
 ## Models (Modelos/)
