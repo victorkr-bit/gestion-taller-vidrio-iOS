@@ -8,6 +8,7 @@ final class AppContainer: ObservableObject {
     let finanzasRepo: FinanzasRepository
     let tallerRepo: TallerRepository
     let ventasRepo: VentasRepository
+    let contactosRepo: ContactosRepository
 
     // MARK: - ViewModels
     let dashboardVM: DashboardViewModel
@@ -25,10 +26,12 @@ final class AppContainer: ObservableObject {
         let finanzasRepo = FinanzasRepository()
         let tallerRepo = TallerRepository()
         let ventasRepo = VentasRepository()
+        let contactosRepo = ContactosRepository()
 
         self.finanzasRepo = finanzasRepo
         self.tallerRepo = tallerRepo
         self.ventasRepo = ventasRepo
+        self.contactosRepo = contactosRepo
 
         // 2. INYECCIÓN EN DASHBOARD
         let dashboardVM = DashboardViewModel(
