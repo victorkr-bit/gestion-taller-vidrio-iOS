@@ -2,7 +2,9 @@ import SwiftUI
 import Charts
 
 struct FacturacionView: View {
-    @ObservedObject var viewModel: DashboardViewModel
+    @ObservedObject var metricasVM: MetricasViewModel
+    @ObservedObject var chartsVM: ChartsViewModel
+    @ObservedObject var filter: FilterCoordinator
     @State private var showFiltro = false
 
     var body: some View {
@@ -16,13 +18,13 @@ struct FacturacionView: View {
         }
         .navigationTitle("Facturación")
         .background(Color(.systemGroupedBackground))
-        .errorAlert($viewModel.errorMessage)
+        .errorAlert($metricasVM.errorMessage)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showFiltro = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
-                        Text(viewModel.periodoLabel)
+                        Text(filter.periodoLabel)
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
@@ -32,7 +34,7 @@ struct FacturacionView: View {
         }
         .sheet(isPresented: $showFiltro) {
             NavigationStack {
-                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
+                FiltroMesAñoView(desde: $filter.mesInicio, hasta: $filter.mesFin)
                     .padding()
                     .navigationTitle("Período")
                     .navigationBarTitleDisplayMode(.inline)
@@ -55,14 +57,14 @@ struct FacturacionView: View {
                 .fontWeight(.semibold)
                 .padding(.horizontal)
 
-            if viewModel.datosGraficoPorTipo.isEmpty {
+            if metricasVM.datosGraficoPorTipo.isEmpty {
                 Text("No hay ingresos en el período seleccionado")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
             } else {
                 VStack(spacing: 14) {
-                    ForEach(viewModel.datosGraficoPorTipo) { dato in
+                    ForEach(metricasVM.datosGraficoPorTipo) { dato in
                         IngresoBarRow(dato: dato)
                     }
                 }
@@ -79,7 +81,7 @@ struct FacturacionView: View {
 
     private var facturacionAnualSection: some View {
         let añoActual = Calendar.current.component(.year, from: Date())
-        let datosOrdenados = viewModel.facturacionAnual
+        let datosOrdenados = chartsVM.facturacionAnual
         let maxTotal = datosOrdenados.map { $0.total }.max() ?? 1
 
         return VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {

@@ -9,7 +9,13 @@ struct MainView: View {
         TabView(selection: $navManager.selectedTab) {
             Tab("Inicio", systemImage: "house", value: AppTab.inicio) {
                 NavigationStack {
-                    DashboardView(viewModel: container.dashboardVM, deudoresVM: container.deudoresVM)
+                    DashboardView(
+                        metricasVM: container.metricasVM,
+                        chartsVM: container.chartsVM,
+                        proximaActividadVM: container.proximaActividadVM,
+                        filter: container.filterCoordinator,
+                        deudoresVM: container.deudoresVM
+                    )
                 }
             }
 
@@ -40,7 +46,9 @@ struct MainView: View {
                         contactoDetailVM: container.contactoDetailVM,
                         leadsVM: container.leadsVM,
                         inscripcionesVM: container.inscripcionesVM,
-                        dashboardVM: container.dashboardVM
+                        metricasVM: container.metricasVM,
+                        chartsVM: container.chartsVM,
+                        filter: container.filterCoordinator
                     )
                 }
             }

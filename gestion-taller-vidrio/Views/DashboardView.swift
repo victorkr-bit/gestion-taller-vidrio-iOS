@@ -2,11 +2,18 @@ import SwiftUI
 import Charts
 
 struct DashboardView: View {
-    @ObservedObject var viewModel: DashboardViewModel
+    @ObservedObject var metricasVM: MetricasViewModel
+    @ObservedObject var chartsVM: ChartsViewModel
+    @ObservedObject var proximaActividadVM: ProximaActividadViewModel
+    @ObservedObject var filter: FilterCoordinator
     @ObservedObject var deudoresVM: DeudoresViewModel
     @EnvironmentObject var navManager: NavigationManager
 
     @State private var showFiltro = false
+
+    private var tendencia: Double {
+        metricasVM.tendenciaPorcentaje(facturacionAnual: chartsVM.facturacionAnual)
+    }
 
     var body: some View {
         ScrollView {
@@ -19,16 +26,17 @@ struct DashboardView: View {
         }
         .navigationTitle("Inicio")
         .background(Color(.systemGroupedBackground))
-        .errorAlert($viewModel.errorMessage)
+        .errorAlert($metricasVM.errorMessage)
+        .errorAlert($proximaActividadVM.errorMessage)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            viewModel.sincronizarMesActualSiCambio()
+            filter.sincronizarMesActualSiCambio()
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showFiltro = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
-                        Text(viewModel.periodoLabel)
+                        Text(filter.periodoLabel)
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
@@ -38,7 +46,7 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showFiltro) {
             NavigationStack {
-                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
+                FiltroMesAñoView(desde: $filter.mesInicio, hasta: $filter.mesFin)
                     .padding()
                     .navigationTitle("Período")
                     .navigationBarTitleDisplayMode(.inline)
@@ -61,7 +69,7 @@ struct DashboardView: View {
                 .fontWeight(.semibold)
                 .padding(.horizontal)
 
-            if viewModel.proximasClases.isEmpty {
+            if proximaActividadVM.proximasClases.isEmpty {
                 EstadoVacioView(
                     icono: "calendar.badge.clock",
                     mensaje: "No hay actividades próximas.",
@@ -69,7 +77,7 @@ struct DashboardView: View {
                 )
             } else {
                 HStack(spacing: 12) {
-                    ForEach(viewModel.proximasClases) { actividad in
+                    ForEach(proximaActividadVM.proximasClases) { actividad in
                         Button {
                             navManager.navigateToCourseDetail(actividad)
                         } label: {
@@ -81,7 +89,7 @@ struct DashboardView: View {
                 }
                 .padding(.horizontal)
 
-                if !viewModel.ocupacionesTaller.isEmpty {
+                if !proximaActividadVM.ocupacionesTaller.isEmpty {
                     VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
                         Text("Ocupación por hora")
                             .font(.callout)
@@ -89,14 +97,14 @@ struct DashboardView: View {
                             .foregroundStyle(.secondary)
                             .padding(.horizontal)
 
-                        if viewModel.ocupacionesTaller.count == 2 {
+                        if proximaActividadVM.ocupacionesTaller.count == 2 {
                             HStack(alignment: .top, spacing: 8) {
-                                ForEach(viewModel.ocupacionesTaller) { item in
+                                ForEach(proximaActividadVM.ocupacionesTaller) { item in
                                     ocupacionChartPanel(item)
                                 }
                             }
                             .padding(.horizontal)
-                        } else if let item = viewModel.ocupacionesTaller.first {
+                        } else if let item = proximaActividadVM.ocupacionesTaller.first {
                             ocupacionChartPanel(item)
                                 .padding(.horizontal)
                         }
@@ -113,10 +121,10 @@ struct DashboardView: View {
             Button { navManager.selectedTab = .pagos } label: {
                 KpiCardView(
                     titulo: "Ingresos",
-                    valor: viewModel.totalIngresosMes,
+                    valor: metricasVM.totalIngresosMes,
                     icon: "arrow.up.circle.fill",
                     color: DesignSystem.Color.accion,
-                    tendencia: viewModel.tendenciaPorcentaje != 0 ? viewModel.tendenciaPorcentaje : nil
+                    tendencia: tendencia != 0 ? tendencia : nil
                 )
             }
             .buttonStyle(.plain)
@@ -126,7 +134,7 @@ struct DashboardView: View {
             } label: {
                 KpiCardView(
                     titulo: "Deuda Total",
-                    valor: viewModel.totalDeuda,
+                    valor: metricasVM.totalDeuda,
                     icon: "exclamationmark.circle.fill",
                     color: DesignSystem.Color.peligro
                 )

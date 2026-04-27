@@ -13,7 +13,9 @@ struct GestionView: View {
     let contactoDetailVM: ContactoDetailViewModel
     let leadsVM: LeadsViewModel
     let inscripcionesVM: InscripcionesViewModel
-    let dashboardVM: DashboardViewModel
+    let metricasVM: MetricasViewModel
+    let chartsVM: ChartsViewModel
+    let filter: FilterCoordinator
 
     var body: some View {
         List {
@@ -31,7 +33,7 @@ struct GestionView: View {
                 NavigationLink(destination: LeadsView(viewModel: leadsVM, inscripcionesVM: inscripcionesVM)) {
                     Label("Leads", systemImage: "person.badge.plus")
                 }
-                NavigationLink(destination: ActividadComercialView(viewModel: dashboardVM)) {
+                NavigationLink(destination: ActividadComercialView(chartsVM: chartsVM, filter: filter)) {
                     Label("Actividad", systemImage: "chart.xyaxis.line")
                 }
             }
@@ -40,33 +42,28 @@ struct GestionView: View {
                 NavigationLink(destination: DeudoresView(viewModel: deudoresVM)) {
                     Label("Deudores", systemImage: "person.crop.circle.badge.xmark")
                 }
-                NavigationLink(destination: FacturacionView(viewModel: dashboardVM)) {
+                NavigationLink(destination: FacturacionView(metricasVM: metricasVM, chartsVM: chartsVM, filter: filter)) {
                     Label("Facturación", systemImage: "chart.bar.xaxis")
                 }
             }
-            // --- FIN DE LA MODIFICACIÓN ---
-            
-            // --- AÑADIDO (Paso 2): Sección de Logout ---
+
             Section("Sistema") {
                 Button(role: .destructive) {
-                    // Llamamos a la función para cerrar sesión
                     authViewModel.signOut()
                 } label: {
-                    // Usamos .destructive (rojo) por defecto
                     Label("Cerrar Sesión", systemImage: "rectangle.portrait.and.arrow.right")
                 }
             }
-            // --- FIN DE LA MODIFICACIÓN ---
-            
         }
         .navigationTitle("Gestión")
     }
 }
-        
+
 
 #Preview {
     let tallerRepo = TallerRepository()
     let finanzasRepo = FinanzasRepository()
+    let filter = FilterCoordinator()
     NavigationStack {
         GestionView(
             contactosRepo: ContactosRepository(),
@@ -75,7 +72,9 @@ struct GestionView: View {
             contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
             leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
             inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, contactosRepo: ContactosRepository()),
-            dashboardVM: DashboardViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo)
+            metricasVM: MetricasViewModel(finanzasRepo: finanzasRepo, filter: filter),
+            chartsVM: ChartsViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo, filter: filter),
+            filter: filter
         )
     }
 }

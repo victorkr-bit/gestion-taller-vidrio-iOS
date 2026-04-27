@@ -41,13 +41,16 @@ App Entry (gestion_taller_vidrioApp.swift)
 
 **Wiring sequence:**
 1. Four repos created: `FinanzasRepository`, `TallerRepository`, `VentasRepository`, `ContactosRepository`
-2. `DashboardViewModel` gets `finanzasRepo` + `tallerRepo`
-3. `PagosViewModel` gets `finanzasRepo` + `contactosRepo`
-4. `PedidosViewModel` gets `ventasRepo` + `finanzasRepo` + `contactosRepo` (factory de PedidoFormViewModel)
-5. `InscripcionesViewModel` gets `tallerRepo` + `finanzasRepo` + `contactosRepo` (expone `contactosRepo` para `InscripcionFormView`)
-6. `ContactoDetailViewModel` gets `tallerRepo`
+2. `FilterCoordinator` (mes inicio/fin compartido entre Dashboard / Actividad / Facturación)
+3. `MetricasViewModel` gets `finanzasRepo` + `filterCoordinator` (KPIs + ingresos por tipo)
+4. `ChartsViewModel` gets `finanzasRepo` + `tallerRepo` + `filterCoordinator` (facturación 12m, evolución clases, detalle período)
+5. `ProximaActividadViewModel` gets `tallerRepo` (próximas clases + ocupación por hora)
+6. `PagosViewModel` gets `finanzasRepo` + `contactosRepo`
+7. `PedidosViewModel` gets `ventasRepo` + `finanzasRepo` + `contactosRepo` (factory de PedidoFormViewModel)
+8. `InscripcionesViewModel` gets `tallerRepo` + `finanzasRepo` + `contactosRepo` (expone `contactosRepo` para `InscripcionFormView`)
+9. `ContactoDetailViewModel` gets `tallerRepo`
 
-VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`, `leadsVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views.
+VMs wired in AppContainer: `metricasVM`, `chartsVM`, `proximaActividadVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`, `leadsVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views. `FilterCoordinator` también vive en el container.
 
 ### Data layer
 
@@ -82,13 +85,15 @@ VMs wired in AppContainer: `dashboardVM`, `pagosVM`, `agendaVM`, `inscripcionesV
 
 `NavigationManager` (environment object) controls tab selection (`AppTab` enum: `inicio`, `cronograma`, `pedidos`, `pagos`, `gestion`) and cross-tab navigation. Each tab wraps its content in a `NavigationStack`. `cronogramaPath: NavigationPath` enables deep navigation from Dashboard → Cronograma detail. Most forms use `.sheet()` presentation.
 
-## ViewModels (12 total)
+## ViewModels (14 total)
 
 All use `@MainActor` and conform to `ObservableObject`.
 
 | ViewModel | Repo dependencies | Key responsibility | In AppContainer |
 |---|---|---|---|
-| `DashboardViewModel` | Finanzas, Taller | KPIs, charts, próxima clase, date filter (MesAño) | Yes |
+| `MetricasViewModel` | Finanzas, FilterCoordinator | KPIs (ingresos/deuda), pagos del período, ingresos por tipo, tendencia | Yes |
+| `ChartsViewModel` | Finanzas, Taller, FilterCoordinator | Facturación 12m, evolución mensual de clases, detalle del período | Yes |
+| `ProximaActividadViewModel` | Taller | Próximas clases (top 2) + ocupación por hora del taller | Yes |
 | `PagosViewModel` | Finanzas, Contactos | Payment list, search, date filter | Yes |
 | `PedidosViewModel` | Ventas, Finanzas, Contactos | Orders with dual filters (pago/entrega), payment accordions | Yes |
 | `AgendaViewModel` | Taller | Schedule (próximos listener + histórico one-shot) | Yes |
@@ -100,6 +105,8 @@ All use `@MainActor` and conform to `ObservableObject`.
 | `ContactosViewModel` | Contactos | Contacts with search filter | No (local) |
 | `PedidoFormViewModel` | Ventas, Contactos | Order form (create/edit dual mode) | No (local) |
 | `LeadsViewModel` | Taller | Leads list with real-time listener, filters, marcar notificado, convertir, borrar | Yes |
+
+**`FilterCoordinator`** (`Services/FilterCoordinator.swift`) — `@MainActor ObservableObject` con `mesInicio`/`mesFin: MesAño` compartidos. `MetricasViewModel` y `ChartsViewModel` se suscriben vía Combine y reaccionan a cambios. `DashboardView`, `ActividadComercialView` y `FacturacionView` editan el filtro a través del mismo coordinador.
 
 ## Models (Modelos/)
 
@@ -144,16 +151,21 @@ gestion-taller-vidrio/
 │   ├── Contacto.swift               # Customers/students
 │   ├── Metricas.swift               # Financial KPIs
 │   ├── DeudorItem.swift             # Computed debtor (union type)
+│   ├── DashboardModels.swift        # Structs compartidas: DetalleClases/Taller/Curso, OcupacionTallerItem, DatoGraficoTipo, DatoMensual, DatoMensualClases
 │   ├── Origen.swift                 # Origen enum (.pedido/.inscripcion) for payment registration
 │   └── Lead.swift                   # Lead + EstadoLead enum (pendiente/notificado/convertido)
 ├── Services/
-│   ├── AppContainer.swift           # DI container (repos + VMs)
+│   ├── AppContainer.swift           # DI container (repos + coordinator + VMs)
 │   ├── FirestoreManager.swift       # Firebase singleton + error mapping
+│   ├── FilterCoordinator.swift      # Mes inicio/fin compartido (Dashboard/Actividad/Facturación)
 │   ├── FinanzasRepository.swift     # Pagos, métricas, deudores
 │   ├── TallerRepository.swift       # Cursos, cronograma, inscripciones
-│   └── VentasRepository.swift       # Pedidos, contactos
+│   ├── VentasRepository.swift       # Pedidos
+│   └── ContactosRepository.swift    # Contactos CRUD + cache
 ├── ViewModels/
-│   ├── DashboardViewModel.swift      # KPIs, charts, próxima clase, ocupación; date filter via MesAño
+│   ├── MetricasViewModel.swift       # KPIs (ingresos/deuda), pagos del período, ingresos por tipo, tendencia
+│   ├── ChartsViewModel.swift         # Facturación 12m, evolución mensual de clases, detalle por período
+│   ├── ProximaActividadViewModel.swift # Próximas clases (top 2) + ocupación por hora del taller
 │   ├── PagosViewModel.swift          # Pagos with search + date filter
 │   ├── PedidosViewModel.swift        # Orders + dual filters + payment accordions
 │   ├── AgendaViewModel.swift         # Schedule (próximos/histórico)
@@ -166,7 +178,9 @@ gestion-taller-vidrio/
 │   ├── PedidoFormViewModel.swift     # Order form create/edit (instantiated in view)
 │   └── LeadsViewModel.swift          # Leads: real-time listener, filtros, acciones (notificar/convertir/borrar)
 ├── Views/
-│   ├── DashboardView.swift          # KPI cards, charts, próxima actividad
+│   ├── DashboardView.swift          # Inicio: próximas actividades + KPIs (ingresos/deuda) + filtro de período
+│   ├── ActividadComercialView.swift # Gestión > Comercial > Actividad: evolución mensual + detalle por período
+│   ├── FacturacionView.swift        # Gestión > Finanzas > Facturación: ingresos por tipo + facturación 13m
 │   ├── AgendaView.swift             # Dual mode (Agenda/Online)
 │   ├── AgendaDetailView.swift       # Schedule detail + enrollments
 │   ├── AgendaFormView.swift         # Create schedule item

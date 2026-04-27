@@ -2,7 +2,8 @@ import SwiftUI
 import Charts
 
 struct ActividadComercialView: View {
-    @ObservedObject var viewModel: DashboardViewModel
+    @ObservedObject var chartsVM: ChartsViewModel
+    @ObservedObject var filter: FilterCoordinator
     @State private var showFiltro = false
 
     var body: some View {
@@ -16,13 +17,13 @@ struct ActividadComercialView: View {
         }
         .navigationTitle("Actividad")
         .background(Color(.systemGroupedBackground))
-        .errorAlert($viewModel.errorMessage)
+        .errorAlert($chartsVM.errorMessage)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showFiltro = true } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
-                        Text(viewModel.periodoLabel)
+                        Text(filter.periodoLabel)
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
@@ -32,7 +33,7 @@ struct ActividadComercialView: View {
         }
         .sheet(isPresented: $showFiltro) {
             NavigationStack {
-                FiltroMesAñoView(desde: $viewModel.mesInicio, hasta: $viewModel.mesFin)
+                FiltroMesAñoView(desde: $filter.mesInicio, hasta: $filter.mesFin)
                     .padding()
                     .navigationTitle("Período")
                     .navigationBarTitleDisplayMode(.inline)
@@ -49,7 +50,7 @@ struct ActividadComercialView: View {
     // MARK: - Evolución Mensual (12 meses, doble eje Y)
 
     private var evolucionMensualSection: some View {
-        let datos = viewModel.clasesAnuales
+        let datos = chartsVM.clasesAnuales
         let maxClases = max(1, datos.map(\.clases).max() ?? 1)
         let maxAlumnos = max(1, datos.map(\.alumnos).max() ?? 1)
 
@@ -156,7 +157,7 @@ struct ActividadComercialView: View {
                 .padding(.horizontal)
 
             VStack(spacing: 0) {
-                if !viewModel.detalleClases.tieneContenido {
+                if !chartsVM.detalleClases.tieneContenido {
                     Text("Sin clases en el período seleccionado")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -164,7 +165,7 @@ struct ActividadComercialView: View {
                         .padding()
                 }
 
-                if let t = viewModel.detalleClases.taller {
+                if let t = chartsVM.detalleClases.taller {
                     let color = TipoVenta.taller.color
                     VStack(spacing: 6) {
                         CategoriaHeaderRow(label: "Taller", color: color)
@@ -173,33 +174,33 @@ struct ActividadComercialView: View {
                     }
                 }
 
-                if !viewModel.detalleClases.presencial.isEmpty {
+                if !chartsVM.detalleClases.presencial.isEmpty {
                     let color = TipoVenta.presencial.color
                     VStack(spacing: 6) {
                         CategoriaHeaderRow(label: "Presencial", color: color)
-                        ForEach(viewModel.detalleClases.presencial) { curso in
+                        ForEach(chartsVM.detalleClases.presencial) { curso in
                             CursoDetalleRow(nombre: curso.nombre, clases: curso.clases, alumnos: curso.alumnos, color: color)
                                 .padding(.horizontal, 16)
                         }
                     }
                 }
 
-                if !viewModel.detalleClases.online.isEmpty {
+                if !chartsVM.detalleClases.online.isEmpty {
                     let color = TipoVenta.online.color
                     VStack(spacing: 6) {
                         CategoriaHeaderRow(label: "Online", color: color)
-                        ForEach(viewModel.detalleClases.online) { curso in
+                        ForEach(chartsVM.detalleClases.online) { curso in
                             CursoDetalleRow(nombre: curso.nombre, clases: nil, alumnos: curso.alumnos, color: color)
                                 .padding(.horizontal, 16)
                         }
                     }
                 }
 
-                if viewModel.detalleClases.tieneContenido {
+                if chartsVM.detalleClases.tieneContenido {
                     Divider().padding(.horizontal).padding(.top, 4)
                     TotalizadorRow(
-                        clases: viewModel.detalleClases.totalClases,
-                        alumnos: viewModel.detalleClases.totalAlumnos
+                        clases: chartsVM.detalleClases.totalClases,
+                        alumnos: chartsVM.detalleClases.totalAlumnos
                     )
                 }
             }

@@ -50,7 +50,7 @@ struct TallerCalculator {
 
     /**
      * Calcula la ocupación total por hora para un conjunto de inscripciones.
-     * Se usa en `DashboardViewModel` para el gráfico de barras.
+     * Se usa en `ProximaActividadViewModel` para el gráfico de barras.
      * Siempre devuelve las 9 horas del rango fijo, aunque la ocupación sea 0.
      */
     static func calcularOcupacionPorHora(para inscripciones: [Inscripcion]) -> [OcupacionHoraDato] {

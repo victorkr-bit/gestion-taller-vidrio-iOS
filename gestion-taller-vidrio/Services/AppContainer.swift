@@ -10,8 +10,13 @@ final class AppContainer: ObservableObject {
     let ventasRepo: VentasRepository
     let contactosRepo: ContactosRepository
 
+    // MARK: - Coordinadores
+    let filterCoordinator: FilterCoordinator
+
     // MARK: - ViewModels
-    let dashboardVM: DashboardViewModel
+    let metricasVM: MetricasViewModel
+    let chartsVM: ChartsViewModel
+    let proximaActividadVM: ProximaActividadViewModel
     let pagosVM: PagosViewModel
     let agendaVM: AgendaViewModel
     let inscripcionesVM: InscripcionesViewModel
@@ -33,20 +38,29 @@ final class AppContainer: ObservableObject {
         self.ventasRepo = ventasRepo
         self.contactosRepo = contactosRepo
 
-        // 2. INYECCIÓN EN DASHBOARD
-        let dashboardVM = DashboardViewModel(
-            finanzasRepo: finanzasRepo,
-            tallerRepo: tallerRepo
-        )
-        self.dashboardVM = dashboardVM
+        // 2. COORDINADOR DE FILTRO COMPARTIDO (Dashboard / Actividad / Facturación)
+        let filterCoordinator = FilterCoordinator()
+        self.filterCoordinator = filterCoordinator
 
-        // 3. INYECCIÓN EN PAGOS
+        // 3. VMs DE DASHBOARD (split de DashboardViewModel)
+        self.metricasVM = MetricasViewModel(
+            finanzasRepo: finanzasRepo,
+            filter: filterCoordinator
+        )
+        self.chartsVM = ChartsViewModel(
+            finanzasRepo: finanzasRepo,
+            tallerRepo: tallerRepo,
+            filter: filterCoordinator
+        )
+        self.proximaActividadVM = ProximaActividadViewModel(tallerRepo: tallerRepo)
+
+        // 4. INYECCIÓN EN PAGOS
         self.pagosVM = PagosViewModel(
             finanzasRepo: finanzasRepo,
             contactosRepo: contactosRepo
         )
 
-        // 4. INYECCIÓN EN CRONOGRAMA (3 VMs)
+        // 5. INYECCIÓN EN CRONOGRAMA (3 VMs)
         self.agendaVM = AgendaViewModel(tallerRepo: tallerRepo)
         self.catalogoOnlineVM = CatalogoOnlineViewModel(tallerRepo: tallerRepo)
         self.inscripcionesVM = InscripcionesViewModel(
@@ -55,20 +69,20 @@ final class AppContainer: ObservableObject {
             contactosRepo: contactosRepo
         )
 
-        // 5. INYECCIÓN EN PEDIDOS
+        // 6. INYECCIÓN EN PEDIDOS
         self.pedidosVM = PedidosViewModel(
             ventasRepo: ventasRepo,
             finanzasRepo: finanzasRepo,
             contactosRepo: contactosRepo
         )
 
-        // 6. INYECCIÓN EN DEUDORES
+        // 7. INYECCIÓN EN DEUDORES
         self.deudoresVM = DeudoresViewModel(repository: finanzasRepo)
 
-        // 7. DETALLE DE CONTACTO
+        // 8. DETALLE DE CONTACTO
         self.contactoDetailVM = ContactoDetailViewModel(tallerRepo: tallerRepo)
 
-        // 8. LEADS
+        // 9. LEADS
         self.leadsVM = LeadsViewModel(tallerRepo: tallerRepo)
     }
 }
