@@ -12,26 +12,20 @@ class ContactosViewModel: ObservableObject {
     @Published var searchText: String = ""
 
     private let taskTracker = TaskTracker()
-    private let repository: VentasRepository
-    
-    // --- NUEVO: Lista Computada ---
-    // La vista observará ESTA lista, no la original 'contactos'
+    private let repository: ContactosRepository
+
     var contactosFiltrados: [Contacto] {
         if searchText.isEmpty {
             return contactos
         } else {
             return contactos.filter { contacto in
-                // Buscamos por nombre (insensible a mayúsculas/minúsculas)
-                // Podrías agregar "|| contacto.telefono.contains..." si quisieras
                 contacto.nombreCompleto.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
-    
-    // CAMBIO 2: Inicializador con valor por defecto
-    
-    init(repository: VentasRepository? = nil) {
-        self.repository = repository ?? VentasRepository()
+
+    init(repository: ContactosRepository? = nil) {
+        self.repository = repository ?? ContactosRepository()
         fetchContactos()
     }
 

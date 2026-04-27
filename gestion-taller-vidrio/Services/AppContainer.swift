@@ -52,7 +52,8 @@ final class AppContainer: ObservableObject {
         self.inscripcionesVM = InscripcionesViewModel(
             tallerRepo: tallerRepo,
             finanzasRepo: finanzasRepo,
-            ventasRepo: ventasRepo
+            ventasRepo: ventasRepo,
+            contactosRepo: contactosRepo
         )
 
         // 5. INYECCIÓN EN PEDIDOS

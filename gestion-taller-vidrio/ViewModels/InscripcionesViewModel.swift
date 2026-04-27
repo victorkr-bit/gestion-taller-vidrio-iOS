@@ -26,11 +26,13 @@ class InscripcionesViewModel: ObservableObject {
     private let tallerRepo: TallerRepository
     private let finanzasRepo: FinanzasRepository
     let ventasRepo: VentasRepository
+    let contactosRepo: ContactosRepository
 
-    init(tallerRepo: TallerRepository, finanzasRepo: FinanzasRepository, ventasRepo: VentasRepository) {
+    init(tallerRepo: TallerRepository, finanzasRepo: FinanzasRepository, ventasRepo: VentasRepository, contactosRepo: ContactosRepository) {
         self.tallerRepo = tallerRepo
         self.finanzasRepo = finanzasRepo
         self.ventasRepo = ventasRepo
+        self.contactosRepo = contactosRepo
     }
 
     deinit {

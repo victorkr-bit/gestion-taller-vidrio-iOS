@@ -19,7 +19,7 @@ struct InscripcionFormView: View {
         self.curso = curso
         self.preselectedAlumnoId = preselectedAlumnoId
         self.preselectedAlumnoNombre = preselectedAlumnoNombre
-        _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: inscripcionesVM.ventasRepo))
+        _contactosViewModel = StateObject(wrappedValue: ContactosViewModel(repository: inscripcionesVM.contactosRepo))
     }
     
     @Environment(\.dismiss) var dismiss
@@ -338,7 +338,7 @@ struct InscripcionFormView: View {
         if inscripcionToEdit != nil { return }
         if contactos.isEmpty {
             do {
-                self.contactos = try await inscripcionesVM.ventasRepo.fetchContactos()
+                self.contactos = try await inscripcionesVM.contactosRepo.fetchContactos()
             } catch {
                 inscripcionesVM.errorMessage = "Error cargando contactos: \(FirestoreManager.mensajeAmigable(error))"
             }

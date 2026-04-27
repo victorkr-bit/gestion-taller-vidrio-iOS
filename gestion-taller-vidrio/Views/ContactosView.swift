@@ -5,8 +5,8 @@ struct ContactosView: View {
     @StateObject private var viewModel: ContactosViewModel
     let detailVM: ContactoDetailViewModel
 
-    init(ventasRepo: VentasRepository, detailVM: ContactoDetailViewModel) {
-        _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: ventasRepo))
+    init(contactosRepo: ContactosRepository, detailVM: ContactoDetailViewModel) {
+        _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: contactosRepo))
         self.detailVM = detailVM
     }
 

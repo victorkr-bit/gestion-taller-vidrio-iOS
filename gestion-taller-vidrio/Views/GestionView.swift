@@ -7,7 +7,7 @@ struct GestionView: View {
 
     @EnvironmentObject var authViewModel: AuthViewModel
 
-    let ventasRepo: VentasRepository
+    let contactosRepo: ContactosRepository
     let tallerRepo: TallerRepository
     let deudoresVM: DeudoresViewModel
     let contactoDetailVM: ContactoDetailViewModel
@@ -18,7 +18,7 @@ struct GestionView: View {
     var body: some View {
         List {
             Section("Datos Maestros") {
-                NavigationLink(destination: ContactosView(ventasRepo: ventasRepo, detailVM: contactoDetailVM)) {
+                NavigationLink(destination: ContactosView(contactosRepo: contactosRepo, detailVM: contactoDetailVM)) {
                     Label("Contactos", systemImage: "person.2.fill")
                 }
 
@@ -69,12 +69,12 @@ struct GestionView: View {
     let finanzasRepo = FinanzasRepository()
     NavigationStack {
         GestionView(
-            ventasRepo: VentasRepository(),
+            contactosRepo: ContactosRepository(),
             tallerRepo: tallerRepo,
             deudoresVM: DeudoresViewModel(),
             contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
             leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
-            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, ventasRepo: VentasRepository()),
+            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, ventasRepo: VentasRepository(), contactosRepo: ContactosRepository()),
             dashboardVM: DashboardViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo)
         )
     }
