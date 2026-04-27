@@ -223,12 +223,6 @@ final class TallerRepository {
         return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
     }
     
-    /// Obtiene todos los contactos desde la colección 'contactos'.
-    func fetchContactos() async throws -> [Contacto] {
-        let snapshot = try await db.collection("contactos").getDocuments()
-        return snapshot.documents.compactMap { $0.decodeSafely(as: Contacto.self) }
-    }
-    
     /// Escucha en tiempo real las inscripciones de un cronograma específico.
     func listenToInscripciones(cronogramaID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> ListenerRegistration {
         let query = db.collection("inscripciones")
