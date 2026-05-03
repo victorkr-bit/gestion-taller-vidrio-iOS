@@ -7,9 +7,15 @@ private let bsasCalendar: Calendar = {
     return cal
 }()
 
+private struct FeriadoDTO: Decodable {
+    let date: String  // "2026-01-01"
+}
+
 struct CalendarioAgendaView: View {
     let items: [CronogramaItem]
     @Environment(\.dismiss) private var dismiss
+
+    @State private var feriados: Set<DateComponents> = []
 
     private var diasOcupados: Set<DateComponents> {
         Set(items.map { item in
@@ -27,7 +33,8 @@ struct CalendarioAgendaView: View {
         let inicioMes = bsasCalendar.date(from: bsasCalendar.dateComponents([.year, .month], from: ahora))!
         return [
             inicioMes,
-            bsasCalendar.date(byAdding: .month, value: 1, to: inicioMes)!
+            bsasCalendar.date(byAdding: .month, value: 1, to: inicioMes)!,
+            bsasCalendar.date(byAdding: .month, value: 2, to: inicioMes)!
         ]
     }
 
@@ -36,8 +43,9 @@ struct CalendarioAgendaView: View {
             ScrollView {
                 VStack(spacing: DesignSystem.Espaciado.xl) {
                     ForEach(meses, id: \.self) { mes in
-                        MesCalendarioView(mesDate: mes, diasOcupados: diasOcupados)
+                        MesCalendarioView(mesDate: mes, diasOcupados: diasOcupados, feriados: feriados)
                     }
+                    leyenda
                 }
                 .padding(.horizontal, DesignSystem.Espaciado.l)
                 .padding(.vertical, DesignSystem.Espaciado.m)
@@ -50,13 +58,57 @@ struct CalendarioAgendaView: View {
                     Button("Listo") { dismiss() }
                 }
             }
+            .task { await cargarFeriados() }
         }
+    }
+
+    private var leyenda: some View {
+        HStack(spacing: DesignSystem.Espaciado.xl) {
+            Label("Con cursos", systemImage: "circle.fill")
+                .foregroundStyle(DesignSystem.Color.accion)
+            Label("Feriado", systemImage: "circle.fill")
+                .foregroundStyle(DesignSystem.Color.alerta)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func cargarFeriados() async {
+        let años = Set(meses.map { bsasCalendar.component(.year, from: $0) })
+        var todos: Set<DateComponents> = []
+        for año in años {
+            todos.formUnion(await fetchFeriados(año: año))
+        }
+        feriados = todos
+    }
+
+    private func fetchFeriados(año: Int) async -> Set<DateComponents> {
+        guard let url = URL(string: "https://date.nager.at/api/v3/PublicHolidays/\(año)/AR"),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let lista = try? JSONDecoder().decode([FeriadoDTO].self, from: data)
+        else { return [] }
+
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
+
+        return Set(lista.compactMap { dto -> DateComponents? in
+            guard let date = fmt.date(from: dto.date) else { return nil }
+            let raw = bsasCalendar.dateComponents([.year, .month, .day], from: date)
+            var comps = DateComponents()
+            comps.year = raw.year
+            comps.month = raw.month
+            comps.day = raw.day
+            return comps
+        })
     }
 }
 
 struct MesCalendarioView: View {
     let mesDate: Date
     let diasOcupados: Set<DateComponents>
+    let feriados: Set<DateComponents>
 
     private let diasSemana = ["L", "M", "X", "J", "V", "S", "D"]
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -104,7 +156,11 @@ struct MesCalendarioView: View {
             LazyVGrid(columns: columns, spacing: DesignSystem.Espaciado.xs) {
                 ForEach(Array(celdas.enumerated()), id: \.offset) { _, dia in
                     if let dia {
-                        DiaCalendarioView(dia: dia, ocupado: estaOcupado(dia: dia))
+                        DiaCalendarioView(
+                            dia: dia,
+                            ocupado: estaOcupado(dia: dia),
+                            feriado: esFeriado(dia: dia)
+                        )
                     } else {
                         Color.clear.frame(height: 44)
                     }
@@ -116,33 +172,55 @@ struct MesCalendarioView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
     }
 
-    private func estaOcupado(dia: Int) -> Bool {
-        var comps = DateComponents()
-        comps.year = año
-        comps.month = mes
-        comps.day = dia
-        return diasOcupados.contains(comps)
+    private func comps(dia: Int) -> DateComponents {
+        var c = DateComponents()
+        c.year = año
+        c.month = mes
+        c.day = dia
+        return c
     }
+
+    private func estaOcupado(dia: Int) -> Bool { diasOcupados.contains(comps(dia: dia)) }
+    private func esFeriado(dia: Int) -> Bool { feriados.contains(comps(dia: dia)) }
 }
 
 struct DiaCalendarioView: View {
     let dia: Int
     let ocupado: Bool
+    let feriado: Bool
+
+    // Color del círculo de fondo: accion si tiene cursos, alerta si solo feriado, clear si ninguno
+    private var fondoColor: SwiftUI.Color {
+        if ocupado { return DesignSystem.Color.accion.opacity(0.12) }
+        if feriado { return DesignSystem.Color.alerta.opacity(0.12) }
+        return .clear
+    }
+
+    // Color del texto del número
+    private var textoColor: SwiftUI.Color {
+        if ocupado { return DesignSystem.Color.accion }
+        if feriado { return DesignSystem.Color.alerta }
+        return .primary
+    }
+
+    // Punto inferior: naranja si feriado (con o sin curso), accion si solo ocupado
+    private var puntoColor: SwiftUI.Color {
+        if feriado { return DesignSystem.Color.alerta }
+        if ocupado { return DesignSystem.Color.accion }
+        return .clear
+    }
 
     var body: some View {
         VStack(spacing: 2) {
             Text("\(dia)")
                 .font(.callout)
-                .fontWeight(ocupado ? .semibold : .regular)
-                .foregroundStyle(ocupado ? DesignSystem.Color.accion : Color.primary)
+                .fontWeight((ocupado || feriado) ? .semibold : .regular)
+                .foregroundStyle(textoColor)
                 .frame(width: 32, height: 32)
-                .background(
-                    Circle()
-                        .fill(ocupado ? DesignSystem.Color.accion.opacity(0.12) : .clear)
-                )
+                .background(Circle().fill(fondoColor))
 
             Circle()
-                .fill(ocupado ? DesignSystem.Color.accion : .clear)
+                .fill(puntoColor)
                 .frame(width: 5, height: 5)
         }
         .frame(maxWidth: .infinity)
