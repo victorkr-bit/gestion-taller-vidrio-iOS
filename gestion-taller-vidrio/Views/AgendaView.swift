@@ -61,13 +61,13 @@ struct AgendaView: View {
             .toolbar {
                 if modoAgenda == .presenciales {
                     ToolbarItem(placement: .topBarTrailing) {
-                        HStack {
-                            Button("Calendario", systemImage: "calendar") {
-                                showCalendario = true
-                            }
-                            Button("Nuevo evento", systemImage: "plus") {
-                                self.isCreatingAgendaEvent = true
-                            }
+                        Button("Nuevo evento", systemImage: "plus") {
+                            self.isCreatingAgendaEvent = true
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Calendario", systemImage: "calendar") {
+                            showCalendario = true
                         }
                     }
                 }
