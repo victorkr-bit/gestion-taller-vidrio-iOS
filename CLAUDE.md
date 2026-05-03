@@ -28,11 +28,11 @@ App Entry (gestion_taller_vidrioApp.swift)
   └─ AuthViewModel (Firebase Auth gate)
       ├─ LoginView
       └─ MainView (TabView, 5 tabs)
-          ├─ Inicio → DashboardView / DashboardViewModel
+          ├─ Inicio → DashboardView / MetricasVM + ChartsVM + ProximaActividadVM (+ FilterCoordinator)
           ├─ Agenda → AgendaView / AgendaVM + InscripcionesVM + CatalogoOnlineVM
           ├─ Pedidos → PedidosView / PedidosViewModel
           ├─ Pagos → PagosView / PagosViewModel
-          └─ Gestión → GestionView (contacts, courses, leads, debtors, logout)
+          └─ Gestión → GestionView (datos maestros, comercial, finanzas, sistema)
 ```
 
 ### Dependency injection — AppContainer
@@ -181,22 +181,27 @@ gestion-taller-vidrio/
 │   ├── DashboardView.swift          # Inicio: próximas actividades + KPIs (ingresos/deuda) + filtro de período
 │   ├── ActividadComercialView.swift # Gestión > Comercial > Actividad: evolución mensual + detalle por período
 │   ├── FacturacionView.swift        # Gestión > Finanzas > Facturación: ingresos por tipo + facturación 13m
-│   ├── AgendaView.swift             # Dual mode (Agenda/Online)
+│   ├── AgendaView.swift             # Dual mode container (Agenda/Online)
+│   ├── AgendaListView.swift         # Lista de cronograma (próximos/histórico)
+│   ├── CalendarioAgendaView.swift   # Modal calendario 3 meses: días con cursos (accion) y feriados AR (alerta) via nager.date API
+│   ├── OnlineListView.swift         # Lista de catálogo online
 │   ├── AgendaDetailView.swift       # Schedule detail + enrollments
 │   ├── AgendaFormView.swift         # Create schedule item
 │   ├── EditarAgendaView.swift       # Edit schedule (precio/fecha)
 │   ├── OnlineCourseDetailView.swift # Online course + enrollments
 │   ├── InscripcionFormView.swift    # Enrollment form
+│   ├── InscripcionRowView.swift     # Row de inscripción (reutilizable en detalles)
 │   ├── MoverInscripcionView.swift   # Move enrollment to a different cronograma slot
 │   ├── PedidosView.swift            # Orders list + filters
 │   ├── PedidoFormView.swift         # Order form
 │   ├── PagosView.swift              # Payment list with search + date filter
+│   ├── PagosListView.swift          # Lista pura de pagos (sin filtros, reutilizable)
 │   ├── PagoRowView.swift            # Reusable row for a single payment
 │   ├── RegistrarPagoView.swift      # Payment registration
 │   ├── PagoFormView.swift           # Payment edit
 │   ├── VentaDirectaFormView.swift   # Direct sale
 │   ├── DeudoresView.swift           # Debtors + swipe actions
-│   ├── GestionView.swift            # Admin hub (contacts, courses, debtors, logout)
+│   ├── GestionView.swift            # Admin hub: Datos Maestros (contactos/cursos), Comercial (leads/actividad), Finanzas (deudores/facturación), Sistema (logout)
 │   ├── ContactosView.swift          # Contacts list
 │   ├── ContactoDetailView.swift     # Contact detail + enrollment history
 │   ├── ContactoFormView.swift       # Create/edit contact form
@@ -221,3 +226,5 @@ gestion-taller-vidrio/
 - `swift-concurrency-pro`: validar uso de async/await, actors, Swift 6
 
 Cuando revises código Swift/SwiftUI, activar swiftui-pro y swift-concurrency-pro.
+
+
