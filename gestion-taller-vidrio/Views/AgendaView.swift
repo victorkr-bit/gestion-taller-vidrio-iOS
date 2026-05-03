@@ -19,6 +19,7 @@ struct AgendaView: View {
 
     // Estado local solo para el sheet de crear
     @State private var isCreatingAgendaEvent = false
+    @State private var showCalendario = false
     @State private var itemToDelete: CronogramaItem?
     @State private var showDeleteAlert = false
     @State private var itemToEdit: CronogramaItem?
@@ -60,8 +61,13 @@ struct AgendaView: View {
             .toolbar {
                 if modoAgenda == .presenciales {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Nuevo evento", systemImage: "plus") {
-                            self.isCreatingAgendaEvent = true
+                        HStack {
+                            Button("Calendario", systemImage: "calendar") {
+                                showCalendario = true
+                            }
+                            Button("Nuevo evento", systemImage: "plus") {
+                                self.isCreatingAgendaEvent = true
+                            }
                         }
                     }
                 }
@@ -69,6 +75,9 @@ struct AgendaView: View {
             // Sheet para crear evento
             .sheet(isPresented: $isCreatingAgendaEvent) {
                 NavigationStack { AgendaFormView(agendaVM: agendaVM) }
+            }
+            .sheet(isPresented: $showCalendario) {
+                CalendarioAgendaView(items: agendaVM.cursosProximos)
             }
             .sheet(item: $itemToEdit) { item in
                 NavigationStack {
