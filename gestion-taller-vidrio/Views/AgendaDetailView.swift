@@ -12,6 +12,7 @@ struct AgendaDetailView: View {
     @State private var isCreatingNew = false
     @State private var inscripcionParaPagar: Inscripcion?
     @State private var isEditingCronograma = false
+    @State private var isMovingCronograma = false
     @State private var inscripcionAMover: Inscripcion?
 
     // Control de expansión
@@ -130,6 +131,9 @@ struct AgendaDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
+                    Button("Mover fecha", systemImage: "calendar.badge.plus") {
+                        self.isMovingCronograma = true
+                    }
                     Button("Editar curso", systemImage: "pencil") {
                         self.isEditingCronograma = true
                     }
@@ -142,6 +146,11 @@ struct AgendaDetailView: View {
         .sheet(isPresented: $isEditingCronograma) {
             NavigationStack {
                 EditarAgendaView(agendaVM: agendaVM, cronogramaItem: displayItem)
+            }
+        }
+        .sheet(isPresented: $isMovingCronograma) {
+            NavigationStack {
+                MoverCronogramaView(agendaVM: agendaVM, item: displayItem)
             }
         }
         .sheet(isPresented: $isCreatingNew) {

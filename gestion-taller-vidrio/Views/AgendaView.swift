@@ -23,6 +23,7 @@ struct AgendaView: View {
     @State private var itemToDelete: CronogramaItem?
     @State private var showDeleteAlert = false
     @State private var itemToEdit: CronogramaItem?
+    @State private var itemToMover: CronogramaItem?
 
     private var activeErrorMessage: Binding<String?> {
         modoAgenda == .online ? $catalogoOnlineVM.errorMessage : $agendaVM.errorMessage
@@ -48,7 +49,8 @@ struct AgendaView: View {
                         agendaVM: agendaVM,
                         itemToEdit: $itemToEdit,
                         itemToDelete: $itemToDelete,
-                        showDeleteAlert: $showDeleteAlert
+                        showDeleteAlert: $showDeleteAlert,
+                        itemToMover: $itemToMover
                     )
                 case .online:
                     OnlineListView(
@@ -77,11 +79,19 @@ struct AgendaView: View {
                 NavigationStack { AgendaFormView(agendaVM: agendaVM) }
             }
             .sheet(isPresented: $showCalendario) {
-                CalendarioAgendaView(items: agendaVM.cursosProximos)
+                CalendarioAgendaView(items: agendaVM.cursosProximos, feriados: agendaVM.feriadosCalendario)
+            }
+            .onChange(of: showCalendario) { _, isShowing in
+                if isShowing { Task { await agendaVM.fetchFeriadosIfNeeded() } }
             }
             .sheet(item: $itemToEdit) { item in
                 NavigationStack {
                     EditarAgendaView(agendaVM: agendaVM, cronogramaItem: item)
+                }
+            }
+            .sheet(item: $itemToMover) { item in
+                NavigationStack {
+                    MoverCronogramaView(agendaVM: agendaVM, item: item)
                 }
             }
             .errorAlert(activeErrorMessage)
@@ -105,13 +115,13 @@ struct AgendaView: View {
                 case .presenciales:
                     agendaVM.filtroSeleccionado = .proximos
                     catalogoOnlineVM.stopListening()
-                    agendaVM.fetchCronograma()
+                    if agendaVM.cursosHistoricos.isEmpty { agendaVM.fetchCronograma() }
                 case .online:
                     catalogoOnlineVM.subscribeToCatalogoOnline()
                 case .historial:
                     agendaVM.filtroSeleccionado = .historial
                     catalogoOnlineVM.stopListening()
-                    agendaVM.fetchCronograma()
+                    if agendaVM.cursosHistoricos.isEmpty { agendaVM.fetchCronograma() }
                 }
             }
             .navigationDestination(for: CronogramaItem.self) { item in

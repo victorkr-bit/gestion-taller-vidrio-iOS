@@ -7,6 +7,7 @@ struct AgendaListView: View {
     @Binding var itemToEdit: CronogramaItem?
     @Binding var itemToDelete: CronogramaItem?
     @Binding var showDeleteAlert: Bool
+    @Binding var itemToMover: CronogramaItem?
 
     var body: some View {
         ZStack {
@@ -21,20 +22,20 @@ struct AgendaListView: View {
                             navManager.cronogramaPath.append(item)
                         } label: {
                             CardView {
-                                GenericRowView(
-                                    titulo: item.cursoNombre,
-                                    subtitulo: nil,
-                                    infoSuperior: Formatters.date(item.fecha),
-                                    infoSuperiorSecundaria: Formatters.time(item.fecha),
-                                    iconoSuperior: "calendar",
-                                    monto: item.precio_curso,
-                                    tags: [
-                                        TagConfig(
-                                            text: "Alumnos (\(item.inscriptosReales))",
-                                            color: item.inscriptosReales > 0 ? .blue : .gray
-                                        )
-                                    ]
-                                )
+                                VStack(alignment: .leading, spacing: DesignSystem.Espaciado.xs) {
+                                    Text(item.cursoNombre)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+
+                                    HStack {
+                                        Label(Formatters.date(item.fecha), systemImage: "calendar")
+                                        Spacer()
+                                        Label("\(item.inscriptosReales)", systemImage: "person.2.fill")
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundStyle(DesignSystem.Color.accion)
+                                }
                             }
                         }
                         .listRowSeparator(.hidden)
@@ -44,6 +45,11 @@ struct AgendaListView: View {
                                 itemToEdit = item
                             } label: {
                                 Label("Editar Curso", systemImage: "pencil")
+                            }
+                            Button {
+                                itemToMover = item
+                            } label: {
+                                Label("Mover fecha", systemImage: "calendar.badge.plus")
                             }
 
                             Divider()
@@ -68,6 +74,14 @@ struct AgendaListView: View {
                                 Label("Editar", systemImage: "pencil")
                             }
                             .tint(.blue)
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button {
+                                itemToMover = item
+                            } label: {
+                                Label("Mover fecha", systemImage: "calendar.badge.plus")
+                            }
+                            .tint(.orange)
                         }
                     }
                 }
