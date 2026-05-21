@@ -7,15 +7,10 @@ private let bsasCalendar: Calendar = {
     return cal
 }()
 
-private struct FeriadoDTO: Decodable {
-    let date: String  // "2026-01-01"
-}
-
 struct CalendarioAgendaView: View {
     let items: [CronogramaItem]
+    let feriados: Set<DateComponents>
     @Environment(\.dismiss) private var dismiss
-
-    @State private var feriados: Set<DateComponents> = []
 
     private var diasOcupados: Set<DateComponents> {
         Set(items.map { item in
@@ -42,10 +37,10 @@ struct CalendarioAgendaView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DesignSystem.Espaciado.xl) {
+                    leyenda
                     ForEach(meses, id: \.self) { mes in
                         MesCalendarioView(mesDate: mes, diasOcupados: diasOcupados, feriados: feriados)
                     }
-                    leyenda
                 }
                 .padding(.horizontal, DesignSystem.Espaciado.l)
                 .padding(.vertical, DesignSystem.Espaciado.m)
@@ -58,7 +53,6 @@ struct CalendarioAgendaView: View {
                     Button("Listo") { dismiss() }
                 }
             }
-            .task { await cargarFeriados() }
         }
     }
 
@@ -74,35 +68,6 @@ struct CalendarioAgendaView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func cargarFeriados() async {
-        let años = Set(meses.map { bsasCalendar.component(.year, from: $0) })
-        var todos: Set<DateComponents> = []
-        for año in años {
-            todos.formUnion(await fetchFeriados(año: año))
-        }
-        feriados = todos
-    }
-
-    private func fetchFeriados(año: Int) async -> Set<DateComponents> {
-        guard let url = URL(string: "https://date.nager.at/api/v3/PublicHolidays/\(año)/AR"),
-              let (data, _) = try? await URLSession.shared.data(from: url),
-              let lista = try? JSONDecoder().decode([FeriadoDTO].self, from: data)
-        else { return [] }
-
-        let fmt = DateFormatter()
-        fmt.dateFormat = "yyyy-MM-dd"
-        fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
-
-        return Set(lista.compactMap { dto -> DateComponents? in
-            guard let date = fmt.date(from: dto.date) else { return nil }
-            let raw = bsasCalendar.dateComponents([.year, .month, .day], from: date)
-            var comps = DateComponents()
-            comps.year = raw.year
-            comps.month = raw.month
-            comps.day = raw.day
-            return comps
-        })
-    }
 }
 
 struct MesCalendarioView: View {
