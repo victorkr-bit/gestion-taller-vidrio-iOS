@@ -204,23 +204,21 @@ struct InscripcionFormView: View {
                 if esTaller {
                     Stepper("Cantidad de Turnos: \(turnos)", value: $turnos, in: 1...30)
                         .onChange(of: turnos) { recalcularTotal() }
-                }
-                
-                HStack {
-                    Text("Precio del Curso")
-                        .fontWeight(.semibold)
-                    Spacer()
-                    if turnos > 1 {
+
+                    HStack {
+                        Text("Precio del Curso")
+                            .fontWeight(.semibold)
+                        Spacer()
                         Text("(\(turnos) x \(Formatters.money(valorUnitario)))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        Text(Formatters.money(precioTotal))
+                            .font(.headline)
+                            .foregroundStyle(DesignSystem.Color.accion)
+                            .bold()
                     }
-                    Text(Formatters.money(precioTotal))
-                        .font(.headline)
-                        .foregroundStyle(DesignSystem.Color.accion)
-                        .bold()
+                    .listRowBackground(DesignSystem.Color.accion.opacity(0.05))
                 }
-                .listRowBackground(DesignSystem.Color.accion.opacity(0.05))
             }
             
             // -----------------------------------------------------------
