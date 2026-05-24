@@ -83,9 +83,34 @@ class InscripcionesViewModel: ObservableObject {
     func saveInscripcion(inscripcion: Inscripcion) {
         taskTracker.track(Task {
             do {
-                try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
+                _ = try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
             } catch {
                 self.errorMessage = "Error al guardar la inscripción: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
+    }
+
+    func guardarInscripcionConPago(inscripcion: Inscripcion, montoPago: Double, medioDePago: MedioDePago) {
+        taskTracker.track(Task {
+            do {
+                let saved = try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
+                guard montoPago > 0 else { return }
+                let origen = Origen.inscripcion(saved)
+                let pago = Pago(
+                    fecha: Date(),
+                    monto: montoPago,
+                    medio_de_pago: medioDePago,
+                    cliente_id: origen.clienteID,
+                    cliente_nombre: origen.clienteNombre,
+                    tipo_venta: origen.tipoVenta,
+                    notas: nil,
+                    origen_tipo: origen.tipo,
+                    descripcion_origen: origen.descripcionOrigen,
+                    origen_id: origen.id
+                )
+                try await finanzasRepo.registrarPago(pago: pago, origen: origen)
+            } catch {
+                self.errorMessage = FirestoreManager.mensajeAmigable(error)
             }
         })
     }
