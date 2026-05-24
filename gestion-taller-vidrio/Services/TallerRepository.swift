@@ -275,12 +275,13 @@ final class TallerRepository {
         }
     }
     
-    /// Guarda (crea o actualiza) una inscripción.
-    func saveInscripcion(inscripcion: Inscripcion) async throws {
+    /// Guarda (crea o actualiza) una inscripción. Retorna la inscripción con ID poblado.
+    @discardableResult
+    func saveInscripcion(inscripcion: Inscripcion) async throws -> Inscripcion {
         // 1. Codificamos a Diccionario para poder manipular nulos
         let encoder = Firestore.Encoder()
         var data = try encoder.encode(inscripcion)
-        
+
         // 2. CRÍTICO: Si es Online, forzamos NSNull para cronogramaId
         if inscripcion.cronogramaId == nil {
             data["cronogramaId"] = NSNull()
@@ -294,10 +295,14 @@ final class TallerRepository {
             // Al editar, nunca pisar la fecha de inscripción original.
             data.removeValue(forKey: "fecha_inscripcion")
             try await db.collection("inscripciones").document(id).setData(data, merge: true)
+            return inscripcion
         } else {
             // Al crear, sellar la fecha server-side (evita desfases de reloj del cliente).
             data["fecha_inscripcion"] = FieldValue.serverTimestamp()
-            _ = try await db.collection("inscripciones").addDocument(data: data)
+            let ref = try await db.collection("inscripciones").addDocument(data: data)
+            var saved = inscripcion
+            saved.id = ref.documentID
+            return saved
         }
     }
     

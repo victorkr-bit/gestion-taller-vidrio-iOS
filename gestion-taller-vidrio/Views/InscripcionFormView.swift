@@ -35,6 +35,9 @@ struct InscripcionFormView: View {
     @State private var valorUnitario: Double = 0.0
     @State private var precioTotal: Double = 0.0
     @State private var valorUnitarioInput: String = ""
+    @State private var totalAPagar: Double = 0.0
+    @State private var totalAPagarInput: String = "0"
+    @State private var medioDePago: MedioDePago = .transferencia
     
     @State private var notas: String = ""
 
@@ -71,7 +74,8 @@ struct InscripcionFormView: View {
     
     // Validación
     var isFormValid: Bool {
-        !alumnoId.isEmpty && precioTotal >= 0
+        !alumnoId.isEmpty && precioTotal >= 0 &&
+        totalAPagar >= 0 && totalAPagar <= precioTotal
     }
     
     private func recalcularTotal() {
@@ -200,27 +204,65 @@ struct InscripcionFormView: View {
                 if esTaller {
                     Stepper("Cantidad de Turnos: \(turnos)", value: $turnos, in: 1...30)
                         .onChange(of: turnos) { recalcularTotal() }
-                }
-                
-                HStack {
-                    Text("Total a Pagar")
-                        .fontWeight(.semibold)
-                    Spacer()
-                    if turnos > 1 {
+
+                    HStack {
+                        Text("Precio del Curso")
+                            .fontWeight(.semibold)
+                        Spacer()
                         Text("(\(turnos) x \(Formatters.money(valorUnitario)))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        Text(Formatters.money(precioTotal))
+                            .font(.headline)
+                            .foregroundStyle(DesignSystem.Color.accion)
+                            .bold()
                     }
-                    Text(Formatters.money(precioTotal))
-                        .font(.headline)
-                        .foregroundStyle(DesignSystem.Color.accion)
-                        .bold()
+                    .listRowBackground(DesignSystem.Color.accion.opacity(0.05))
                 }
-                .listRowBackground(DesignSystem.Color.accion.opacity(0.05))
             }
             
             // -----------------------------------------------------------
-            // SECCIÓN 4: HORARIO (SOLO TALLER)
+            // SECCIÓN 4: PAGO AL INSCRIBIRSE (SOLO MODO NUEVO)
+            // -----------------------------------------------------------
+            if inscripcionToEdit == nil {
+                Section("Pago al Inscribirse") {
+                    HStack {
+                        Text("Total a Pagar")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text("$").foregroundStyle(.secondary)
+                        TextField("0", text: $totalAPagarInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .onChange(of: totalAPagarInput) { _, newValue in
+                                self.totalAPagar = Double(newValue) ?? 0.0
+                            }
+                    }
+
+                    if totalAPagar > 0 {
+                        Picker("Medio de Pago", selection: $medioDePago) {
+                            ForEach(MedioDePago.allCases) { medio in
+                                Text(medio.rawValue).tag(medio)
+                            }
+                        }
+
+                        let deudaResultante = precioTotal - totalAPagar
+                        HStack {
+                            Text("Deuda resultante")
+                                .font(.subheadline)
+                            Spacer()
+                            Text(Formatters.money(deudaResultante))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(deudaResultante > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
+                        }
+                    }
+                }
+            }
+
+            // -----------------------------------------------------------
+            // SECCIÓN 5: HORARIO (SOLO TALLER)
             // -----------------------------------------------------------
             if esTaller {
                 Section("Horario de Inicio") {
@@ -388,7 +430,15 @@ struct InscripcionFormView: View {
 
         inscripcion.notas = notas.isEmpty ? nil : notas
 
-        inscripcionesVM.saveInscripcion(inscripcion: inscripcion)
+        if inscripcionToEdit != nil {
+            inscripcionesVM.saveInscripcion(inscripcion: inscripcion)
+        } else {
+            inscripcionesVM.guardarInscripcionConPago(
+                inscripcion: inscripcion,
+                montoPago: totalAPagar,
+                medioDePago: medioDePago
+            )
+        }
         dismiss()
     }
 }
