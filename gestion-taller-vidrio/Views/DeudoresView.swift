@@ -104,6 +104,22 @@ struct DeudoresView: View {
             }
         }
         .navigationTitle("Deudores")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Orden", selection: $viewModel.orden) {
+                        Label("Monto (mayor a menor)", systemImage: "arrow.down.circle")
+                            .tag(OrdenDeudores.montoDescendente)
+                        Label("Fecha (más reciente)", systemImage: "calendar.badge.minus")
+                            .tag(OrdenDeudores.fechaDescendente)
+                        Label("Fecha (más antiguo)", systemImage: "calendar.badge.plus")
+                            .tag(OrdenDeudores.fechaAscendente)
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+            }
+        }
         .refreshable {
             viewModel.fetchDeudores()
         }
@@ -131,6 +147,12 @@ struct DeudoresView: View {
         } message: { origen in
             Text("Estás a punto de setear la deuda de \(origen.clienteNombre) a $0, sin registrar un pago. Esta acción no se puede deshacer.")
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        DeudoresView(viewModel: DeudoresViewModel())
     }
 }
 

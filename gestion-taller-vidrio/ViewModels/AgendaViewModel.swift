@@ -3,6 +3,16 @@ import Combine
 import SwiftUI
 import FirebaseFirestore
 
+private let bsasCalendarVM: Calendar = {
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")!
+    return cal
+}()
+
+private struct FeriadoDTOVM: Decodable {
+    let date: String
+}
+
 @MainActor
 class AgendaViewModel: ObservableObject {
 
@@ -13,6 +23,10 @@ class AgendaViewModel: ObservableObject {
     // Lógica de Filtro
     @Published private(set) var cursosProximos: [CronogramaItem] = []
     @Published private(set) var cursosHistoricos: [CronogramaItem] = []
+
+    // Caché de feriados (por año, persistente en sesión)
+    @Published private(set) var feriadosCalendario: Set<DateComponents> = []
+    private var feriadosLoaded = false
 
     enum FiltroCronograma: String, CaseIterable, Identifiable {
         case proximos = "Próximos"
@@ -97,6 +111,7 @@ class AgendaViewModel: ObservableObject {
     }
 
     func fetchCursos() {
+        guard cursos.isEmpty else { return }
         taskTracker.track(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
@@ -105,6 +120,45 @@ class AgendaViewModel: ObservableObject {
             } catch {
                 self.errorMessage = "Error al cargar el catálogo de cursos: \(FirestoreManager.mensajeAmigable(error))"
             }
+        })
+    }
+
+    // MARK: - Feriados (caché por sesión)
+
+    func fetchFeriadosIfNeeded() async {
+        guard !feriadosLoaded else { return }
+        feriadosLoaded = true
+        let ahora = Date()
+        let inicioMes = bsasCalendarVM.date(from: bsasCalendarVM.dateComponents([.year, .month], from: ahora))!
+        let años = Set((0..<3).compactMap { offset -> Int? in
+            guard let mes = bsasCalendarVM.date(byAdding: .month, value: offset, to: inicioMes) else { return nil }
+            return bsasCalendarVM.component(.year, from: mes)
+        })
+        var todos: Set<DateComponents> = []
+        for año in años {
+            todos.formUnion(await fetchFeriados(año: año))
+        }
+        feriadosCalendario = todos
+    }
+
+    private func fetchFeriados(año: Int) async -> Set<DateComponents> {
+        guard let url = URL(string: "https://date.nager.at/api/v3/PublicHolidays/\(año)/AR"),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let lista = try? JSONDecoder().decode([FeriadoDTOVM].self, from: data)
+        else { return [] }
+
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
+
+        return Set(lista.compactMap { dto -> DateComponents? in
+            guard let date = fmt.date(from: dto.date) else { return nil }
+            let raw = bsasCalendarVM.dateComponents([.year, .month, .day], from: date)
+            var comps = DateComponents()
+            comps.year = raw.year
+            comps.month = raw.month
+            comps.day = raw.day
+            return comps
         })
     }
 

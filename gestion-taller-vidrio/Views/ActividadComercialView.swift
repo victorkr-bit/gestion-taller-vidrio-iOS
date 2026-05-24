@@ -9,8 +9,8 @@ struct ActividadComercialView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: DesignSystem.Espaciado.xl) {
-                evolucionMensualSection
                 detalleClasesSection
+                evolucionMensualSection
                 Spacer(minLength: 50)
             }
             .padding(.vertical)

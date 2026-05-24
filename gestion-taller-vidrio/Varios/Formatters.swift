@@ -83,8 +83,6 @@ struct Formatters {
         return dateDayMonthFormatter.string(from: date)
     }
 
-    static let uiLocale = Locale(identifier: "es")
-
     // Configurada para manejar milisegundos (estándar común en backends)
     static let iso8601: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()

@@ -32,10 +32,10 @@ struct ContactosView: View {
                                         HStack {
                                             Image(systemName: "phone.fill")
                                                 .font(.caption)
-                                                .foregroundStyle(Color.secondary)
+                                                .foregroundStyle(DesignSystem.Color.accion)
                                             Text(telefono)
                                                 .font(.subheadline)
-                                                .foregroundStyle(Color.secondary)
+                                                .foregroundStyle(Color.primary)
                                         }
                                     }
 
@@ -43,10 +43,10 @@ struct ContactosView: View {
                                         HStack {
                                             Image(systemName: "envelope.fill")
                                                 .font(.caption)
-                                                .foregroundStyle(Color.secondary)
+                                                .foregroundStyle(DesignSystem.Color.accion)
                                             Text(email)
                                                 .font(.subheadline)
-                                                .foregroundStyle(Color.secondary)
+                                                .foregroundStyle(Color.primary)
                                         }
                                     }
                                 }

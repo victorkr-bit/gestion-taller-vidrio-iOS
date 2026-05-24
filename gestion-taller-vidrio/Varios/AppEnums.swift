@@ -146,20 +146,6 @@ enum MedioDePago: String, Codable, CaseIterable, Identifiable {
         self = valor
     }
 
-    var color: Color {
-        switch self {
-        case .efectivo: return .green
-        case .transferencia: return .blue
-        case .mercadoPago: return .cyan
-        case .tarjeta: return .purple
-        case .paypal: return .indigo
-        case .otros: return .gray
-        }
-    }
-
-    static func color(forRawValue rawValue: String) -> Color {
-        Self(rawValue: rawValue)?.color ?? .blue.opacity(0.5)
-    }
 }
 
 // Enum para el origen del pago [cite: 221]

@@ -43,17 +43,14 @@ struct TallerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
     @StateObject private var authViewModel = AuthViewModel()
-    //@AppStorage("isDarkMode") private var isDarkMode = true
 
     var body: some Scene {
         WindowGroup {
             if authViewModel.user != nil {
                 MainView()
                     .environmentObject(authViewModel)
-                    //.preferredColorScheme(isDarkMode ? .dark : .light)
             } else {
                 LoginView()
-                    //.preferredColorScheme(isDarkMode ? .dark : .light)
             }
         }
     }

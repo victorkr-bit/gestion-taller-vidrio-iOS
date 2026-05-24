@@ -46,3 +46,5 @@
 2. **Estrategia:** Siempre verificar si una operación de escritura requiere una Cloud Function antes de intentar escribir directamente en Firestore.
 3. **Ejecución:** Mantener las propiedades de los modelos sincronizadas con los payloads esperados por el backend.
 4. **Validación:** El simulador preferido para pruebas es **iPhone 17 Pro**.
+
+

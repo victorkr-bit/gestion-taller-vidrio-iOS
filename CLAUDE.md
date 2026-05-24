@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Workflow
 - Before implementing any changes, explain your plan and list the files you'll modify.
 - Wait for explicit approval before proceeding.
+- Al proponer o mostrar ediciones de código, muéstralas siempre de forma expandida (sin truncar o resumir partes relevantes del bloque de código) para facilitar su revisión y aprobación.
 
 ## Build & Run
 

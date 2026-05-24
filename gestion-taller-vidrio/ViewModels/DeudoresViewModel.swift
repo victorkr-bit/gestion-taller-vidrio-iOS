@@ -2,6 +2,12 @@ import Foundation
 import Combine
 import SwiftUI
 
+enum OrdenDeudores: Hashable {
+    case montoDescendente
+    case fechaDescendente
+    case fechaAscendente
+}
+
 @MainActor
 class DeudoresViewModel: ObservableObject {
 
@@ -10,6 +16,7 @@ class DeudoresViewModel: ObservableObject {
     @Published var deudores: [DeudorItem] = []
     @Published var searchText: String = ""
     @Published private var searchQuery: String = ""
+    @Published var orden: OrdenDeudores = .montoDescendente
 
     private let taskTracker = TaskTracker()
     private var cancellables = Set<AnyCancellable>()
@@ -36,13 +43,22 @@ class DeudoresViewModel: ObservableObject {
     }
 
     var deudoresFiltrados: [DeudorItem] {
-        guard !searchQuery.isEmpty else { return deudores }
-        let query = searchQuery.lowercased()
-        return deudores.filter { deudor in
-            deudor.nombreCliente.lowercased().contains(query) ||
-            deudor.descripcion.lowercased().contains(query) ||
-            deudor.tipo.rawValue.lowercased().contains(query) ||
-            (deudor.estaVencida && "vencida".contains(query))
+        let filtrados: [DeudorItem]
+        if searchQuery.isEmpty {
+            filtrados = deudores
+        } else {
+            let query = searchQuery.lowercased()
+            filtrados = deudores.filter { deudor in
+                deudor.nombreCliente.lowercased().contains(query) ||
+                deudor.descripcion.lowercased().contains(query) ||
+                deudor.tipo.rawValue.lowercased().contains(query) ||
+                (deudor.estaVencida && "vencida".contains(query))
+            }
+        }
+        switch orden {
+        case .montoDescendente: return filtrados.sorted { $0.montoAdeudado > $1.montoAdeudado }
+        case .fechaDescendente:  return filtrados.sorted { $0.fecha > $1.fecha }
+        case .fechaAscendente:   return filtrados.sorted { $0.fecha < $1.fecha }
         }
     }
 
