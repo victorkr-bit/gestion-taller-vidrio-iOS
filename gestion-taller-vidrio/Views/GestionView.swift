@@ -11,8 +11,6 @@ struct GestionView: View {
     let tallerRepo: TallerRepository
     let deudoresVM: DeudoresViewModel
     let contactoDetailVM: ContactoDetailViewModel
-    let leadsVM: LeadsViewModel
-    let inscripcionesVM: InscripcionesViewModel
     let metricasVM: MetricasViewModel
     let chartsVM: ChartsViewModel
     let filter: FilterCoordinator
@@ -30,9 +28,6 @@ struct GestionView: View {
             }
 
             Section("Comercial") {
-                NavigationLink(destination: LeadsView(viewModel: leadsVM, inscripcionesVM: inscripcionesVM)) {
-                    Label("Leads", systemImage: "person.badge.plus")
-                }
                 NavigationLink(destination: ActividadComercialView(chartsVM: chartsVM, filter: filter)) {
                     Label("Actividad", systemImage: "chart.xyaxis.line")
                 }
@@ -47,7 +42,13 @@ struct GestionView: View {
                 }
             }
 
-            Section("Sistema") {
+            Section(header: Text("Sistema"), footer:
+                Text("Versión \(AppVersion.fullVersion)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 4)
+            ) {
                 Button(role: .destructive) {
                     authViewModel.signOut()
                 } label: {
@@ -70,8 +71,6 @@ struct GestionView: View {
             tallerRepo: tallerRepo,
             deudoresVM: DeudoresViewModel(),
             contactoDetailVM: ContactoDetailViewModel(tallerRepo: tallerRepo),
-            leadsVM: LeadsViewModel(tallerRepo: tallerRepo),
-            inscripcionesVM: InscripcionesViewModel(tallerRepo: tallerRepo, finanzasRepo: finanzasRepo, contactosRepo: ContactosRepository()),
             metricasVM: MetricasViewModel(finanzasRepo: finanzasRepo, filter: filter),
             chartsVM: ChartsViewModel(finanzasRepo: finanzasRepo, tallerRepo: tallerRepo, filter: filter),
             filter: filter

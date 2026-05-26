@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-"Taller Cris" — iOS management app for a glass art workshop. Handles orders, payments, course scheduling, enrollments, contacts, leads, and financial dashboards. All data lives in Firebase Firestore; there is no local persistence.
+"Taller Cris" — iOS management app for a glass art workshop. Handles orders, payments, course scheduling, enrollments, contacts, and financial dashboards. All data lives in Firebase Firestore; there is no local persistence.
 
 ## Workflow
 - Before implementing any changes, explain your plan and list the files you'll modify.
@@ -19,6 +19,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build from CLI:** `xcodebuild -project gestion-taller-vidrio.xcodeproj -scheme gestion-taller-vidrio -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`
 - **Dependencies:** Swift Package Manager only (Firebase iOS SDK v12.6.0+: Auth, Core, Firestore, Functions). Packages resolve automatically on first build.
 - **No tests exist.** No test targets are configured.
+
+### Release & Versioning
+
+The app uses an automated versioning system (Calendar Versioning + Git Hash):
+- **Version File:** [Version.swift](file:///Users/victorkr/Proyectos/gestion-taller-vidrio-iOS/gestion-taller-vidrio/Varios/Version.swift) contains the [AppVersion](file:///Users/victorkr/Proyectos/gestion-taller-vidrio-iOS/gestion-taller-vidrio/Varios/Version.swift) struct.
+- **Automation:** Xcode executes [build-version.sh](file:///Users/victorkr/Proyectos/gestion-taller-vidrio-iOS/build-version.sh) before compiling. It generates `Version.swift` dynamically.
+- **Settings:** In [project.pbxproj](file:///Users/victorkr/Proyectos/gestion-taller-vidrio-iOS/gestion-taller-vidrio.xcodeproj/project.pbxproj), User Script Sandboxing is disabled (`ENABLE_USER_SCRIPT_SANDBOXING = NO`) to allow reading Git metadata and writing to the source directory. The phase runs on every build (`alwaysOutOfDate = 1`).
+- **Format:** `vYY.MM.DD (GitHash)` (e.g. `v26.05.25 (a6804ee)`).
+- **Usage:** Shown as a section footer in [GestionView.swift](file:///Users/victorkr/Proyectos/gestion-taller-vidrio-iOS/gestion-taller-vidrio/Views/GestionView.swift).
 
 ## Architecture
 
@@ -51,14 +60,14 @@ App Entry (gestion_taller_vidrioApp.swift)
 8. `InscripcionesViewModel` gets `tallerRepo` + `finanzasRepo` + `contactosRepo` (expone `contactosRepo` para `InscripcionFormView`)
 9. `ContactoDetailViewModel` gets `tallerRepo`
 
-VMs wired in AppContainer: `metricasVM`, `chartsVM`, `proximaActividadVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`, `leadsVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views. `FilterCoordinator` también vive en el container.
+VMs wired in AppContainer: `metricasVM`, `chartsVM`, `proximaActividadVM`, `pagosVM`, `agendaVM`, `inscripcionesVM`, `catalogoOnlineVM`, `pedidosVM`, `deudoresVM`, `contactoDetailVM`. `CursosViewModel`, `ContactosViewModel`, and `PedidoFormViewModel` are instantiated locally in their views. `FilterCoordinator` también vive en el container.
 
 ### Data layer
 
 - **FirestoreManager** — singleton (`FirestoreManager.shared`) holding the `Firestore` and `Functions` instances. Contains centralized Cloud Functions error mapping (`mapCloudError`).
 - **Repositories** (4 `final class`es):
   - `FinanzasRepository` — payments (`pagos`), metrics (`metricas`), debtors
-  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`), leads (`leads`)
+  - `TallerRepository` — courses (`cursos`), schedule (`cronograma`), enrollments (`inscripciones`)
   - `VentasRepository` — orders (`pedidos`)
   - `ContactosRepository` — contacts (`contactos`) CRUD + cache en memoria. Única puerta a la colección `contactos`.
 - **Write operations** go through Firebase Cloud Functions (region: `southamerica-east1`). Reads use Firestore listeners for real-time sync.
@@ -72,13 +81,12 @@ VMs wired in AppContainer: `metricasVM`, `chartsVM`, `proximaActividadVM`, `pago
 | `registrarPago` | Create payment + update origin balance |
 | `editarPago` | Update payment + recalculate balance |
 | `borrarPago` | Delete payment + revert balance |
-| `borrarEntidad` | Generic delete with validation (checks pagos/inscriptos); also supports `leads` collection (no validation needed) |
+| `borrarEntidad` | Generic delete with validation (checks pagos/inscriptos) |
 | `actualizarCronograma` | Update schedule item + propagate to enrollments |
-| `convertirLead` | Convert lead to contacto; returns `contactoId` |
 
 ### Real-time sync strategy
 
-- **Listeners (real-time):** metrics, pagos (date-filtered), próximos cronograma, pedidos, inscripciones (per cronograma/curso), catálogo online, leads
+- **Listeners (real-time):** metrics, pagos (date-filtered), próximos cronograma, pedidos, inscripciones (per cronograma/curso), catálogo online
 - **One-shot fetches:** histórico cronograma, cursos catalog, contactos, deudores
 - **On-demand listeners:** payment accordions per pedido/inscripción (lazy loaded, cleaned up on collapse)
 
@@ -86,7 +94,7 @@ VMs wired in AppContainer: `metricasVM`, `chartsVM`, `proximaActividadVM`, `pago
 
 `NavigationManager` (environment object) controls tab selection (`AppTab` enum: `inicio`, `cronograma`, `pedidos`, `pagos`, `gestion`) and cross-tab navigation. Each tab wraps its content in a `NavigationStack`. `cronogramaPath: NavigationPath` enables deep navigation from Dashboard → Cronograma detail. Most forms use `.sheet()` presentation.
 
-## ViewModels (14 total)
+## ViewModels (13 total)
 
 All use `@MainActor` and conform to `ObservableObject`.
 
@@ -105,7 +113,6 @@ All use `@MainActor` and conform to `ObservableObject`.
 | `CursosViewModel` | Taller | Course catalog CRUD | No (local) |
 | `ContactosViewModel` | Contactos | Contacts with search filter | No (local) |
 | `PedidoFormViewModel` | Ventas, Contactos | Order form (create/edit dual mode) | No (local) |
-| `LeadsViewModel` | Taller | Leads list with real-time listener, filters, marcar notificado, convertir, borrar | Yes |
 
 **`FilterCoordinator`** (`Services/FilterCoordinator.swift`) — `@MainActor ObservableObject` con `mesInicio`/`mesFin: MesAño` compartidos. `MetricasViewModel` y `ChartsViewModel` se suscriben vía Combine y reaccionan a cambios. `DashboardView`, `ActividadComercialView` y `FacturacionView` editan el filtro a través del mismo coordinador.
 
@@ -121,7 +128,6 @@ All use `@MainActor` and conform to `ObservableObject`.
 | `Contacto.swift` | `contactos` | nombre, apellido, email?, telefono?, direccion?, redes_sociales?, cuit?, notas? |
 | `Metricas.swift` | `metricas/finanzas` | total_deuda_pedidos, total_deuda_inscripciones |
 | `DeudorItem.swift` | (computed) | Union of Pedido/Inscripcion for debtors panel |
-| `Lead.swift` | `leads` | nombre, canal, contacto, curso_interes, notas, estado (EstadoLead), fecha_ingreso (FechaFlexible)?, contacto_id? |
 
 `Pedido` and `Inscripcion` have `asCloudPayload` / `updatePayload` methods — keep in sync with backend.
 
@@ -153,8 +159,7 @@ gestion-taller-vidrio/
 │   ├── Metricas.swift               # Financial KPIs
 │   ├── DeudorItem.swift             # Computed debtor (union type)
 │   ├── DashboardModels.swift        # Structs compartidas: DetalleClases/Taller/Curso, OcupacionTallerItem, DatoGraficoTipo, DatoMensual, DatoMensualClases
-│   ├── Origen.swift                 # Origen enum (.pedido/.inscripcion) for payment registration
-│   └── Lead.swift                   # Lead + EstadoLead enum (pendiente/notificado/convertido)
+│   └── Origen.swift                 # Origen enum (.pedido/.inscripcion) for payment registration
 ├── Services/
 │   ├── AppContainer.swift           # DI container (repos + coordinator + VMs)
 │   ├── FirestoreManager.swift       # Firebase singleton + error mapping
@@ -176,8 +181,7 @@ gestion-taller-vidrio/
 │   ├── ContactoDetailViewModel.swift # Enrollment history for a single contact
 │   ├── CursosViewModel.swift         # Course CRUD (instantiated in view)
 │   ├── ContactosViewModel.swift      # Contacts + search (instantiated in view)
-│   ├── PedidoFormViewModel.swift     # Order form create/edit (instantiated in view)
-│   └── LeadsViewModel.swift          # Leads: real-time listener, filtros, acciones (notificar/convertir/borrar)
+│   └── PedidoFormViewModel.swift     # Order form create/edit (instantiated in view)
 ├── Views/
 │   ├── DashboardView.swift          # Inicio: próximas actividades + KPIs (ingresos/deuda) + filtro de período
 │   ├── ActividadComercialView.swift # Gestión > Comercial > Actividad: evolución mensual + detalle por período
@@ -202,15 +206,13 @@ gestion-taller-vidrio/
 │   ├── PagoFormView.swift           # Payment edit
 │   ├── VentaDirectaFormView.swift   # Direct sale
 │   ├── DeudoresView.swift           # Debtors + swipe actions
-│   ├── GestionView.swift            # Admin hub: Datos Maestros (contactos/cursos), Comercial (leads/actividad), Finanzas (deudores/facturación), Sistema (logout)
+│   ├── GestionView.swift            # Admin hub: Datos Maestros (contactos/cursos), Comercial (actividad), Finanzas (deudores/facturación), Sistema (logout)
 │   ├── ContactosView.swift          # Contacts list
 │   ├── ContactoDetailView.swift     # Contact detail + enrollment history
 │   ├── ContactoFormView.swift       # Create/edit contact form
 │   ├── SelectorContactoView.swift   # Reusable contact picker sheet
 │   ├── CursosView.swift             # Course catalog management
-│   ├── CursoFormView.swift          # Create/edit course form
-│   ├── LeadsView.swift              # Leads list + filtros + panel notificación + modal conversión
-│   └── LeadRowView.swift            # Lead card: checkbox selección, datos, botón acción por estado, trash icon
+│   └── CursoFormView.swift          # Create/edit course form
 └── Varios/
     ├── AppEnums.swift               # TipoCurso, EstadoInscripcion, TipoPedido, TipoVenta, MedioDePago, OrigenTipoPago, TallerError
     ├── Formatters.swift             # Currency (es_AR), dates (es/Argentina), ISO8601

@@ -44,8 +44,6 @@ struct MainView: View {
                         tallerRepo: container.tallerRepo,
                         deudoresVM: container.deudoresVM,
                         contactoDetailVM: container.contactoDetailVM,
-                        leadsVM: container.leadsVM,
-                        inscripcionesVM: container.inscripcionesVM,
                         metricasVM: container.metricasVM,
                         chartsVM: container.chartsVM,
                         filter: container.filterCoordinator
