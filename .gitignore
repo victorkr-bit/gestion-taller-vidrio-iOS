@@ -27,3 +27,16 @@ DerivedData/
 
 # Logs
 *.log
+
+# Firebase / Configuración Local
+gestion-taller-vidrio/GoogleService-Info.plist
+
+# Entornos de Asistentes de IA (Claude / Gemini)
+.claude/
+CLAUDE.md
+GEMINI.md
+.geminiignore
+skills-lock.json
+
+# Documentación de diseño interna
+docs/
