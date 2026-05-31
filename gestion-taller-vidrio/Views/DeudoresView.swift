@@ -3,11 +3,8 @@ import SwiftUI
 struct DeudoresView: View {
 
     @ObservedObject var viewModel: DeudoresViewModel
-    
-    @State private var origenParaPagar: Origen?
-    @State private var origenParaCondonar: Origen?
-    @State private var showingCondonarAlert = false
-    
+    @EnvironmentObject var navigationManager: NavigationManager
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -40,60 +37,43 @@ struct DeudoresView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
 
-            List {
-                ForEach(viewModel.deudoresFiltrados) { deudor in
-                    CardView {
-                        GenericRowView(
-                            titulo: deudor.nombreCliente,
-                            subtitulo: deudor.descripcion,
-                            infoSuperior: Formatters.date(deudor.fecha),
-                            iconoSuperior: nil,
-                            monto: deudor.montoAdeudado,
-                            tags: {
-                                var t = [TagConfig(text: deudor.tipo.rawValue.capitalized, color: deudor.tipo == .pedido ? DesignSystem.Color.accion : DesignSystem.Color.pendiente)]
-                                if deudor.estaVencida {
-                                    t.append(TagConfig(text: "Vencida", color: DesignSystem.Color.peligro))
-                                }
-                                return t
-                            }()
+                List {
+                    ForEach(viewModel.deudoresFiltrados) { deudor in
+                        Button {
+                            Task { await navigate(to: deudor) }
+                        } label: {
+                            CardView {
+                                GenericRowView(
+                                    titulo: deudor.nombreCliente,
+                                    subtitulo: deudor.descripcion,
+                                    infoSuperior: Formatters.date(deudor.fecha),
+                                    iconoSuperior: nil,
+                                    monto: deudor.montoAdeudado,
+                                    tags: [TagConfig(
+                                        text: deudor.tipo.rawValue.capitalized,
+                                        color: deudor.tipo == .pedido ? DesignSystem.Color.accion : DesignSystem.Color.pendiente
+                                    )]
+                                )
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .listRowSeparator(.hidden)
+                    }
+                }
+                .listStyle(.plain)
+                .overlay {
+                    if viewModel.isLoading && viewModel.deudores.isEmpty {
+                        ProgressView("Cargando deudores...")
+                    } else if !viewModel.isLoading && viewModel.deudoresFiltrados.isEmpty {
+                        EstadoVacioView(
+                            icono: viewModel.deudores.isEmpty ? "checkmark.circle" : "magnifyingglass",
+                            mensaje: viewModel.deudores.isEmpty
+                                ? "Sin cobros vencidos"
+                                : "Sin resultados para \"\(viewModel.searchText)\"",
+                            colorIcono: viewModel.deudores.isEmpty ? DesignSystem.Color.exito : Color.secondary
                         )
                     }
-                    .listRowSeparator(.hidden)
-                    
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            self.origenParaPagar = deudor.origen
-                        } label: {
-                            Label("Registrar Pago", systemImage: "plus.circle.fill")
-                        }
-                        .tint(DesignSystem.Color.exito)
-                    }
-                    
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button {
-                            self.origenParaCondonar = deudor.origen
-                            self.showingCondonarAlert = true
-                        } label: {
-                            Label("Condonar", systemImage: "hand.thumbsup.fill")
-                        }
-                        .tint(DesignSystem.Color.neutro)
-                    }
                 }
-            }
-            .listStyle(.plain)
-            .overlay {
-                if viewModel.isLoading && viewModel.deudores.isEmpty {
-                    ProgressView("Cargando deudores...")
-                } else if !viewModel.isLoading && viewModel.deudoresFiltrados.isEmpty {
-                    EstadoVacioView(
-                        icono: viewModel.deudores.isEmpty ? "checkmark.circle" : "magnifyingglass",
-                        mensaje: viewModel.deudores.isEmpty
-                            ? "¡No hay deudas pendientes!"
-                            : "Sin resultados para \"\(viewModel.searchText)\"",
-                        colorIcono: viewModel.deudores.isEmpty ? DesignSystem.Color.exito : Color.secondary
-                    )
-                }
-            }
             } // VStack
 
             if viewModel.isLoading && !viewModel.deudores.isEmpty {
@@ -127,25 +107,19 @@ struct DeudoresView: View {
         .onAppear {
             viewModel.fetchDeudores()
         }
-        
-        .sheet(item: $origenParaPagar) { origen in
-            NavigationStack {
-                RegistrarPagoView(
-                    origen: origen,
-                    onSave: { (pago, origen) in
-                        try await viewModel.registrarPago(pago: pago, origen: origen)
-                    }
-                )
+    }
+
+    private func navigate(to deudor: DeudorItem) async {
+        switch deudor.origen {
+        case .pedido:
+            navigationManager.selectedTab = .pedidos
+        case .inscripcion(let inscripcion):
+            if let cronogramaId = inscripcion.cronogramaId,
+               let item = await viewModel.fetchCronogramaItem(id: cronogramaId) {
+                navigationManager.navigateToCourseDetail(item)
+            } else {
+                navigationManager.selectedTab = .cronograma
             }
-        }
-        
-        .alert("¿Condonar Deuda?", isPresented: $showingCondonarAlert, presenting: origenParaCondonar) { origen in
-            Button("Condonar Deuda", role: .destructive) {
-                viewModel.condonarDeuda(origen: origen)
-            }
-            Button("Cancelar", role: .cancel) { }
-        } message: { origen in
-            Text("Estás a punto de setear la deuda de \(origen.clienteNombre) a $0, sin registrar un pago. Esta acción no se puede deshacer.")
         }
     }
 }
@@ -153,6 +127,7 @@ struct DeudoresView: View {
 #Preview {
     NavigationStack {
         DeudoresView(viewModel: DeudoresViewModel())
+            .environmentObject(NavigationManager())
     }
 }
 

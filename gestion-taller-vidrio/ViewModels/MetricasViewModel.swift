@@ -10,6 +10,8 @@ class MetricasViewModel: ObservableObject {
 
     @Published var totalIngresosMes: Double = 0.0
     @Published var totalDeuda: Double = 0.0
+    @Published var totalDeudaReal: Double = 0.0
+    @Published var totalMontoCobrar: Double = 0.0
     @Published var pagosDelMes: [Pago] = []
     @Published var datosGraficoPorTipo: [DatoGraficoTipo] = []
 
@@ -47,7 +49,21 @@ class MetricasViewModel: ObservableObject {
             }
         }
 
+        refreshResumenDeuda()
         restartPagosListener()
+    }
+
+    func refreshResumenDeuda() {
+        Task {
+            do {
+                let resumen = try await finanzasRepo.fetchResumenDeuda()
+                self.totalDeudaReal = resumen.real
+                self.totalMontoCobrar = resumen.futuro
+            } catch {
+                print("⚠️ [ResumenDeuda] Error: \(FirestoreManager.mensajeAmigable(error))")
+                // No bloquea la UI; los valores quedan en su último valor conocido
+            }
+        }
     }
 
     private func observeFilter() {
@@ -74,6 +90,7 @@ class MetricasViewModel: ObservableObject {
                 self.pagosDelMes = pagos
                 self.totalIngresosMes = pagos.reduce(0) { $0 + $1.monto }
                 self.recalcularDatosGraficos(pagos)
+                self.refreshResumenDeuda()
             case .failure(let error):
                 self.errorMessage = "Error cargando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }

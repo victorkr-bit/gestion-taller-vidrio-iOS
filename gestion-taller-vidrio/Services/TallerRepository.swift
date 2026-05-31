@@ -160,6 +160,12 @@ final class TallerRepository {
         return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
     }
     
+    /// Obtiene un CronogramaItem por su document ID.
+    func fetchCronogramaItem(id: String) async throws -> CronogramaItem? {
+        let doc = try await db.collection("cronograma").document(id).getDocument()
+        return try? doc.data(as: CronogramaItem.self)
+    }
+
     /// Guarda (crea o actualiza) un documento de CronogramaItem.
     func saveCronogramaItem(item: CronogramaItem) async throws {
         let data = try Firestore.Encoder().encode(item)

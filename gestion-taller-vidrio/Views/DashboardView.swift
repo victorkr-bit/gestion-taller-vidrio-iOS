@@ -114,27 +114,36 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - KPI Grid (Ingresos + Deuda)
+    // MARK: - KPI Grid (Ingresos + A Cobrar / Deuda)
 
     private var kpiGrid: some View {
-        HStack(spacing: DesignSystem.Espaciado.l) {
-            Button { navManager.selectedTab = .pagos } label: {
+        VStack(spacing: DesignSystem.Espaciado.s) {
+            HStack(spacing: DesignSystem.Espaciado.l) {
+                Button { navManager.selectedTab = .pagos } label: {
+                    KpiCardView(
+                        titulo: "Ingresos",
+                        valor: metricasVM.totalIngresosMes,
+                        icon: "arrow.up.circle.fill",
+                        color: DesignSystem.Color.accion,
+                        tendencia: tendencia != 0 ? tendencia : nil
+                    )
+                }
+                .buttonStyle(.plain)
+
                 KpiCardView(
-                    titulo: "Ingresos",
-                    valor: metricasVM.totalIngresosMes,
-                    icon: "arrow.up.circle.fill",
-                    color: DesignSystem.Color.accion,
-                    tendencia: tendencia != 0 ? tendencia : nil
+                    titulo: "A Cobrar",
+                    valor: metricasVM.totalMontoCobrar,
+                    icon: "clock.fill",
+                    color: DesignSystem.Color.pendiente
                 )
             }
-            .buttonStyle(.plain)
 
             NavigationLink {
                 DeudoresView(viewModel: deudoresVM)
             } label: {
                 KpiCardView(
-                    titulo: "Deuda Total",
-                    valor: metricasVM.totalDeuda,
+                    titulo: "Deuda vencida",
+                    valor: metricasVM.totalDeudaReal,
                     icon: "exclamationmark.circle.fill",
                     color: DesignSystem.Color.peligro
                 )
