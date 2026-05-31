@@ -114,39 +114,41 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - KPI Grid (Ingresos + Deuda Real + A Cobrar)
+    // MARK: - KPI Grid (Ingresos + A Cobrar / Deuda)
 
     private var kpiGrid: some View {
-        HStack(spacing: DesignSystem.Espaciado.s) {
-            Button { navManager.selectedTab = .pagos } label: {
+        VStack(spacing: DesignSystem.Espaciado.s) {
+            HStack(spacing: DesignSystem.Espaciado.l) {
+                Button { navManager.selectedTab = .pagos } label: {
+                    KpiCardView(
+                        titulo: "Ingresos",
+                        valor: metricasVM.totalIngresosMes,
+                        icon: "arrow.up.circle.fill",
+                        color: DesignSystem.Color.accion,
+                        tendencia: tendencia != 0 ? tendencia : nil
+                    )
+                }
+                .buttonStyle(.plain)
+
                 KpiCardView(
-                    titulo: "Ingresos",
-                    valor: metricasVM.totalIngresosMes,
-                    icon: "arrow.up.circle.fill",
-                    color: DesignSystem.Color.accion,
-                    tendencia: tendencia != 0 ? tendencia : nil
+                    titulo: "A Cobrar",
+                    valor: metricasVM.totalMontoCobrar,
+                    icon: "clock.fill",
+                    color: DesignSystem.Color.pendiente
                 )
             }
-            .buttonStyle(.plain)
 
             NavigationLink {
                 DeudoresView(viewModel: deudoresVM)
             } label: {
                 KpiCardView(
-                    titulo: "Deuda",
+                    titulo: "Deuda vencida",
                     valor: metricasVM.totalDeudaReal,
                     icon: "exclamationmark.circle.fill",
                     color: DesignSystem.Color.peligro
                 )
             }
             .buttonStyle(.plain)
-
-            KpiCardView(
-                titulo: "A Cobrar",
-                valor: metricasVM.totalMontoCobrar,
-                icon: "clock.fill",
-                color: DesignSystem.Color.pendiente
-            )
         }
         .padding(.horizontal)
     }
@@ -416,7 +418,7 @@ struct KpiCardView: View {
                 Text(titulo).font(.caption).foregroundStyle(.secondary)
             }
             Text(etiqueta ?? Formatters.money(valor))
-                .font(.subheadline)
+                .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(color)
                 .lineLimit(1)
