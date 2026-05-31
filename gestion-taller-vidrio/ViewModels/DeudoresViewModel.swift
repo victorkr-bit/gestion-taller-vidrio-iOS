@@ -21,12 +21,12 @@ class DeudoresViewModel: ObservableObject {
     private let taskTracker = TaskTracker()
     private var cancellables = Set<AnyCancellable>()
 
-    // CAMBIO 1: Repo de Finanzas
     private let repository: FinanzasRepository
+    private let tallerRepository: TallerRepository
 
-    // CAMBIO 2: Init
-    init(repository: FinanzasRepository? = nil) {
-        self.repository = repository ?? FinanzasRepository()
+    init(finanzasRepository: FinanzasRepository? = nil, tallerRepository: TallerRepository? = nil) {
+        self.repository = finanzasRepository ?? FinanzasRepository()
+        self.tallerRepository = tallerRepository ?? TallerRepository()
         $searchText
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .sink { [weak self] text in self?.searchQuery = text }
@@ -80,28 +80,7 @@ class DeudoresViewModel: ObservableObject {
         })
     }
 
-    func registrarPago(pago: Pago, origen: Origen) async throws {
-        errorMessage = nil
-        do {
-            try await repository.registrarPago(pago: pago, origen: origen)
-            fetchDeudores()
-        } catch {
-            errorMessage = "Error al registrar pago: \(FirestoreManager.mensajeAmigable(error))"
-            throw error
-        }
-    }
-    
-    func condonarDeuda(origen: Origen) {
-        isLoading = true
-        errorMessage = nil
-        taskTracker.track(Task {
-            do {
-                try await repository.condonarDeuda(origen: origen)
-                fetchDeudores()
-            } catch {
-                self.errorMessage = "Error al condonar la deuda: \(FirestoreManager.mensajeAmigable(error))"
-                self.isLoading = false
-            }
-        })
+    func fetchCronogramaItem(id: String) async -> CronogramaItem? {
+        return try? await tallerRepository.fetchCronogramaItem(id: id)
     }
 }

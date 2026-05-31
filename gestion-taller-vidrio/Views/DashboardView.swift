@@ -114,10 +114,10 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - KPI Grid (Ingresos + Deuda)
+    // MARK: - KPI Grid (Ingresos + Deuda Real + A Cobrar)
 
     private var kpiGrid: some View {
-        HStack(spacing: DesignSystem.Espaciado.l) {
+        HStack(spacing: DesignSystem.Espaciado.s) {
             Button { navManager.selectedTab = .pagos } label: {
                 KpiCardView(
                     titulo: "Ingresos",
@@ -133,13 +133,20 @@ struct DashboardView: View {
                 DeudoresView(viewModel: deudoresVM)
             } label: {
                 KpiCardView(
-                    titulo: "Deuda Total",
-                    valor: metricasVM.totalDeuda,
+                    titulo: "Deuda",
+                    valor: metricasVM.totalDeudaReal,
                     icon: "exclamationmark.circle.fill",
                     color: DesignSystem.Color.peligro
                 )
             }
             .buttonStyle(.plain)
+
+            KpiCardView(
+                titulo: "A Cobrar",
+                valor: metricasVM.totalMontoCobrar,
+                icon: "clock.fill",
+                color: DesignSystem.Color.pendiente
+            )
         }
         .padding(.horizontal)
     }
@@ -409,7 +416,7 @@ struct KpiCardView: View {
                 Text(titulo).font(.caption).foregroundStyle(.secondary)
             }
             Text(etiqueta ?? Formatters.money(valor))
-                .font(.title2)
+                .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundStyle(color)
                 .lineLimit(1)

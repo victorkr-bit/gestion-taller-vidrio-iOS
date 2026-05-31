@@ -76,7 +76,7 @@ final class AppContainer: ObservableObject {
         )
 
         // 7. INYECCIÓN EN DEUDORES
-        self.deudoresVM = DeudoresViewModel(repository: finanzasRepo)
+        self.deudoresVM = DeudoresViewModel(finanzasRepository: finanzasRepo, tallerRepository: tallerRepo)
 
         // 8. DETALLE DE CONTACTO
         self.contactoDetailVM = ContactoDetailViewModel(tallerRepo: tallerRepo)

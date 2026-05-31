@@ -191,67 +191,74 @@ final class FinanzasRepository {
         }
     }
 
-    // MARK: - Panel de Deudores
-    
-    /// Obtiene los Pedidos e Inscripciones con deuda en paralelo.
-    func fetchDeudores(limitPerCategory: Int = 50) async throws -> [DeudorItem] {
-        
+    // MARK: - Resumen de deuda (Dashboard)
+
+    /// Separa la deuda real (cobros vencidos) del monto a cobrar futuro.
+    /// Usa una sola desigualdad por colección (índice automático) y particiona en cliente.
+    func fetchResumenDeuda() async throws -> (real: Double, futuro: Double) {
+        let ahora = Date()
+
         async let pedidosTask = db.collection("pedidos")
             .whereField("monto_adeudado", isGreaterThan: 0)
-            .order(by: "monto_adeudado", descending: true)
-            .limit(to: limitPerCategory)
             .getDocuments()
-        
+
         async let inscripcionesTask = db.collection("inscripciones")
             .whereField("monto_adeudado", isGreaterThan: 0)
-            .limit(to: limitPerCategory)
             .getDocuments()
-        
+
         let (pedidosSnapshot, inscripcionesSnapshot) = try await (pedidosTask, inscripcionesTask)
-        
-        // Mapeo
+
+        var real: Double = 0
+        var futuro: Double = 0
+
+        for doc in pedidosSnapshot.documents {
+            guard let pedido = doc.decodeSafely(as: Pedido.self) else { continue }
+            // Pedido entregado con deuda = vencido (real); no entregado = a cobrar (futuro)
+            if pedido.estado_entrega { real += pedido.monto_adeudado }
+            else { futuro += pedido.monto_adeudado }
+        }
+
+        for doc in inscripcionesSnapshot.documents {
+            guard let inscripcion = doc.decodeSafely(as: Inscripcion.self) else { continue }
+            // Curso ya realizado con deuda = vencido (real); futuro = a cobrar
+            if inscripcion.fecha_curso < ahora { real += inscripcion.monto_adeudado }
+            else { futuro += inscripcion.monto_adeudado }
+        }
+
+        return (real: real, futuro: futuro)
+    }
+
+    // MARK: - Panel de Deudores
+
+    /// Obtiene los Pedidos entregados e Inscripciones a cursos ya realizados con deuda pendiente.
+    /// Filtra en cliente (estado_entrega / fecha_curso) para evitar índices compuestos.
+    func fetchDeudores() async throws -> [DeudorItem] {
+        let ahora = Date()
+
+        async let pedidosTask = db.collection("pedidos")
+            .whereField("monto_adeudado", isGreaterThan: 0)
+            .getDocuments()
+
+        async let inscripcionesTask = db.collection("inscripciones")
+            .whereField("monto_adeudado", isGreaterThan: 0)
+            .getDocuments()
+
+        let (pedidosSnapshot, inscripcionesSnapshot) = try await (pedidosTask, inscripcionesTask)
+
         let pedidosDeudores = pedidosSnapshot.documents.compactMap { doc -> DeudorItem? in
-            guard let pedido = doc.decodeSafely(as: Pedido.self) else { return nil }
+            guard let pedido = doc.decodeSafely(as: Pedido.self), pedido.estado_entrega else { return nil }
             return DeudorItem(pedido: pedido)
         }
 
         let inscripcionesDeudoras = inscripcionesSnapshot.documents.compactMap { doc -> DeudorItem? in
-            guard let inscripcion = doc.decodeSafely(as: Inscripcion.self) else { return nil }
+            guard let inscripcion = doc.decodeSafely(as: Inscripcion.self), inscripcion.fecha_curso < ahora else { return nil }
             return DeudorItem(inscripcion: inscripcion)
         }
-        
+
         let todos = pedidosDeudores + inscripcionesDeudoras
         return todos.sorted(by: { $0.fecha > $1.fecha })
     }
-    
-    /// Setea el monto_adeudado a 0 en una transacción (Condonar).
-    func condonarDeuda(origen: Origen) async throws {
-        guard let origenRef = origen.ref else {
-            throw FirestoreManager.shared.mapCloudError(NSError(domain: FunctionsErrorDomain, code: FunctionsErrorCode.notFound.rawValue))
-        }
-        
-        _ = try await db.runTransaction { (transaction, errorPointer) -> Void? in
-            
-            let dataParaActualizar: [String: Any]
-            
-            switch origen {
-            case .pedido:
-                dataParaActualizar = [
-                    "monto_adeudado": 0.0,
-                    "estado_pago": true
-                ]
-            case .inscripcion:
-                dataParaActualizar = [
-                    "monto_adeudado": 0.0,
-                    "estado": EstadoInscripcion.pagado.rawValue
-                ]
-            }
-            
-            transaction.updateData(dataParaActualizar, forDocument: origenRef)
-            return nil
-        }
-    }
-    
+
     // MARK: - Métricas (KPIs)
     
     /// Obtiene los KPIs financieros pre-calculados.
