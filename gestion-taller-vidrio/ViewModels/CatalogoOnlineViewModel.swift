@@ -20,7 +20,7 @@ class CatalogoOnlineViewModel: ObservableObject {
         self.tallerRepo = tallerRepo
     }
 
-    deinit {
+    isolated deinit {
         catalogoListener?.remove()
     }
 

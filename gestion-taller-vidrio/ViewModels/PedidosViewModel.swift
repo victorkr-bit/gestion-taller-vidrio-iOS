@@ -91,8 +91,7 @@ class PedidosViewModel: ObservableObject {
         startListeningOrders()
     }
     
-    deinit {
-        taskTracker.cancelAll()
+    isolated deinit {
         pedidosListener?.remove()
         paymentListeners.values.forEach { $0.remove() }
     }

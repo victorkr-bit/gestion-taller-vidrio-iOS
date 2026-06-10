@@ -117,11 +117,13 @@ final class TaskTracker {
         }
     }
 
-    nonisolated func cancelAll() {
-        MainActor.assumeIsolated {
-            tasks.values.forEach { $0.cancel() }
-            tasks.removeAll()
-        }
+    func cancelAll() {
+        tasks.values.forEach { $0.cancel() }
+        tasks.removeAll()
+    }
+
+    isolated deinit {
+        tasks.values.forEach { $0.cancel() }
     }
 }
 

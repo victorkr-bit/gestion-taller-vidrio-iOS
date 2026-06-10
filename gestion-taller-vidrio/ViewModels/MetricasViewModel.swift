@@ -30,7 +30,7 @@ class MetricasViewModel: ObservableObject {
         observeFilter()
     }
 
-    deinit {
+    isolated deinit {
         metricasListener?.remove()
         pagosListener?.remove()
     }
@@ -70,18 +70,20 @@ class MetricasViewModel: ObservableObject {
         filter.$mesInicio
             .combineLatest(filter.$mesFin)
             .dropFirst() // ignorar el valor inicial; ya se cargó en startListeners
-            .sink { [weak self] _, _ in
-                self?.restartPagosListener()
+            .sink { [weak self] inicio, fin in
+                self?.restartPagosListener(inicio: inicio, fin: fin)
             }
             .store(in: &cancellables)
     }
 
-    private func restartPagosListener() {
+    // Los params evitan leer filter.* desde el sink: @Published emite en willSet,
+    // cuando las properties del coordinator todavía tienen el período anterior.
+    private func restartPagosListener(inicio: MesAño? = nil, fin: MesAño? = nil) {
         pagosListener?.remove()
 
         pagosListener = finanzasRepo.listenToPagos(
-            from: filter.mesInicio.fechaInicio,
-            to: filter.mesFin.fechaFin
+            from: (inicio ?? filter.mesInicio).fechaInicio,
+            to: (fin ?? filter.mesFin).fechaFin
         ) { [weak self] result in
             guard let self = self else { return }
             self.isLoading = false

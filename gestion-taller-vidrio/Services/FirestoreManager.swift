@@ -12,10 +12,11 @@ final class FirestoreManager {
     
     // Instancias únicas de Firebase
     let db: Firestore
-    lazy var functions: Functions = Functions.functions(region: "southamerica-east1")
-    
+    let functions: Functions
+
     private init() {
         self.db = Firestore.firestore()
+        self.functions = Functions.functions(region: "southamerica-east1")
         // Aquí podrías agregar configuraciones de caché si hiciera falta en el futuro
     }
     

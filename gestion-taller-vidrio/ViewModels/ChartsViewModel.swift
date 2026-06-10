@@ -30,8 +30,7 @@ class ChartsViewModel: ObservableObject {
         observeFilter()
     }
 
-    deinit {
-        taskTracker.cancelAll()
+    isolated deinit {
         anualListener?.remove()
     }
 
@@ -39,8 +38,8 @@ class ChartsViewModel: ObservableObject {
         filter.$mesInicio
             .combineLatest(filter.$mesFin)
             .dropFirst()
-            .sink { [weak self] _, _ in
-                self?.loadDetalleClases()
+            .sink { [weak self] inicio, fin in
+                self?.loadDetalleClases(inicio: inicio, fin: fin)
             }
             .store(in: &cancellables)
     }
@@ -102,16 +101,18 @@ class ChartsViewModel: ObservableObject {
 
     // MARK: - Detalle de clases del período (depende del filter)
 
-    private func loadDetalleClases() {
+    // Los params evitan leer filter.* desde el sink: @Published emite en willSet,
+    // cuando las properties del coordinator todavía tienen el período anterior.
+    private func loadDetalleClases(inicio: MesAño? = nil, fin: MesAño? = nil) {
         taskTracker.track(Task {
             do {
                 let ahora = Date()
-                let fechaInicio = self.filter.mesInicio.fechaInicio
+                let fechaInicio = (inicio ?? self.filter.mesInicio).fechaInicio
                 guard fechaInicio <= ahora else {
                     self.detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
                     return
                 }
-                let fechaFin = min(self.filter.mesFin.fechaFin, ahora)
+                let fechaFin = min((fin ?? self.filter.mesFin).fechaFin, ahora)
                 let ins = try await self.tallerRepo.fetchInscripcionesPorFecha(
                     from: fechaInicio,
                     to: fechaFin

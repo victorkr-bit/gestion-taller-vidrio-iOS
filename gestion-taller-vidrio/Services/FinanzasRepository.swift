@@ -1,7 +1,8 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 import FirebaseFunctions
 
+@MainActor
 final class FinanzasRepository {
     
     // Acceso a la infraestructura compartida

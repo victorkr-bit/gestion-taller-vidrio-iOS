@@ -77,8 +77,7 @@ class PagosViewModel: ObservableObject {
         fetchContactos()
     }
     
-    deinit {
-        taskTracker.cancelAll()
+    isolated deinit {
         listener?.remove()
     }
     

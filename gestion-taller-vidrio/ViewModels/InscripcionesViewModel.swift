@@ -33,8 +33,7 @@ class InscripcionesViewModel: ObservableObject {
         self.contactosRepo = contactosRepo
     }
 
-    deinit {
-        taskTracker.cancelAll()
+    isolated deinit {
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
     }

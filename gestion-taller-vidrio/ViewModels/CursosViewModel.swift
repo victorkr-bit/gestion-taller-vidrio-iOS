@@ -19,8 +19,7 @@ class CursosViewModel: ObservableObject {
         startListening()
     }
 
-    deinit {
-        taskTracker.cancelAll()
+    isolated deinit {
         cursosListener?.remove()
     }
 

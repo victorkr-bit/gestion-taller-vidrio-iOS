@@ -22,7 +22,7 @@ class ProximaActividadViewModel: ObservableObject {
         listenToProximaClase()
     }
 
-    deinit {
+    isolated deinit {
         cronogramaListener?.remove()
         inscripcionListeners.values.forEach { $0.remove() }
     }

@@ -1,7 +1,8 @@
 import Foundation
 import FirebaseFirestore
-import FirebaseFunctions
+@preconcurrency import FirebaseFunctions
 
+@MainActor
 final class VentasRepository {
 
     // Acceso a la infraestructura compartida
@@ -74,8 +75,7 @@ final class VentasRepository {
     // MARK: - Helpers Privados (Cloud Functions)
 
     private func createPedidoRemote(_ pedido: Pedido) async throws {
-         let data = pedido.asCloudPayload
-         _ = try await functions.httpsCallable("crearPedido").call(data)
+         _ = try await functions.httpsCallable("crearPedido").call(pedido.asCloudPayload)
     }
 
     private func updatePedidoRemote(_ pedido: Pedido, id: String) async throws {

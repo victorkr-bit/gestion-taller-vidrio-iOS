@@ -59,7 +59,6 @@ class AgendaViewModel: ObservableObject {
     }
 
     isolated deinit {
-        taskTracker.cancelAll()
         cronogramaListener?.remove()
     }
 

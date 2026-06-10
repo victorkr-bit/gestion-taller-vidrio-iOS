@@ -21,7 +21,7 @@ extension Pedido {
     
     // 1. Payload para CREAR (Se usa en createPedidoRemote)
     // Manda todos los datos necesarios para inicializar el pedido
-    var asCloudPayload: [String: Any] {
+    var asCloudPayload: [String: any Sendable] {
         return [
             "clienteId": cliente_id,
             "clienteNombre": cliente_nombre,
