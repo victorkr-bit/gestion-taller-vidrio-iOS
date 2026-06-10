@@ -62,10 +62,6 @@ class DeudoresViewModel: ObservableObject {
         }
     }
 
-    deinit {
-        taskTracker.cancelAll()
-    }
-
     func fetchDeudores() {
         isLoading = true
         errorMessage = nil

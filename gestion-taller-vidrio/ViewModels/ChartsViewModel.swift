@@ -31,7 +31,6 @@ class ChartsViewModel: ObservableObject {
     }
 
     deinit {
-        taskTracker.cancelAll()
         anualListener?.remove()
     }
 

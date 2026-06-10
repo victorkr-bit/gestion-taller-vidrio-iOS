@@ -34,7 +34,6 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     deinit {
-        taskTracker.cancelAll()
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
     }

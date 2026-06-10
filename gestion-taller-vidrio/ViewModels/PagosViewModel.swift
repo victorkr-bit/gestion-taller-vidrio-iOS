@@ -78,7 +78,6 @@ class PagosViewModel: ObservableObject {
     }
     
     deinit {
-        taskTracker.cancelAll()
         listener?.remove()
     }
     

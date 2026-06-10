@@ -20,10 +20,6 @@ class PedidoFormViewModel: ObservableObject {
     
     private let taskTracker = TaskTracker()
 
-    deinit {
-        taskTracker.cancelAll()
-    }
-
     private let repository: VentasRepository
     private let contactosRepo: ContactosRepository
     private let editingPedidoID: String?

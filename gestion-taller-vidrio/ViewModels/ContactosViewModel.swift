@@ -29,10 +29,6 @@ class ContactosViewModel: ObservableObject {
         fetchContactos()
     }
 
-    deinit {
-        taskTracker.cancelAll()
-    }
-
     func fetchContactos() {
         isLoading = true
         errorMessage = nil
