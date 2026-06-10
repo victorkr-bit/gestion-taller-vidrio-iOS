@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 import FirebaseFunctions
 
 @MainActor
@@ -306,7 +306,8 @@ final class TallerRepository {
         } else {
             // Al crear, sellar la fecha server-side (evita desfases de reloj del cliente).
             data["fecha_inscripcion"] = FieldValue.serverTimestamp()
-            let ref = try await db.collection("inscripciones").addDocument(data: data)
+            let ref = db.collection("inscripciones").document()
+            try await ref.setData(data)
             var saved = inscripcion
             saved.id = ref.documentID
             return saved
