@@ -2,6 +2,7 @@ import Foundation
 import FirebaseFirestore
 import FirebaseFunctions
 
+@MainActor
 final class VentasRepository {
 
     // Acceso a la infraestructura compartida
