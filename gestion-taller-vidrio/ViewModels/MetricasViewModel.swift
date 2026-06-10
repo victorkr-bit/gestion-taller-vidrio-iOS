@@ -30,7 +30,7 @@ class MetricasViewModel: ObservableObject {
         observeFilter()
     }
 
-    deinit {
+    isolated deinit {
         metricasListener?.remove()
         pagosListener?.remove()
     }

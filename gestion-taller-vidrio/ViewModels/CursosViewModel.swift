@@ -19,7 +19,7 @@ class CursosViewModel: ObservableObject {
         startListening()
     }
 
-    deinit {
+    isolated deinit {
         cursosListener?.remove()
     }
 

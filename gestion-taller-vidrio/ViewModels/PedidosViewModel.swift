@@ -91,7 +91,7 @@ class PedidosViewModel: ObservableObject {
         startListeningOrders()
     }
     
-    deinit {
+    isolated deinit {
         pedidosListener?.remove()
         paymentListeners.values.forEach { $0.remove() }
     }

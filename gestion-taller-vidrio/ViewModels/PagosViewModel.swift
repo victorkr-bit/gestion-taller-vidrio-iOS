@@ -77,7 +77,7 @@ class PagosViewModel: ObservableObject {
         fetchContactos()
     }
     
-    deinit {
+    isolated deinit {
         listener?.remove()
     }
     

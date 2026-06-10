@@ -30,7 +30,7 @@ class ChartsViewModel: ObservableObject {
         observeFilter()
     }
 
-    deinit {
+    isolated deinit {
         anualListener?.remove()
     }
 

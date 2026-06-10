@@ -33,7 +33,7 @@ class InscripcionesViewModel: ObservableObject {
         self.contactosRepo = contactosRepo
     }
 
-    deinit {
+    isolated deinit {
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
     }
