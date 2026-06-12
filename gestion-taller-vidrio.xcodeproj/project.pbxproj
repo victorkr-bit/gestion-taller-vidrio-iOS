@@ -13,14 +13,30 @@
 		5D21D5FF2EE8A63E00CA4DE1 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 5D21D5FE2EE8A63E00CA4DE1 /* FirebaseFunctions */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		AA1000082FAA000000000008 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5D0475862ECA62DA00919628 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5D04758D2ECA62DA00919628;
+			remoteInfo = "gestion-taller-vidrio";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5D04758E2ECA62DA00919628 /* gestion-taller-vidrio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "gestion-taller-vidrio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA1000022FAA000000000002 /* gestion-taller-vidrioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "gestion-taller-vidrioTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5D0475902ECA62DA00919628 /* gestion-taller-vidrio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "gestion-taller-vidrio";
+			sourceTree = "<group>";
+		};
+		AA1000032FAA000000000003 /* gestion-taller-vidrioTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "gestion-taller-vidrioTests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,6 +53,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA1000052FAA000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				5D0475902ECA62DA00919628 /* gestion-taller-vidrio */,
+				AA1000032FAA000000000003 /* gestion-taller-vidrioTests */,
 				5D04758F2ECA62DA00919628 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				5D04758E2ECA62DA00919628 /* gestion-taller-vidrio.app */,
+				AA1000022FAA000000000002 /* gestion-taller-vidrioTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -86,6 +111,29 @@
 			productReference = 5D04758E2ECA62DA00919628 /* gestion-taller-vidrio.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA1000012FAA000000000001 /* gestion-taller-vidrioTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA1000092FAA000000000009 /* Build configuration list for PBXNativeTarget "gestion-taller-vidrioTests" */;
+			buildPhases = (
+				AA1000042FAA000000000004 /* Sources */,
+				AA1000052FAA000000000005 /* Frameworks */,
+				AA1000062FAA000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA1000072FAA000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA1000032FAA000000000003 /* gestion-taller-vidrioTests */,
+			);
+			name = "gestion-taller-vidrioTests";
+			packageProductDependencies = (
+			);
+			productName = "gestion-taller-vidrioTests";
+			productReference = AA1000022FAA000000000002 /* gestion-taller-vidrioTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -98,6 +146,10 @@
 				TargetAttributes = {
 					5D04758D2ECA62DA00919628 = {
 						CreatedOnToolsVersion = 26.1.1;
+					};
+					AA1000012FAA000000000001 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 5D04758D2ECA62DA00919628;
 					};
 				};
 			};
@@ -120,12 +172,20 @@
 			projectRoot = "";
 			targets = (
 				5D04758D2ECA62DA00919628 /* gestion-taller-vidrio */,
+				AA1000012FAA000000000001 /* gestion-taller-vidrioTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		5D04758C2ECA62DA00919628 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA1000062FAA000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -164,7 +224,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA1000042FAA000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA1000072FAA000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5D04758D2ECA62DA00919628 /* gestion-taller-vidrio */;
+			targetProxy = AA1000082FAA000000000008 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		5D0475972ECA62DB00919628 /* Debug */ = {
@@ -381,6 +456,58 @@
 			};
 			name = Release;
 		};
+		AA10000A2FAA00000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J3Q5PCL45W;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.crisromeroglass.gestion-taller-vidrioTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/gestion-taller-vidrio.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/gestion-taller-vidrio";
+				XROS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		AA10000B2FAA00000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J3Q5PCL45W;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.crisromeroglass.gestion-taller-vidrioTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/gestion-taller-vidrio.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/gestion-taller-vidrio";
+				XROS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -398,6 +525,15 @@
 			buildConfigurations = (
 				5D04759A2ECA62DB00919628 /* Debug */,
 				5D04759B2ECA62DB00919628 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA1000092FAA000000000009 /* Build configuration list for PBXNativeTarget "gestion-taller-vidrioTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA10000A2FAA00000000000A /* Debug */,
+				AA10000B2FAA00000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
