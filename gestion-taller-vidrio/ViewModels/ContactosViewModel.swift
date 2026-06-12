@@ -12,7 +12,7 @@ class ContactosViewModel: ObservableObject {
     @Published var searchText: String = ""
 
     private let taskTracker = TaskTracker()
-    private let repository: ContactosRepository
+    private let repository: any ContactosRepositorio
 
     var contactosFiltrados: [Contacto] {
         if searchText.isEmpty {
@@ -24,7 +24,7 @@ class ContactosViewModel: ObservableObject {
         }
     }
 
-    init(repository: ContactosRepository? = nil) {
+    init(repository: (any ContactosRepositorio)? = nil) {
         self.repository = repository ?? ContactosRepository()
         fetchContactos()
     }

@@ -21,10 +21,10 @@ class DeudoresViewModel: ObservableObject {
     private let taskTracker = TaskTracker()
     private var cancellables = Set<AnyCancellable>()
 
-    private let repository: FinanzasRepository
-    private let tallerRepository: TallerRepository
+    private let repository: any FinanzasRepositorio
+    private let tallerRepository: any TallerRepositorio
 
-    init(finanzasRepository: FinanzasRepository? = nil, tallerRepository: TallerRepository? = nil) {
+    init(finanzasRepository: (any FinanzasRepositorio)? = nil, tallerRepository: (any TallerRepositorio)? = nil) {
         self.repository = finanzasRepository ?? FinanzasRepository()
         self.tallerRepository = tallerRepository ?? TallerRepository()
         $searchText

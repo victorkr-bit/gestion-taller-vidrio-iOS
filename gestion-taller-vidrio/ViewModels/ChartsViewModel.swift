@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class ChartsViewModel: ObservableObject {
@@ -11,15 +10,15 @@ class ChartsViewModel: ObservableObject {
     @Published var clasesAnuales: [DatoMensualClases] = []
     @Published var detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
 
-    private var anualListener: ListenerRegistration?
+    private var anualListener: SuscripcionActiva?
     private var cancellables = Set<AnyCancellable>()
     private let taskTracker = TaskTracker()
 
-    private let finanzasRepo: FinanzasRepository
-    private let tallerRepo: TallerRepository
+    private let finanzasRepo: any FinanzasRepositorio
+    private let tallerRepo: any TallerRepositorio
     private let filter: FilterCoordinator
 
-    init(finanzasRepo: FinanzasRepository, tallerRepo: TallerRepository, filter: FilterCoordinator) {
+    init(finanzasRepo: any FinanzasRepositorio, tallerRepo: any TallerRepositorio, filter: FilterCoordinator) {
         self.finanzasRepo = finanzasRepo
         self.tallerRepo = tallerRepo
         self.filter = filter

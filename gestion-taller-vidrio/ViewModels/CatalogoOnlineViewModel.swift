@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class CatalogoOnlineViewModel: ObservableObject {
@@ -11,12 +10,12 @@ class CatalogoOnlineViewModel: ObservableObject {
     @Published var catalogoOnline: [Curso] = []
 
     // Listener
-    private var catalogoListener: ListenerRegistration?
+    private var catalogoListener: SuscripcionActiva?
 
     // MARK: - Dependencia
-    private let tallerRepo: TallerRepository
+    private let tallerRepo: any TallerRepositorio
 
-    init(tallerRepo: TallerRepository) {
+    init(tallerRepo: any TallerRepositorio) {
         self.tallerRepo = tallerRepo
     }
 

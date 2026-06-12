@@ -3,7 +3,7 @@ import Foundation
 import FirebaseFunctions
 
 @MainActor
-final class FinanzasRepository {
+final class FinanzasRepository: FinanzasRepositorio {
     
     // Acceso a la infraestructura compartida
     private let db = FirestoreManager.shared.db
@@ -44,19 +44,19 @@ final class FinanzasRepository {
     // MARK: - Pagos (Tiempo Real)
     
     /// Escucha cambios en la colección pagos dentro de un rango de fechas.
-    func listenToPagos(from: Date?, to: Date?, completion: @escaping (Result<[Pago], Error>) -> Void) -> ListenerRegistration {
+    func listenToPagos(from: Date?, to: Date?, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva {
         var query: Query = db.collection("pagos")
-        
+
         if let fromDate = from {
             query = query.whereField("fecha", isGreaterThanOrEqualTo: fromDate)
         }
         if let toDate = to {
             query = query.whereField("fecha", isLessThanOrEqualTo: toDate)
         }
-        
+
         query = query.order(by: "fecha", descending: true)
-        
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -68,14 +68,15 @@ final class FinanzasRepository {
             let pagos = documents.compactMap { $0.decodeSafely(as: Pago.self) }
             completion(.success(pagos))
         }
+        return SuscripcionActiva { registration.remove() }
     }
 
     /// Escucha en tiempo real los pagos de una inscripción o pedido específico (Acordeón).
-    func listenToPagos(origenID: String, completion: @escaping (Result<[Pago], Error>) -> Void) -> ListenerRegistration {
+    func listenToPagos(origenID: String, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva {
         let query = db.collection("pagos")
             .whereField("origen_id", isEqualTo: origenID)
-            
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -88,9 +89,10 @@ final class FinanzasRepository {
             let pagos = documents.compactMap { $0.decodeSafely(as: Pago.self) }
             // Ordenar por fecha descendente en memoria
             let pagosOrdenados = pagos.sorted(by: { $0.fecha > $1.fecha })
-            
+
             completion(.success(pagosOrdenados))
         }
+        return SuscripcionActiva { registration.remove() }
     }
     
     // MARK: - Gestión de Pagos (Cloud Functions)
@@ -270,8 +272,8 @@ final class FinanzasRepository {
     }
     
     /// Escucha cambios en tiempo real en las métricas.
-    func listenToMetricas(completion: @escaping (Result<MetricasFinancieras, Error>) -> Void) -> ListenerRegistration {
-        return db.collection("metricas").document("finanzas")
+    func listenToMetricas(completion: @escaping (Result<MetricasFinancieras, Error>) -> Void) -> SuscripcionActiva {
+        let registration = db.collection("metricas").document("finanzas")
             .addSnapshotListener { snapshot, error in
                 if let error = error {
                     completion(.failure(error))
@@ -289,5 +291,6 @@ final class FinanzasRepository {
                     completion(.failure(error))
                 }
             }
+        return SuscripcionActiva { registration.remove() }
     }
 }

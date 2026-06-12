@@ -5,23 +5,30 @@ import Foundation
 enum TestFactory {
 
     static func inscripcion(
+        id: String? = nil,
         horario: String? = nil,
         turnos: Int? = nil,
-        nombre: String = "Alumno Test"
+        nombre: String = "Alumno Test",
+        cursoNombre: String = "Curso Test",
+        cursoTipo: TipoCurso = .taller,
+        cronogramaId: String? = "crono-test-id",
+        fechaCurso: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        montoAbonado: Double = 0,
+        montoAdeudado: Double = 10_000
     ) -> Inscripcion {
         Inscripcion(
-            id: nil,
+            id: id,
             alumnoId: "alumno-test-id",
             alumno_nombre: nombre,
-            cronogramaId: "crono-test-id",
+            cronogramaId: cronogramaId,
             cursoId: "curso-test-id",
-            cursoNombre: "Curso Test",
-            cursoTipo: .taller,
+            cursoNombre: cursoNombre,
+            cursoTipo: cursoTipo,
             fecha_inscripcion: nil,
-            fecha_curso: Date(timeIntervalSince1970: 1_750_000_000),
+            fecha_curso: fechaCurso,
             precio_curso: 10_000,
-            monto_abonado: 0,
-            monto_adeudado: 10_000,
+            monto_abonado: montoAbonado,
+            monto_adeudado: montoAdeudado,
             estado: .inscripto,
             horario_inicio: horario,
             turnos: turnos,
@@ -30,23 +37,111 @@ enum TestFactory {
     }
 
     static func pedido(
+        id: String? = nil,
         presupuesto: Double = 50_000,
         tipo: TipoPedido = .piezas,
-        fecha: Date = Date(timeIntervalSince1970: 1_750_000_000)
+        fecha: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        numero: String = "P-0001",
+        cliente: String = "Cliente Test",
+        descripcion: String = "Pedido de prueba",
+        montoAbonado: Double = 0,
+        estadoPago: Bool = false,
+        estadoEntrega: Bool = false
     ) -> Pedido {
         Pedido(
-            id: nil,
-            numero_pedido: "P-0001",
+            id: id,
+            numero_pedido: numero,
             cliente_id: "cliente-test-id",
-            cliente_nombre: "Cliente Test",
+            cliente_nombre: cliente,
             presupuesto: presupuesto,
-            monto_abonado: 0,
-            monto_adeudado: presupuesto,
-            estado_pago: false,
+            monto_abonado: montoAbonado,
+            monto_adeudado: presupuesto - montoAbonado,
+            estado_pago: estadoPago,
             fecha: fecha,
-            descripcion: "Pedido de prueba",
+            descripcion: descripcion,
             tipo: tipo,
-            estado_entrega: false
+            estado_entrega: estadoEntrega
         )
     }
+
+    static func pago(
+        id: String? = "pago-test-id",
+        monto: Double = 1_000,
+        medio: MedioDePago = .efectivo,
+        tipoVenta: TipoVenta = .taller,
+        fecha: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        cliente: String = "Cliente Test",
+        notas: String? = nil,
+        descripcionOrigen: String = "Pago de prueba",
+        origenID: String? = nil
+    ) -> Pago {
+        Pago(
+            id: id,
+            fecha: fecha,
+            monto: monto,
+            medio_de_pago: medio,
+            cliente_id: "cliente-test-id",
+            cliente_nombre: cliente,
+            tipo_venta: tipoVenta,
+            notas: notas,
+            origen_tipo: origenID == nil ? .ventaDirecta : .pedido,
+            descripcion_origen: descripcionOrigen,
+            origen_id: origenID
+        )
+    }
+
+    static func contacto(
+        id: String? = "contacto-test-id",
+        nombre: String = "Nombre",
+        apellido: String = "Apellido"
+    ) -> Contacto {
+        Contacto(
+            id: id,
+            nombre: nombre,
+            apellido: apellido,
+            email: nil,
+            telefono: nil,
+            direccion: nil,
+            redes_sociales: nil,
+            cuit: nil,
+            notas: nil
+        )
+    }
+
+    static func cronogramaItem(
+        id: String? = "crono-test-id",
+        cursoNombre: String = "Curso Test",
+        cursoTipo: TipoCurso = .taller,
+        fecha: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        inscriptos: Int? = nil
+    ) -> CronogramaItem {
+        CronogramaItem(
+            id: id,
+            cursoId: "curso-test-id",
+            cursoNombre: cursoNombre,
+            cursoTipo: cursoTipo,
+            precio_curso: 10_000,
+            fecha: fecha,
+            cant_inscriptos: inscriptos,
+            notas: nil
+        )
+    }
+}
+
+// MARK: - Espera de Tasks internos de los ViewModels
+
+/// Espera (polling cooperativo) hasta que la condición sea true o se agote el timeout.
+/// Los VMs lanzan Tasks internos no awaiteables; con fakes que responden al instante
+/// alcanza con ceder el MainActor unas iteraciones.
+@MainActor
+func esperarCondicion(
+    iteraciones: Int = 500,
+    _ condicion: () -> Bool
+) async -> Bool {
+    for _ in 0..<iteraciones {
+        if condicion() { return true }
+        await Task.yield()
+        try? await Task.sleep(for: .milliseconds(1))
+    }
+    return condicion()
 }

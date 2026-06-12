@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class CursosViewModel: ObservableObject {
@@ -10,11 +9,11 @@ class CursosViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let taskTracker = TaskTracker()
-    private var cursosListener: ListenerRegistration?
+    private var cursosListener: SuscripcionActiva?
 
-    private let repository: TallerRepository
+    private let repository: any TallerRepositorio
 
-    init(repository: TallerRepository? = nil) {
+    init(repository: (any TallerRepositorio)? = nil) {
         self.repository = repository ?? TallerRepository()
         startListening()
     }

@@ -3,7 +3,7 @@ import FirebaseFirestore
 import FirebaseFunctions
 
 @MainActor
-final class ContactosRepository {
+final class ContactosRepository: ContactosRepositorio {
 
     private let db = FirestoreManager.shared.db
     private let functions = FirestoreManager.shared.functions

@@ -3,7 +3,7 @@ import FirebaseFirestore
 @preconcurrency import FirebaseFunctions
 
 @MainActor
-final class VentasRepository {
+final class VentasRepository: VentasRepositorio {
 
     // Acceso a la infraestructura compartida
     private let db = FirestoreManager.shared.db
@@ -24,24 +24,25 @@ final class VentasRepository {
     }
     
     /// Escucha cambios en tiempo real en la lista de pedidos.
-    func listenToPedidos(completion: @escaping (Result<[Pedido], Error>) -> Void) -> ListenerRegistration {
+    func listenToPedidos(completion: @escaping (Result<[Pedido], Error>) -> Void) -> SuscripcionActiva {
         let query = db.collection("pedidos")
             .order(by: "fecha", descending: true)
-            
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
+
             guard let documents = querySnapshot?.documents else {
                 completion(.success([]))
                 return
             }
-            
+
             let pedidos = documents.compactMap { $0.decodeSafely(as: Pedido.self) }
             completion(.success(pedidos))
         }
+        return SuscripcionActiva { registration.remove() }
     }
     
     /// Guarda un pedido (decide si es creación o actualización).

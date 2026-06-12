@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class ProximaActividadViewModel: ObservableObject {
@@ -11,13 +10,13 @@ class ProximaActividadViewModel: ObservableObject {
     @Published var proximasClases: [CronogramaItem] = []
     @Published var ocupacionesTaller: [OcupacionTallerItem] = []
 
-    private var cronogramaListener: ListenerRegistration?
-    private var inscripcionListeners: [String: ListenerRegistration] = [:]
+    private var cronogramaListener: SuscripcionActiva?
+    private var inscripcionListeners: [String: SuscripcionActiva] = [:]
     private var currentTalleres: [String: CronogramaItem] = [:]
 
-    private let tallerRepo: TallerRepository
+    private let tallerRepo: any TallerRepositorio
 
-    init(tallerRepo: TallerRepository) {
+    init(tallerRepo: any TallerRepositorio) {
         self.tallerRepo = tallerRepo
         listenToProximaClase()
     }

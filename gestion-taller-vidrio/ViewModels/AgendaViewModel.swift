@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import SwiftUI
-import FirebaseFirestore
 
 private let bsasCalendarVM: Calendar = {
     var cal = Calendar(identifier: .gregorian)
@@ -47,13 +46,13 @@ class AgendaViewModel: ObservableObject {
     @Published var cursos: [Curso] = []
 
     // Listener
-    private var cronogramaListener: ListenerRegistration?
+    private var cronogramaListener: SuscripcionActiva?
     private let taskTracker = TaskTracker()
 
     // MARK: - Dependencia
-    private let tallerRepo: TallerRepository
+    private let tallerRepo: any TallerRepositorio
 
-    init(tallerRepo: TallerRepository) {
+    init(tallerRepo: any TallerRepositorio) {
         self.tallerRepo = tallerRepo
         subscribeToCronograma()
     }
