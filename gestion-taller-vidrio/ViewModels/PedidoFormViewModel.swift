@@ -20,11 +20,11 @@ class PedidoFormViewModel: ObservableObject {
     
     private let taskTracker = TaskTracker()
 
-    private let repository: VentasRepository
-    private let contactosRepo: ContactosRepository
+    private let repository: any VentasRepositorio
+    private let contactosRepo: any ContactosRepositorio
     private let editingPedidoID: String?
 
-    init(pedido: Pedido? = nil, repository: VentasRepository? = nil, contactosRepo: ContactosRepository? = nil) {
+    init(pedido: Pedido? = nil, repository: (any VentasRepositorio)? = nil, contactosRepo: (any ContactosRepositorio)? = nil) {
         self.repository = repository ?? VentasRepository()
         self.contactosRepo = contactosRepo ?? ContactosRepository()
 

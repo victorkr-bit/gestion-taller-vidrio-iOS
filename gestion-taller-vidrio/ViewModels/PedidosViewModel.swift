@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import SwiftUI
-import FirebaseFirestore
 
 @MainActor
 class PedidosViewModel: ObservableObject {
@@ -20,8 +19,8 @@ class PedidosViewModel: ObservableObject {
     @Published var pagosPorPedido: [String: [Pago]] = [:]
     
     // Almacén de Listeners
-    private var pedidosListener: ListenerRegistration?
-    private var paymentListeners: [String: ListenerRegistration] = [:]
+    private var pedidosListener: SuscripcionActiva?
+    private var paymentListeners: [String: SuscripcionActiva] = [:]
     private let taskTracker = TaskTracker()
     
     // MARK: - Enums de Filtros
@@ -80,11 +79,11 @@ class PedidosViewModel: ObservableObject {
     
     // MARK: - Inyección de Dependencias
     
-    private let ventasRepo: VentasRepository
-    private let finanzasRepo: FinanzasRepository
-    private let contactosRepo: ContactosRepository
+    private let ventasRepo: any VentasRepositorio
+    private let finanzasRepo: any FinanzasRepositorio
+    private let contactosRepo: any ContactosRepositorio
 
-    init(ventasRepo: VentasRepository? = nil, finanzasRepo: FinanzasRepository? = nil, contactosRepo: ContactosRepository? = nil) {
+    init(ventasRepo: (any VentasRepositorio)? = nil, finanzasRepo: (any FinanzasRepositorio)? = nil, contactosRepo: (any ContactosRepositorio)? = nil) {
         self.ventasRepo = ventasRepo ?? VentasRepository()
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.contactosRepo = contactosRepo ?? ContactosRepository()

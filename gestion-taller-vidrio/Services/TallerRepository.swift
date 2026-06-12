@@ -3,7 +3,7 @@ import Foundation
 import FirebaseFunctions
 
 @MainActor
-final class TallerRepository {
+final class TallerRepository: TallerRepositorio {
     
     // Acceso a la infraestructura compartida
     private let db = FirestoreManager.shared.db
@@ -21,8 +21,8 @@ final class TallerRepository {
     }
 
     /// Escucha en tiempo real cambios en el catálogo completo de cursos.
-    func listenToCursos(completion: @escaping (Result<[Curso], Error>) -> Void) -> ListenerRegistration {
-        return db.collection("cursos").addSnapshotListener { querySnapshot, error in
+    func listenToCursos(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {
+        let registration = db.collection("cursos").addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -34,6 +34,7 @@ final class TallerRepository {
             let cursos = documents.compactMap { $0.decodeSafely(as: Curso.self) }
             completion(.success(cursos))
         }
+        return SuscripcionActiva { registration.remove() }
     }
 
     /// Guarda (crea o actualiza) un documento de Curso.
@@ -93,11 +94,11 @@ final class TallerRepository {
     }
     
     /// Escucha en tiempo real cambios en el catálogo Online.
-    func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> ListenerRegistration {
+    func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {
         let query = db.collection("cursos")
             .whereField("tipo", isEqualTo: TipoCurso.online.rawValue)
-        
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -109,6 +110,7 @@ final class TallerRepository {
             let cursos = documents.compactMap { $0.decodeSafely(as: Curso.self) }
             completion(.success(cursos))
         }
+        return SuscripcionActiva { registration.remove() }
     }
 
     // MARK: - Cronograma (Agenda)
@@ -127,14 +129,14 @@ final class TallerRepository {
 
     /// Escucha en tiempo real los cursos PRÓXIMOS.
     /// Fundamental para actualizar el contador 'cant_inscriptos' sin recargar manualmente.
-    func listenToCursosProximos(completion: @escaping (Result<[CronogramaItem], Error>) -> Void) -> ListenerRegistration {
+    func listenToCursosProximos(completion: @escaping (Result<[CronogramaItem], Error>) -> Void) -> SuscripcionActiva {
         let hoyArgentina = getStartOfTodayInArgentina()
 
         let query = db.collection("cronograma")
             .whereField("fecha", isGreaterThanOrEqualTo: hoyArgentina)
             .order(by: "fecha", descending: false)
 
-        return query.addSnapshotListener { querySnapshot, error in
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -146,6 +148,7 @@ final class TallerRepository {
             let items = documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
             completion(.success(items))
         }
+        return SuscripcionActiva { registration.remove() }
     }
     
     /// Obtiene los cursos YA REALIZADOS (Pasado).
@@ -231,11 +234,11 @@ final class TallerRepository {
     }
     
     /// Escucha en tiempo real las inscripciones de un cronograma específico.
-    func listenToInscripciones(cronogramaID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> ListenerRegistration {
+    func listenToInscripciones(cronogramaID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> SuscripcionActiva {
         let query = db.collection("inscripciones")
             .whereField("cronogramaId", isEqualTo: cronogramaID)
-        
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -244,7 +247,7 @@ final class TallerRepository {
                 completion(.success([]))
                 return
             }
-            
+
             var inscripciones: [Inscripcion] = []
             for doc in documents {
                 if let inscripcion = doc.decodeSafely(as: Inscripcion.self) {
@@ -253,15 +256,16 @@ final class TallerRepository {
             }
             completion(.success(inscripciones))
         }
+        return SuscripcionActiva { registration.remove() }
     }
     
     /// Escucha en tiempo real las inscripciones de un curso Online.
-    func listenToInscripcionesOnline(cursoID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> ListenerRegistration {
+    func listenToInscripcionesOnline(cursoID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> SuscripcionActiva {
         let query = db.collection("inscripciones")
             .whereField("cursoId", isEqualTo: cursoID)
             .order(by: "fecha_curso", descending: true)
-            
-        return query.addSnapshotListener { querySnapshot, error in
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -270,7 +274,7 @@ final class TallerRepository {
                 completion(.success([]))
                 return
             }
-            
+
             var inscripciones: [Inscripcion] = []
             for doc in documents {
                 // Usamos try? para ser resilientes a datos corruptos en producción
@@ -280,6 +284,7 @@ final class TallerRepository {
             }
             completion(.success(inscripciones))
         }
+        return SuscripcionActiva { registration.remove() }
     }
     
     /// Guarda (crea o actualiza) una inscripción. Retorna la inscripción con ID poblado.

@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import SwiftUI
-import FirebaseFirestore
 
 @MainActor
 class PagosViewModel: ObservableObject {
@@ -59,17 +58,17 @@ class PagosViewModel: ObservableObject {
         }
     }
 
-    private var listener: ListenerRegistration?
+    private var listener: SuscripcionActiva?
     private let taskTracker = TaskTracker()
-    
+
     // MARK: - Inyección de Dependencias
-    private let finanzasRepo: FinanzasRepository
-    private let contactosRepo: ContactosRepository
+    private let finanzasRepo: any FinanzasRepositorio
+    private let contactosRepo: any ContactosRepositorio
 
     // MARK: - Inicializador
     init(
-        finanzasRepo: FinanzasRepository? = nil,
-        contactosRepo: ContactosRepository? = nil
+        finanzasRepo: (any FinanzasRepositorio)? = nil,
+        contactosRepo: (any ContactosRepositorio)? = nil
     ) {
         self.finanzasRepo = finanzasRepo ?? FinanzasRepository()
         self.contactosRepo = contactosRepo ?? ContactosRepository()

@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class InscripcionesViewModel: ObservableObject {
@@ -18,16 +17,16 @@ class InscripcionesViewModel: ObservableObject {
     @Published var ocupacionPorInscripcion: [String: Int] = [:]
 
     // Listeners
-    private var inscripcionesListener: ListenerRegistration?
-    private var paymentListeners: [String: ListenerRegistration] = [:]
+    private var inscripcionesListener: SuscripcionActiva?
+    private var paymentListeners: [String: SuscripcionActiva] = [:]
     private let taskTracker = TaskTracker()
 
     // MARK: - Dependencias
-    private let tallerRepo: TallerRepository
-    private let finanzasRepo: FinanzasRepository
-    let contactosRepo: ContactosRepository
+    private let tallerRepo: any TallerRepositorio
+    private let finanzasRepo: any FinanzasRepositorio
+    let contactosRepo: any ContactosRepositorio
 
-    init(tallerRepo: TallerRepository, finanzasRepo: FinanzasRepository, contactosRepo: ContactosRepository) {
+    init(tallerRepo: any TallerRepositorio, finanzasRepo: any FinanzasRepositorio, contactosRepo: any ContactosRepositorio) {
         self.tallerRepo = tallerRepo
         self.finanzasRepo = finanzasRepo
         self.contactosRepo = contactosRepo

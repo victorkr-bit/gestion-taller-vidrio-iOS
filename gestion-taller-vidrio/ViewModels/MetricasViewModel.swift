@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseFirestore
 
 @MainActor
 class MetricasViewModel: ObservableObject {
@@ -15,14 +14,14 @@ class MetricasViewModel: ObservableObject {
     @Published var pagosDelMes: [Pago] = []
     @Published var datosGraficoPorTipo: [DatoGraficoTipo] = []
 
-    private var metricasListener: ListenerRegistration?
-    private var pagosListener: ListenerRegistration?
+    private var metricasListener: SuscripcionActiva?
+    private var pagosListener: SuscripcionActiva?
     private var cancellables = Set<AnyCancellable>()
 
-    private let finanzasRepo: FinanzasRepository
+    private let finanzasRepo: any FinanzasRepositorio
     private let filter: FilterCoordinator
 
-    init(finanzasRepo: FinanzasRepository, filter: FilterCoordinator) {
+    init(finanzasRepo: any FinanzasRepositorio, filter: FilterCoordinator) {
         self.finanzasRepo = finanzasRepo
         self.filter = filter
 

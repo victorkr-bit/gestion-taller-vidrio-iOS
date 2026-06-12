@@ -8,9 +8,9 @@ final class ContactoDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    private let tallerRepo: TallerRepository
+    private let tallerRepo: any TallerRepositorio
 
-    init(tallerRepo: TallerRepository) {
+    init(tallerRepo: any TallerRepositorio) {
         self.tallerRepo = tallerRepo
     }
 
