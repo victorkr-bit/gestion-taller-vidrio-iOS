@@ -273,3 +273,14 @@ private struct TallerOcupacionChart: View {
         .padding(.horizontal, DesignSystem.Espaciado.m)
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        AgendaDetailView(agendaVM: c.agendaVM, inscripcionesVM: c.inscripcionesVM,
+                         cronogramaItem: PreviewData.cronogramaProximos[0])
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

@@ -114,3 +114,13 @@ struct OnlineCourseDetailView: View {
         .errorAlert($inscripcionesVM.errorMessage)
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        OnlineCourseDetailView(inscripcionesVM: PreviewContainer.shared.inscripcionesVM,
+                               curso: PreviewData.cursosOnline[0])
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

@@ -124,3 +124,14 @@ private struct InscripcionHistorialRow: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        ContactoDetailView(contacto: PreviewData.contactos[0], detailVM: c.contactoDetailVM,
+                           contactosVM: ContactosViewModel(repository: c.contactosRepo))
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

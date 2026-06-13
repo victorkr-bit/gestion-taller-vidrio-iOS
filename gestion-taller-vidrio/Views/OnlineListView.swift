@@ -39,3 +39,13 @@ struct OnlineListView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        OnlineListView(catalogoOnlineVM: c.catalogoOnlineVM, inscripcionesVM: c.inscripcionesVM)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

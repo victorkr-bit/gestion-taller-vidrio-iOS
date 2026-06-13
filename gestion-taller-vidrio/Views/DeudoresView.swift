@@ -124,10 +124,12 @@ struct DeudoresView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
-        DeudoresView(viewModel: DeudoresViewModel())
-            .environmentObject(NavigationManager())
+        DeudoresView(viewModel: PreviewContainer.shared.deudoresVM)
     }
+    .environmentObject(NavigationManager())
 }
+#endif
 

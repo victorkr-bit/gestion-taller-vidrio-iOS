@@ -340,3 +340,12 @@ struct FilterLabel: View {
     }
 }
 
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        PedidosView(viewModel: PreviewContainer.shared.pedidosVM)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

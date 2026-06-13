@@ -5,7 +5,7 @@ struct ContactosView: View {
     @StateObject private var viewModel: ContactosViewModel
     let detailVM: ContactoDetailViewModel
 
-    init(contactosRepo: ContactosRepository, detailVM: ContactoDetailViewModel) {
+    init(contactosRepo: any ContactosRepositorio, detailVM: ContactoDetailViewModel) {
         _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: contactosRepo))
         self.detailVM = detailVM
     }
@@ -137,3 +137,13 @@ struct ContactosView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        ContactosView(contactosRepo: c.contactosRepo, detailVM: c.contactoDetailVM)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

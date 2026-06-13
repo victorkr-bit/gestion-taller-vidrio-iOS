@@ -91,3 +91,14 @@ struct AgendaListView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        AgendaListView(agendaVM: PreviewContainer.shared.agendaVM,
+                       itemToEdit: .constant(nil), itemToDelete: .constant(nil),
+                       showDeleteAlert: .constant(false), itemToMover: .constant(nil))
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

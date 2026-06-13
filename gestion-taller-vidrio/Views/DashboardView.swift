@@ -435,3 +435,15 @@ struct KpiCardView: View {
         .sombraTarjeta(DesignSystem.Sombra.panel)
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        DashboardView(metricasVM: c.metricasVM, chartsVM: c.chartsVM,
+                      proximaActividadVM: c.proximaActividadVM, filter: c.filterCoordinator,
+                      deudoresVM: c.deudoresVM)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

@@ -168,3 +168,13 @@ struct FacturacionView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        FacturacionView(metricasVM: c.metricasVM, chartsVM: c.chartsVM, filter: c.filterCoordinator)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

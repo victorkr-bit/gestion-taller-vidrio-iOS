@@ -178,3 +178,12 @@ private struct PagosRow: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        PagosView(viewModel: PreviewContainer.shared.pagosVM)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

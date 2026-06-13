@@ -211,3 +211,13 @@ struct ActividadComercialView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview {
+    let c = PreviewContainer.shared
+    NavigationStack {
+        ActividadComercialView(chartsVM: c.chartsVM, filter: c.filterCoordinator)
+    }
+    .environmentObject(NavigationManager())
+}
+#endif

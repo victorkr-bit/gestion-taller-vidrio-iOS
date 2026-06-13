@@ -4,7 +4,7 @@ struct CursosView: View {
 
     @StateObject private var viewModel: CursosViewModel
 
-    init(tallerRepo: TallerRepository) {
+    init(tallerRepo: any TallerRepositorio) {
         _viewModel = StateObject(wrappedValue: CursosViewModel(repository: tallerRepo))
     }
     
@@ -113,6 +113,11 @@ struct CursosView: View {
     }
 }
 
+#if DEBUG
 #Preview {
-    CursosView(tallerRepo: TallerRepository())
+    NavigationStack {
+        CursosView(tallerRepo: PreviewContainer.shared.tallerRepo)
+    }
+    .environmentObject(NavigationManager())
 }
+#endif
