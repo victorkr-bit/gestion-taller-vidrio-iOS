@@ -90,6 +90,21 @@ enum TestFactory {
         )
     }
 
+    static func curso(
+        id: String? = "curso-test-id",
+        nombre: String = "Curso Test",
+        tipo: TipoCurso = .presencial,
+        precio: Double = 10_000
+    ) -> Curso {
+        Curso(
+            id: id,
+            nombre: nombre,
+            tipo: tipo,
+            precio: precio,
+            cant_inscriptos: nil
+        )
+    }
+
     static func contacto(
         id: String? = "contacto-test-id",
         nombre: String = "Nombre",

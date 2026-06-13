@@ -136,11 +136,15 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var deleteInscripcionLlamadas: [Inscripcion] = []
     private(set) var moverInscripcionLlamadas: [(inscripcionId: String, destinoCronogramaId: String, adoptarPrecio: Bool)] = []
     private(set) var rangosFechaPedidos: [(from: Date, to: Date)] = []
+    private(set) var saveCursoLlamadas: [Curso] = []
+    private(set) var deleteCursoLlamadas: [Curso] = []
+    private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
 
     // Spies de cancelación
     private(set) var cancelacionesInscripciones: [String: Int] = [:]
     private(set) var cancelacionesInscripcionesOnline: [String: Int] = [:]
     private(set) var cancelacionesCronograma = 0
+    private(set) var cancelacionesCatalogo = 0
 
     // Emisores
     func emitirInscripciones(cronogramaID: String, _ lista: [Inscripcion]) {
@@ -154,6 +158,18 @@ final class TallerRepositorioFake: TallerRepositorio {
     }
     func emitirCursosProximos(_ items: [CronogramaItem]) {
         cursosProximosCompletion?(.success(items))
+    }
+    func emitirCursos(_ cursos: [Curso]) {
+        cursosCompletion?(.success(cursos))
+    }
+    func emitirErrorCursos(_ error: Error) {
+        cursosCompletion?(.failure(error))
+    }
+    func emitirCatalogoOnline(_ cursos: [Curso]) {
+        catalogoOnlineCompletion?(.success(cursos))
+    }
+    func emitirErrorCatalogo(_ error: Error) {
+        catalogoOnlineCompletion?(.failure(error))
     }
 
     // MARK: TallerRepositorio
@@ -170,11 +186,13 @@ final class TallerRepositorioFake: TallerRepositorio {
 
     func saveCurso(curso: Curso) async throws -> (cronogramas: Int, inscripciones: Int)? {
         try lanzarSiHayError()
+        saveCursoLlamadas.append(curso)
         return saveCursoStub
     }
 
     func deleteCurso(curso: Curso) async throws {
         try lanzarSiHayError()
+        deleteCursoLlamadas.append(curso)
     }
 
     func fetchCatalogoOnline() async throws -> [Curso] {
@@ -184,7 +202,7 @@ final class TallerRepositorioFake: TallerRepositorio {
 
     func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {
         catalogoOnlineCompletion = completion
-        return SuscripcionActiva { }
+        return SuscripcionActiva { [weak self] in self?.cancelacionesCatalogo += 1 }
     }
 
     func fetchCursosProximos() async throws -> [CronogramaItem] {
@@ -254,6 +272,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     }
 
     func fetchInscripcionesByAlumno(alumnoId: String) async throws -> [Inscripcion] {
+        fetchInscripcionesByAlumnoLlamadas.append(alumnoId)
         try lanzarSiHayError()
         return inscripcionesStub
     }
@@ -325,8 +344,10 @@ final class ContactosRepositorioFake: ContactosRepositorio {
     private(set) var saveContactoLlamadas: [(contacto: Contacto, uid: String)] = []
     private(set) var updateContactoLlamadas: [(contacto: Contacto, id: String)] = []
     private(set) var deleteContactoLlamadas: [Contacto] = []
+    private(set) var fetchContactosLlamadas: [Bool] = [] // registra forceRefresh
 
     func fetchContactos(forceRefresh: Bool) async throws -> [Contacto] {
+        fetchContactosLlamadas.append(forceRefresh)
         try lanzarSiHayError()
         return contactosStub
     }
