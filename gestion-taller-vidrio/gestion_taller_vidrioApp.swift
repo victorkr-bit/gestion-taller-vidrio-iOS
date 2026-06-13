@@ -9,13 +9,20 @@ enum EntornoEjecucion {
     static let esTest: Bool =
         NSClassFromString("XCTestCase") != nil ||
         ProcessInfo.processInfo.environment["XCTestSessionIdentifier"] != nil
+
+    /// True cuando el proceso es el runner de SwiftUI Previews de Xcode.
+    static let esPreview: Bool =
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+
+    /// En test o preview la app es un host inerte: no configura Firebase ni abre listeners reales.
+    static var modoInerte: Bool { esTest || esPreview }
 }
 
 // 1. Creamos un AppDelegate explícito para complacer a Firebase
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        if !EntornoEjecucion.esTest {
+        if !EntornoEjecucion.modoInerte {
             FirebaseApp.configure()
         }
         return true
@@ -27,7 +34,7 @@ class AuthViewModel: ObservableObject {
     private var authStateHandle: AuthStateDidChangeListenerHandle?
 
     init() {
-        guard !EntornoEjecucion.esTest else { return }
+        guard !EntornoEjecucion.modoInerte else { return }
         self.authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             self?.user = user
         }

@@ -2,9 +2,10 @@
 import Foundation
 
 /// Repos de preview (solo DEBUG). Conforman los protocolos sin tocar Firebase.
-/// Diferencia clave con los fakes de test: los `listenToX` **auto-emiten** el
-/// stub sembrado de forma síncrona, así las previews declarativas renderizan con
-/// datos sin un driver externo. Las escrituras son no-op.
+/// Los `listenToX` **emiten de forma diferida** (próximo runloop vía `Task`), igual
+/// que Firestore real: así no se mutan `@Published` durante la construcción del
+/// view tree (evita el crash "Publishing changes from within view updates" que
+/// dejaba la preview en loop de rebuild). Las escrituras son no-op.
 
 // MARK: - Finanzas
 
@@ -31,12 +32,14 @@ final class FinanzasRepositorioPreview: FinanzasRepositorio {
     }
 
     func listenToPagos(from: Date?, to: Date?, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(pagos))
+        let datos = pagos
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
 
     func listenToPagos(origenID: String, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(pagos.filter { $0.origen_id == origenID }))
+        let datos = pagos.filter { $0.origen_id == origenID }
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
 
@@ -50,7 +53,8 @@ final class FinanzasRepositorioPreview: FinanzasRepositorio {
     func fetchMetricasFinancieras() async throws -> MetricasFinancieras { metricas }
 
     func listenToMetricas(completion: @escaping (Result<MetricasFinancieras, Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(metricas))
+        let datos = metricas
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
 }
@@ -82,7 +86,8 @@ final class TallerRepositorioPreview: TallerRepositorio {
 
     func fetchCursos() async throws -> [Curso] { cursos }
     func listenToCursos(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(cursos))
+        let datos = cursos
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
     func saveCurso(curso: Curso) async throws -> (cronogramas: Int, inscripciones: Int)? { nil }
@@ -90,13 +95,15 @@ final class TallerRepositorioPreview: TallerRepositorio {
 
     func fetchCatalogoOnline() async throws -> [Curso] { catalogoOnline }
     func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(catalogoOnline))
+        let datos = catalogoOnline
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
 
     func fetchCursosProximos() async throws -> [CronogramaItem] { proximos }
     func listenToCursosProximos(completion: @escaping (Result<[CronogramaItem], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(proximos))
+        let datos = proximos
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
     func fetchCursosHistoricos(limit: Int) async throws -> [CronogramaItem] { historico }
@@ -111,11 +118,13 @@ final class TallerRepositorioPreview: TallerRepositorio {
         inscripciones.filter { $0.cronogramaId == cronogramaID }
     }
     func listenToInscripciones(cronogramaID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(inscripciones.filter { $0.cronogramaId == cronogramaID }))
+        let datos = inscripciones.filter { $0.cronogramaId == cronogramaID }
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
     func listenToInscripcionesOnline(cursoID: String, completion: @escaping (Result<[Inscripcion], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(inscripcionesOnline.filter { $0.cursoId == cursoID }))
+        let datos = inscripcionesOnline.filter { $0.cursoId == cursoID }
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
     func saveInscripcion(inscripcion: Inscripcion) async throws -> Inscripcion { inscripcion }
@@ -139,7 +148,8 @@ final class VentasRepositorioPreview: VentasRepositorio {
 
     func fetchPedidos(limit: Int) async throws -> [Pedido] { pedidos }
     func listenToPedidos(completion: @escaping (Result<[Pedido], Error>) -> Void) -> SuscripcionActiva {
-        completion(.success(pedidos))
+        let datos = pedidos
+        Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
     func savePedido(pedido: Pedido, existingID: String?) async throws {}
