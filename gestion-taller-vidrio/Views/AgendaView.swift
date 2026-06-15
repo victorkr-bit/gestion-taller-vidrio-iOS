@@ -79,7 +79,14 @@ struct AgendaView: View {
                 NavigationStack { AgendaFormView(agendaVM: agendaVM) }
             }
             .sheet(isPresented: $showCalendario) {
-                CalendarioAgendaView(items: agendaVM.cursosProximos, feriados: agendaVM.feriadosCalendario)
+                CalendarioAgendaView(
+                    items: agendaVM.cursosProximos,
+                    feriados: agendaVM.feriadosCalendario,
+                    onSeleccionarItem: { item in
+                        showCalendario = false
+                        navManager.navigateToCourseDetail(item)
+                    }
+                )
             }
             .onChange(of: showCalendario) { _, isShowing in
                 if isShowing { Task { await agendaVM.fetchFeriadosIfNeeded() } }
