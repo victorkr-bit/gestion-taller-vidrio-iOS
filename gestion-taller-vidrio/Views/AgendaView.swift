@@ -83,8 +83,11 @@ struct AgendaView: View {
                     items: agendaVM.cursosProximos,
                     feriados: agendaVM.feriadosCalendario,
                     onSeleccionarItem: { item in
+                        // Ya estamos en la tab de cronograma (el calendario se abre desde
+                        // Agenda), así que append directo sin el defer de navigateToCourseDetail.
+                        // El push arranca junto al cierre del sheet → menos glimpse de la lista.
                         showCalendario = false
-                        navManager.navigateToCourseDetail(item)
+                        navManager.cronogramaPath.append(item)
                     }
                 )
             }
