@@ -13,7 +13,6 @@ struct CalendarioAgendaView: View {
     var onSeleccionarItem: ((CronogramaItem) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var itemSeleccionado: CronogramaItem?
-    @State private var sheetVisible: Bool = false
 
     private var diasOcupados: Set<DateComponents> {
         Set(items.map { item in
@@ -57,12 +56,8 @@ struct CalendarioAgendaView: View {
                                 let año = bsasCalendar.component(.year, from: mes)
                                 let mesNum = bsasCalendar.component(.month, from: mes)
                                 if let encontrado = itemParaDia(dia: dia, mes: mesNum, año: año) {
-                                    if encontrado == itemSeleccionado {
-                                        sheetVisible = false
-                                        itemSeleccionado = nil
-                                    } else {
-                                        itemSeleccionado = encontrado
-                                        sheetVisible = true
+                                    withAnimation(.snappy(duration: 0.25)) {
+                                        itemSeleccionado = (encontrado == itemSeleccionado) ? nil : encontrado
                                     }
                                 }
                             }
@@ -73,16 +68,24 @@ struct CalendarioAgendaView: View {
                 .padding(.vertical, DesignSystem.Espaciado.m)
             }
             .background(Color(.systemGroupedBackground))
-            .sheet(isPresented: $sheetVisible, onDismiss: { itemSeleccionado = nil }) {
+            .overlay(alignment: .bottom) {
                 if let item = itemSeleccionado {
-                    DetalleDiaView(item: item, onVerCurso: {
-                        sheetVisible = false
-                        itemSeleccionado = nil
-                        onSeleccionarItem?(item)
-                    })
-                        .presentationDetents([.fraction(0.28)])
-                        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.28)))
-                        .presentationDragIndicator(.visible)
+                    VStack(spacing: 0) {
+                        Capsule()
+                            .fill(Color.secondary.opacity(0.4))
+                            .frame(width: 36, height: 5)
+                            .padding(.top, DesignSystem.Espaciado.s)
+                        DetalleDiaView(item: item, onVerCurso: {
+                            itemSeleccionado = nil
+                            onSeleccionarItem?(item)
+                        })
+                    }
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(.rect(
+                        topLeadingRadius: DesignSystem.Radio.tarjeta,
+                        topTrailingRadius: DesignSystem.Radio.tarjeta))
+                    .sombraTarjeta()
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .navigationTitle("Calendario")
