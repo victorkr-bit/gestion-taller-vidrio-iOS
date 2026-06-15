@@ -10,6 +10,7 @@ private let bsasCalendar: Calendar = {
 struct CalendarioAgendaView: View {
     let items: [CronogramaItem]
     let feriados: Set<DateComponents>
+    var onSeleccionarItem: ((CronogramaItem) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var itemSeleccionado: CronogramaItem?
     @State private var sheetVisible: Bool = false
@@ -74,7 +75,11 @@ struct CalendarioAgendaView: View {
             .background(Color(.systemGroupedBackground))
             .sheet(isPresented: $sheetVisible, onDismiss: { itemSeleccionado = nil }) {
                 if let item = itemSeleccionado {
-                    DetalleDiaView(item: item)
+                    DetalleDiaView(item: item, onVerCurso: {
+                        sheetVisible = false
+                        itemSeleccionado = nil
+                        onSeleccionarItem?(item)
+                    })
                         .presentationDetents([.fraction(0.28)])
                         .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.28)))
                         .presentationDragIndicator(.visible)

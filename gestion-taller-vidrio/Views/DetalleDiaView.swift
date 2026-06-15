@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DetalleDiaView: View {
     let item: CronogramaItem
+    var onVerCurso: (() -> Void)? = nil
 
     private static let fechaFormatter: DateFormatter = {
         let fmt = DateFormatter()
@@ -33,9 +34,16 @@ struct DetalleDiaView: View {
                 .background(item.cursoTipo.color.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.etiqueta))
 
-            Text(item.cursoNombre)
-                .font(.title3)
-                .fontWeight(.semibold)
+            HStack {
+                Text(item.cursoNombre)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.tertiary)
+            }
 
             Text(fechaFormateada)
                 .font(.subheadline)
@@ -47,5 +55,7 @@ struct DetalleDiaView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DesignSystem.Espaciado.l)
+        .contentShape(Rectangle())
+        .onTapGesture { onVerCurso?() }
     }
 }
