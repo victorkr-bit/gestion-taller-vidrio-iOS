@@ -17,6 +17,7 @@ struct AgendaDetailView: View {
 
     // Control de expansión
     @State private var expandedInscripcionID: String?
+    @State private var linkCopiado = false
 
     // Copia local del item, actualizada en tiempo real por onReceive($cursosProximos)
     @State private var localItem: CronogramaItem?
@@ -94,6 +95,28 @@ struct AgendaDetailView: View {
                                     }
                                 }
                                 .fixedSize(horizontal: false, vertical: true)
+                                if let url = displayItem.inscripcionURL {
+                                    Divider()
+                                    HStack(spacing: 12) {
+                                        Text(url.absoluteString)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        Button {
+                                            UIPasteboard.general.string = url.absoluteString
+                                            linkCopiado = true
+                                            Task { try? await Task.sleep(for: .seconds(1.5)); linkCopiado = false }
+                                        } label: {
+                                            Image(systemName: linkCopiado ? "checkmark" : "doc.on.doc")
+                                                .font(.subheadline)
+                                                .foregroundStyle(linkCopiado ? DesignSystem.Color.exito : .accentColor)
+                                                .contentTransition(.symbolEffect(.replace))
+                                        }
+                                    }
+                                    .sensoryFeedback(.success, trigger: linkCopiado)
+                                }
                             }
                         }
                     }
@@ -126,7 +149,7 @@ struct AgendaDetailView: View {
                 .listStyle(.plain)
             }
         }
-        .navigationTitle("Detalle del Curso")
+        .navigationTitle("Detalle Curso")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

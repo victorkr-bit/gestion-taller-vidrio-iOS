@@ -51,6 +51,13 @@ struct AgendaListView: View {
                             } label: {
                                 Label("Mover fecha", systemImage: "calendar.badge.plus")
                             }
+                            if let url = item.inscripcionURL {
+                                Button {
+                                    UIPasteboard.general.string = url.absoluteString
+                                } label: {
+                                    Label("Copiar link de inscripción", systemImage: "link")
+                                }
+                            }
 
                             Divider()
 
