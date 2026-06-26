@@ -152,13 +152,12 @@ final class TallerRepository: TallerRepositorio {
     }
     
     /// Obtiene los cursos YA REALIZADOS (Pasado).
-    func fetchCursosHistoricos(limit: Int = 20) async throws -> [CronogramaItem] {
+    func fetchCursosHistoricos() async throws -> [CronogramaItem] {
         let hoy = Calendar.current.startOfDay(for: Date())
-        
+
         let snapshot = try await db.collection("cronograma")
             .whereField("fecha", isLessThan: hoy)
             .order(by: "fecha", descending: true)
-            .limit(to: limit)
             .getDocuments()
             
         return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
