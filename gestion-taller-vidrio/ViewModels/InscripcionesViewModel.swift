@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 class InscripcionesViewModel: ObservableObject {
@@ -16,8 +17,12 @@ class InscripcionesViewModel: ObservableObject {
 
     @Published var ocupacionPorInscripcion: [String: Int] = [:]
 
+    // Preinscripciones pendientes (solo cursos presenciales), ya filtradas y ordenadas
+    @Published var preinscripciones: [Preinscripcion] = []
+
     // Listeners
     private var inscripcionesListener: SuscripcionActiva?
+    private var preinscripcionesListener: SuscripcionActiva?
     private var paymentListeners: [String: SuscripcionActiva] = [:]
     private let taskTracker = TaskTracker()
 
@@ -35,6 +40,7 @@ class InscripcionesViewModel: ObservableObject {
     isolated deinit {
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
+        preinscripcionesListener?.remove()
     }
 
     // MARK: - Lógica de Inscripciones
@@ -193,5 +199,56 @@ class InscripcionesViewModel: ObservableObject {
             destinoCronogramaId: destinoCronogramaId,
             adoptarPrecio: adoptarPrecio
         )
+    }
+
+    // MARK: - Preinscripciones (cursos presenciales)
+
+    /// Suscribe el listener de preinscripciones del cronograma. Filtra `pendiente` en memoria
+    /// y ordena por fecha de preinscripción ascendente (primero quien se preinscribió antes; nil al final).
+    func fetchPreinscripciones(cronogramaID: String) {
+        preinscripciones = []
+        preinscripcionesListener?.remove()
+
+        preinscripcionesListener = tallerRepo.listenToPreinscripciones(cronogramaID: cronogramaID) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let lista):
+                self.preinscripciones = lista
+                    .filter { $0.estado == .pendiente }
+                    .sorted { Self.fechaOrden($0) < Self.fechaOrden($1) }
+            case .failure(let error):
+                self.errorMessage = "Error en preinscripciones: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        }
+    }
+
+    /// Fecha de orden: las preinscripciones sin `fecha_preinscripcion` (serverTimestamp recién creado) van al final.
+    private static func fechaOrden(_ p: Preinscripcion) -> Date {
+        p.fecha_preinscripcion?.dateValue() ?? .distantFuture
+    }
+
+    /// Confirma el pago de una preinscripción. En éxito, el listener la quita sola (pasa a `convertida`).
+    func confirmarPreinscripcion(_ preinscripcion: Preinscripcion, monto: Double, medioDePago: MedioDePago) async throws {
+        guard let id = preinscripcion.id else { return }
+        errorMessage = nil
+        try await tallerRepo.confirmarPreinscripcion(preinscripcionId: id, monto: monto, medioDePago: medioDePago)
+    }
+
+    /// Descarta una preinscripción (la marca como cancelada).
+    func descartarPreinscripcion(_ preinscripcion: Preinscripcion) {
+        guard let id = preinscripcion.id else { return }
+        taskTracker.track(Task {
+            do {
+                try await tallerRepo.cancelarPreinscripcion(preinscripcionId: id)
+            } catch {
+                self.errorMessage = "Error al descartar la preinscripción: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
+    }
+
+    func stopListeningPreinscripciones() {
+        preinscripcionesListener?.remove()
+        preinscripcionesListener = nil
+        preinscripciones = []
     }
 }

@@ -11,6 +11,7 @@ struct AgendaDetailView: View {
     @State private var inscripcionToEdit: Inscripcion?
     @State private var isCreatingNew = false
     @State private var inscripcionParaPagar: Inscripcion?
+    @State private var preinscripcionParaConfirmar: Preinscripcion?
     @State private var isEditingCronograma = false
     @State private var isMovingCronograma = false
     @State private var inscripcionAMover: Inscripcion?
@@ -69,8 +70,14 @@ struct AgendaDetailView: View {
                                 Divider()
                                 HStack {
                                     VStack(alignment: .center, spacing: 2) {
-                                        Text("\(inscripcionesVM.inscripciones.count)")
-                                            .font(.headline).bold()
+                                        if displayItem.cursoTipo == .presencial, let cupo = displayItem.cupo_maximo {
+                                            Text("\(inscripcionesVM.inscripciones.count)/\(cupo)")
+                                                .font(.headline).bold()
+                                                .foregroundStyle(displayItem.estaLleno ? DesignSystem.Color.peligro : DesignSystem.Color.exito)
+                                        } else {
+                                            Text("\(inscripcionesVM.inscripciones.count)")
+                                                .font(.headline).bold()
+                                        }
                                         Text("inscriptos")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
@@ -95,7 +102,7 @@ struct AgendaDetailView: View {
                                     }
                                 }
                                 .fixedSize(horizontal: false, vertical: true)
-                                if let url = displayItem.inscripcionURL {
+                                if let url = displayItem.linkCompartir {
                                     Divider()
                                     HStack(spacing: 12) {
                                         Text(url.absoluteString)
@@ -132,6 +139,21 @@ struct AgendaDetailView: View {
                         .listRowSeparator(.hidden)
                     }
 
+                    // --- Sección 2.5: Preinscriptos pendientes de pago (solo presenciales) ---
+                    if displayItem.cursoTipo == .presencial && !inscripcionesVM.preinscripciones.isEmpty {
+                        Section {
+                            ForEach(inscripcionesVM.preinscripciones) { preinscripcion in
+                                PreinscripcionRowView(
+                                    preinscripcion: preinscripcion,
+                                    inscripcionesVM: inscripcionesVM,
+                                    preinscripcionParaConfirmar: $preinscripcionParaConfirmar
+                                )
+                            }
+                        } header: {
+                            Text("Preinscriptos")
+                        }
+                    }
+
                     // --- Sección 3: Lista de Inscriptos ---
                     Section {
                         ForEach(inscripcionesOrdenadas) { inscripcion in
@@ -144,6 +166,8 @@ struct AgendaDetailView: View {
                                 inscripcionAMover: $inscripcionAMover
                             )
                         }
+                    } header: {
+                        Text("Inscriptos")
                     }
                 }
                 .listStyle(.plain)
@@ -215,6 +239,16 @@ struct AgendaDetailView: View {
                 )
             }
         }
+        .sheet(item: $preinscripcionParaConfirmar) { preinscripcion in
+            NavigationStack {
+                ConfirmarPreinscripcionView(
+                    preinscripcion: preinscripcion,
+                    onConfirm: { monto, medio in
+                        try await inscripcionesVM.confirmarPreinscripcion(preinscripcion, monto: monto, medioDePago: medio)
+                    }
+                )
+            }
+        }
         .onReceive(agendaVM.$cursosProximos) { items in
             if let id = cronogramaItem.id,
                let fresh = items.first(where: { $0.id == id }) {
@@ -230,6 +264,9 @@ struct AgendaDetailView: View {
         .onAppear {
             if let id = cronogramaItem.id {
                 inscripcionesVM.fetchInscripciones(cronogramaID: id)
+                if displayItem.cursoTipo == .presencial {
+                    inscripcionesVM.fetchPreinscripciones(cronogramaID: id)
+                }
                 // Sincronizar con el estado actual del listener al abrir la vista
                 if let fresh = agendaVM.item(for: id) {
                     localItem = fresh
@@ -239,6 +276,7 @@ struct AgendaDetailView: View {
         .onDisappear {
             expandedInscripcionID = nil
             inscripcionesVM.cleanupPaymentListeners()
+            inscripcionesVM.stopListeningPreinscripciones()
         }
         .errorAlert($inscripcionesVM.errorMessage)
     }

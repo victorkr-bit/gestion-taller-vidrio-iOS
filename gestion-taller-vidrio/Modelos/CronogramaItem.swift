@@ -11,11 +11,18 @@ struct CronogramaItem: Codable, Identifiable, Hashable {
     
     // Es opcional para no romper si el documento es viejo y no tiene el campo aún.
     var cant_inscriptos: Int?
+    var cupo_maximo: Int?   // Solo presenciales. Sin valor = sin límite.
     var notas: String?
-    
+
     // Computed property defensiva para la UI
     var inscriptosReales: Int {
         return cant_inscriptos ?? 0
+    }
+
+    /// True si hay cupo definido y ya se alcanzó (con pagados/inscriptos firmes).
+    var estaLleno: Bool {
+        guard let cupo = cupo_maximo else { return false }
+        return inscriptosReales >= cupo
     }
     
     // Implementación de Hashable
@@ -35,6 +42,17 @@ extension CronogramaItem {
     var inscripcionURL: URL? {
         guard let docID = id else { return nil }
         return URL(string: "https://taller-glass-v2.web.app/inscribir/\(docID)")
+    }
+
+    /// Link público de preinscripción para cursos presenciales.
+    var preinscripcionURL: URL? {
+        guard let docID = id else { return nil }
+        return URL(string: "https://taller-glass-v2.web.app/preinscribir/\(docID)")
+    }
+
+    /// Link a compartir según el tipo de curso: preinscripción para presenciales, inscripción para el resto.
+    var linkCompartir: URL? {
+        cursoTipo == .presencial ? preinscripcionURL : inscripcionURL
     }
 
     var mensajeCompartir: String {

@@ -155,4 +155,83 @@ struct InscripcionesViewModelTests {
         #expect(taller.moverInscripcionLlamadas.first?.destinoCronogramaId == "c2")
         #expect(taller.moverInscripcionLlamadas.first?.adoptarPrecio == true)
     }
+
+    // MARK: - Preinscripciones
+
+    @Test func preinscripcionesFiltraPendientesYOrdenaPorFechaAscendente() {
+        let (vm, taller, _) = makeVM()
+        vm.fetchPreinscripciones(cronogramaID: "c1")
+
+        let viejo = Date(timeIntervalSince1970: 1_000)
+        let nuevo = Date(timeIntervalSince1970: 2_000)
+        taller.emitirPreinscripciones(cronogramaID: "c1", [
+            TestFactory.preinscripcion(id: "p2", nombre: "Beto", estado: .pendiente, fechaPreinscripcion: nuevo),
+            TestFactory.preinscripcion(id: "p1", nombre: "Ana", estado: .pendiente, fechaPreinscripcion: viejo),
+            TestFactory.preinscripcion(id: "p3", nombre: "Cancelada", estado: .cancelada, fechaPreinscripcion: viejo),
+            TestFactory.preinscripcion(id: "p4", nombre: "Convertida", estado: .convertida, fechaPreinscripcion: viejo)
+        ])
+
+        #expect(vm.preinscripciones.map(\.id) == ["p1", "p2"])
+    }
+
+    @Test func preinscripcionSinFechaVaAlFinal() {
+        let (vm, taller, _) = makeVM()
+        vm.fetchPreinscripciones(cronogramaID: "c1")
+
+        taller.emitirPreinscripciones(cronogramaID: "c1", [
+            TestFactory.preinscripcion(id: "pSinFecha", fechaPreinscripcion: nil),
+            TestFactory.preinscripcion(id: "pConFecha", fechaPreinscripcion: Date(timeIntervalSince1970: 5_000))
+        ])
+
+        #expect(vm.preinscripciones.map(\.id) == ["pConFecha", "pSinFecha"])
+    }
+
+    @Test func errorDelListenerDePreinscripcionesSeteaErrorMessage() {
+        let (vm, taller, _) = makeVM()
+        vm.fetchPreinscripciones(cronogramaID: "c1")
+        taller.emitirErrorPreinscripciones(cronogramaID: "c1", ErrorDePrueba())
+        #expect(vm.errorMessage != nil)
+    }
+
+    @Test func confirmarPreinscripcionDelegaConMontoYMedio() async throws {
+        let (vm, taller, _) = makeVM()
+        let pre = TestFactory.preinscripcion(id: "p1")
+
+        try await vm.confirmarPreinscripcion(pre, monto: 7_500, medioDePago: .mercadoPago)
+
+        #expect(taller.confirmarPreinscripcionLlamadas.count == 1)
+        let llamada = taller.confirmarPreinscripcionLlamadas.first
+        #expect(llamada?.id == "p1")
+        #expect(llamada?.monto == 7_500)
+        #expect(llamada?.medio == .mercadoPago)
+    }
+
+    @Test func confirmarPreinscripcionPropagaError() async {
+        let (vm, taller, _) = makeVM()
+        taller.errorStub = ErrorDePrueba()
+
+        await #expect(throws: Error.self) {
+            try await vm.confirmarPreinscripcion(TestFactory.preinscripcion(id: "p1"), monto: 100, medioDePago: .efectivo)
+        }
+    }
+
+    @Test func descartarPreinscripcionDelegaAlRepo() async {
+        let (vm, taller, _) = makeVM()
+
+        vm.descartarPreinscripcion(TestFactory.preinscripcion(id: "p1"))
+
+        let llamado = await esperarCondicion { taller.cancelarPreinscripcionLlamadas.contains("p1") }
+        #expect(llamado)
+    }
+
+    @Test func stopListeningPreinscripcionesCancelaYLimpia() {
+        let (vm, taller, _) = makeVM()
+        vm.fetchPreinscripciones(cronogramaID: "c1")
+        taller.emitirPreinscripciones(cronogramaID: "c1", [TestFactory.preinscripcion(id: "p1")])
+
+        vm.stopListeningPreinscripciones()
+
+        #expect(taller.cancelacionesPreinscripciones["c1"] == 1)
+        #expect(vm.preinscripciones.isEmpty)
+    }
 }

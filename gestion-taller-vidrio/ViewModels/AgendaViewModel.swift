@@ -226,9 +226,9 @@ class AgendaViewModel: ObservableObject {
         cursosProximos.first { $0.id == id } ?? cursosHistoricos.first { $0.id == id }
     }
 
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {
         errorMessage = nil
-        try await tallerRepo.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas)
+        try await tallerRepo.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas, nuevoCupo: nuevoCupo)
 
         // Actualización local inmediata para que la UI refleje los cambios
         // sin esperar al listener (que además no cubre históricos).
@@ -236,6 +236,7 @@ class AgendaViewModel: ObservableObject {
             if let precio = nuevoPrecio { item.precio_curso = precio }
             if let fecha = nuevaFecha { item.fecha = fecha }
             if let notas = nuevasNotas { item.notas = notas }
+            if let cupo = nuevoCupo { item.cupo_maximo = cupo == 0 ? nil : cupo }
         }
         if let idx = cursosProximos.firstIndex(where: { $0.id == id }) {
             aplicar(&cursosProximos[idx])

@@ -91,7 +91,8 @@ struct MoverCronogramaView: View {
                     id: id,
                     nuevoPrecio: nil,
                     nuevaFecha: ajustarHora(nuevaFecha),
-                    nuevasNotas: nil
+                    nuevasNotas: nil,
+                    nuevoCupo: nil
                 )
                 dismiss()
                 onMoved?()

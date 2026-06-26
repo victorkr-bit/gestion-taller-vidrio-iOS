@@ -127,6 +127,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     // Captura de listeners
     private(set) var inscripcionesCompletions: [String: (Result<[Inscripcion], Error>) -> Void] = [:]
     private(set) var inscripcionesOnlineCompletions: [String: (Result<[Inscripcion], Error>) -> Void] = [:]
+    private(set) var preinscripcionesCompletions: [String: (Result<[Preinscripcion], Error>) -> Void] = [:]
     private(set) var cursosProximosCompletion: ((Result<[CronogramaItem], Error>) -> Void)?
     private(set) var cursosCompletion: ((Result<[Curso], Error>) -> Void)?
     private(set) var catalogoOnlineCompletion: ((Result<[Curso], Error>) -> Void)?
@@ -139,10 +140,14 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var saveCursoLlamadas: [Curso] = []
     private(set) var deleteCursoLlamadas: [Curso] = []
     private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
+    private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?)] = []
+    private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago)] = []
+    private(set) var cancelarPreinscripcionLlamadas: [String] = []
 
     // Spies de cancelación
     private(set) var cancelacionesInscripciones: [String: Int] = [:]
     private(set) var cancelacionesInscripcionesOnline: [String: Int] = [:]
+    private(set) var cancelacionesPreinscripciones: [String: Int] = [:]
     private(set) var cancelacionesCronograma = 0
     private(set) var cancelacionesCatalogo = 0
 
@@ -170,6 +175,12 @@ final class TallerRepositorioFake: TallerRepositorio {
     }
     func emitirErrorCatalogo(_ error: Error) {
         catalogoOnlineCompletion?(.failure(error))
+    }
+    func emitirPreinscripciones(cronogramaID: String, _ lista: [Preinscripcion]) {
+        preinscripcionesCompletions[cronogramaID]?(.success(lista))
+    }
+    func emitirErrorPreinscripciones(cronogramaID: String, _ error: Error) {
+        preinscripcionesCompletions[cronogramaID]?(.failure(error))
     }
 
     // MARK: TallerRepositorio
@@ -229,8 +240,9 @@ final class TallerRepositorioFake: TallerRepositorio {
         try lanzarSiHayError()
     }
 
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {
         try lanzarSiHayError()
+        actualizarCronogramaLlamadas.append((id, nuevoPrecio, nuevaFecha, nuevasNotas, nuevoCupo))
     }
 
     func deleteCronogramaItem(item: CronogramaItem) async throws {
@@ -281,6 +293,21 @@ final class TallerRepositorioFake: TallerRepositorio {
         rangosFechaPedidos.append((from, to))
         try lanzarSiHayError()
         return inscripcionesStub
+    }
+
+    func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        preinscripcionesCompletions[cronogramaID] = completion
+        return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripciones[cronogramaID, default: 0] += 1 }
+    }
+
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
+        try lanzarSiHayError()
+        confirmarPreinscripcionLlamadas.append((preinscripcionId, monto, medioDePago))
+    }
+
+    func cancelarPreinscripcion(preinscripcionId: String) async throws {
+        try lanzarSiHayError()
+        cancelarPreinscripcionLlamadas.append(preinscripcionId)
     }
 
     private func lanzarSiHayError() throws {

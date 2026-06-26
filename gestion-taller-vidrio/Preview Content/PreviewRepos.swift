@@ -111,7 +111,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         proximos.first { $0.id == id } ?? historico.first { $0.id == id }
     }
     func saveCronogramaItem(item: CronogramaItem) async throws {}
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {}
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {}
     func deleteCronogramaItem(item: CronogramaItem) async throws {}
 
     func fetchInscripciones(cronogramaID: String) async throws -> [Inscripcion] {
@@ -134,6 +134,13 @@ final class TallerRepositorioPreview: TallerRepositorio {
         (inscripciones + inscripcionesOnline).filter { $0.alumnoId == alumnoId }
     }
     func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion] { inscripciones }
+
+    func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        Task { @MainActor in completion(.success([])) }
+        return SuscripcionActiva {}
+    }
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {}
+    func cancelarPreinscripcion(preinscripcionId: String) async throws {}
 }
 
 // MARK: - Ventas

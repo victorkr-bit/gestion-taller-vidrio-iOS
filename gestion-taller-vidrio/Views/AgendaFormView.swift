@@ -10,10 +10,19 @@ struct AgendaFormView: View {
     // Campos del formulario
     @State private var selectedCursoID: String = ""
     @State private var fecha: Date = .now
+    @State private var cupoInput: String = ""
 
     // Validación
     var isFormValid: Bool {
         !selectedCursoID.isEmpty
+    }
+
+    private var cursoSeleccionado: Curso? {
+        agendaVM.cursos.first { $0.id == selectedCursoID }
+    }
+
+    private var esPresencial: Bool {
+        cursoSeleccionado?.tipo == .presencial
     }
 
     private var hoy: Date {
@@ -37,6 +46,23 @@ struct AgendaFormView: View {
                     in: hoy...,
                     displayedComponents: .date
                 )
+            }
+
+            if esPresencial {
+                Section("Cupo") {
+                    HStack {
+                        Text("Cupo máximo")
+                        Spacer()
+                        Text("N°").foregroundStyle(.secondary)
+                        TextField("Sin límite", text: $cupoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                    }
+                    Text("Opcional. Vacío = sin límite.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section {
@@ -77,12 +103,14 @@ struct AgendaFormView: View {
         let fechaFinal = calendar.date(from: components) ?? fecha
 
         // 2. Crear el nuevo CronogramaItem con la fecha ajustada
+        let cupo: Int? = (selectedCurso.tipo == .presencial) ? Int(cupoInput).flatMap { $0 > 0 ? $0 : nil } : nil
         let newItem = CronogramaItem(
             cursoId: selectedCurso.id ?? "",
             cursoNombre: selectedCurso.nombre,
             cursoTipo: selectedCurso.tipo,
             precio_curso: selectedCurso.precio,
-            fecha: fechaFinal
+            fecha: fechaFinal,
+            cupo_maximo: cupo
         )
 
         // 3. Llamar al ViewModel para guardar

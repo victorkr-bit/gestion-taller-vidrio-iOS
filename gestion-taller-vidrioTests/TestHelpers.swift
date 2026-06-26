@@ -1,4 +1,5 @@
 import Foundation
+import FirebaseFirestore
 @testable import gestion_taller_vidrio
 
 /// Fábricas de modelos para tests. Solo datos sintéticos.
@@ -128,7 +129,8 @@ enum TestFactory {
         cursoNombre: String = "Curso Test",
         cursoTipo: TipoCurso = .taller,
         fecha: Date = Date(timeIntervalSince1970: 1_750_000_000),
-        inscriptos: Int? = nil
+        inscriptos: Int? = nil,
+        cupo: Int? = nil
     ) -> CronogramaItem {
         CronogramaItem(
             id: id,
@@ -138,7 +140,41 @@ enum TestFactory {
             precio_curso: 10_000,
             fecha: fecha,
             cant_inscriptos: inscriptos,
+            cupo_maximo: cupo,
             notas: nil
+        )
+    }
+
+    static func preinscripcion(
+        id: String? = "preins-test-id",
+        nombre: String = "Nombre",
+        apellido: String = "Apellido",
+        cronogramaId: String = "crono-test-id",
+        cursoNombre: String = "Curso Test",
+        precioCurso: Double = 10_000,
+        estado: EstadoPreinscripcion = .pendiente,
+        email: String? = nil,
+        telefono: String? = nil,
+        notas: String? = nil,
+        fechaCurso: Date = Date(timeIntervalSince1970: 1_750_000_000),
+        fechaPreinscripcion: Date? = Date(timeIntervalSince1970: 1_749_000_000)
+    ) -> Preinscripcion {
+        Preinscripcion(
+            id: id,
+            cronogramaId: cronogramaId,
+            cursoNombre: cursoNombre,
+            cursoTipo: TipoCurso.presencial.rawValue,
+            fecha_curso: Timestamp(date: fechaCurso),
+            precio_curso: precioCurso,
+            nombre: nombre,
+            apellido: apellido,
+            email: email,
+            telefono: telefono,
+            notas: notas,
+            estado: estado,
+            fecha_preinscripcion: fechaPreinscripcion.map { Timestamp(date: $0) },
+            contacto_id: nil,
+            inscripcion_id: nil
         )
     }
 }

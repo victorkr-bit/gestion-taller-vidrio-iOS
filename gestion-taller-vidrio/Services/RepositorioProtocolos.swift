@@ -53,7 +53,7 @@ protocol TallerRepositorio: Sendable {
     func fetchCursosHistoricos() async throws -> [CronogramaItem]
     func fetchCronogramaItem(id: String) async throws -> CronogramaItem?
     func saveCronogramaItem(item: CronogramaItem) async throws
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws
     func deleteCronogramaItem(item: CronogramaItem) async throws
     // Inscripciones
     func fetchInscripciones(cronogramaID: String) async throws -> [Inscripcion]
@@ -65,6 +65,10 @@ protocol TallerRepositorio: Sendable {
     func deleteInscripcion(inscripcion: Inscripcion) async throws
     func fetchInscripcionesByAlumno(alumnoId: String) async throws -> [Inscripcion]
     func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion]
+    // Preinscripciones (cursos presenciales)
+    func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws
+    func cancelarPreinscripcion(preinscripcionId: String) async throws
 }
 
 @MainActor

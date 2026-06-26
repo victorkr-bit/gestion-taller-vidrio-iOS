@@ -31,7 +31,11 @@ struct AgendaListView: View {
                                     HStack {
                                         Label(Formatters.date(item.fecha), systemImage: "calendar")
                                         Spacer()
-                                        Label("\(item.inscriptosReales)", systemImage: "person.2.fill")
+                                        if let cupo = item.cupo_maximo {
+                                            Label("\(item.inscriptosReales)/\(cupo)", systemImage: "person.2.fill")
+                                        } else {
+                                            Label("\(item.inscriptosReales)", systemImage: "person.2.fill")
+                                        }
                                     }
                                     .font(.subheadline)
                                     .foregroundStyle(DesignSystem.Color.accion)

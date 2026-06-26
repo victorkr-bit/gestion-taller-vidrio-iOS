@@ -180,8 +180,9 @@ final class TallerRepository: TallerRepositorio {
         }
     }
     
-    /// Actualiza precio, fecha y/o notas de un cronograma y propaga a inscripciones vía Cloud Function.
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?) async throws {
+    /// Actualiza precio, fecha, notas y/o cupo de un cronograma y propaga a inscripciones vía Cloud Function.
+    /// `nuevoCupo`: nil = sin cambio; 0 = borrar (backend hace FieldValue.delete()); >0 = setear.
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {
         var nuevosDatos: [String: Any] = [:]
         if let precio = nuevoPrecio {
             nuevosDatos["precio"] = precio
@@ -191,6 +192,9 @@ final class TallerRepository: TallerRepositorio {
         }
         if let notas = nuevasNotas {
             nuevosDatos["notas"] = notas
+        }
+        if let cupo = nuevoCupo {
+            nuevosDatos["cupo_maximo"] = cupo
         }
 
         let data: [String: Any] = [
@@ -363,6 +367,56 @@ final class TallerRepository: TallerRepositorio {
             .whereField("fecha_curso", isLessThanOrEqualTo: to)
             .getDocuments()
         return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
+    }
+
+    // MARK: - Preinscripciones (cursos presenciales)
+
+    /// Escucha en tiempo real TODAS las preinscripciones de un cronograma.
+    /// El filtrado por estado (pendiente) y el orden se hacen en el ViewModel para evitar índices compuestos.
+    func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        let query = db.collection("preinscripciones")
+            .whereField("cronogramaId", isEqualTo: cronogramaID)
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let documents = querySnapshot?.documents else {
+                completion(.success([]))
+                return
+            }
+
+            var preinscripciones: [Preinscripcion] = []
+            for doc in documents {
+                if let pre = doc.decodeSafely(as: Preinscripcion.self) {
+                    preinscripciones.append(pre)
+                }
+            }
+            completion(.success(preinscripciones))
+        }
+        return SuscripcionActiva { registration.remove() }
+    }
+
+    /// Confirma el pago de una preinscripción vía Cloud Function: crea/busca contacto, crea la
+    /// inscripción firme, registra el pago y marca la preinscripción como convertida (transacción atómica).
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
+        let data: [String: Any] = [
+            "preinscripcionId": preinscripcionId,
+            "monto": monto,
+            "medio_de_pago": medioDePago.rawValue
+        ]
+        do {
+            _ = try await functions.httpsCallable("confirmarPreinscripcion").call(data)
+        } catch {
+            throw FirestoreManager.shared.mapCloudError(error)
+        }
+    }
+
+    /// Descarta una preinscripción (update directo, no requiere Cloud Function).
+    func cancelarPreinscripcion(preinscripcionId: String) async throws {
+        try await db.collection("preinscripciones").document(preinscripcionId)
+            .updateData(["estado": EstadoPreinscripcion.cancelada.rawValue])
     }
 
     // MARK: - Helpers Privados

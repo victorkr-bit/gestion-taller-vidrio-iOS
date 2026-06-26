@@ -10,6 +10,7 @@ struct EditarAgendaView: View {
     @State private var precioInput: String = ""
     @State private var fecha: Date = .now
     @State private var notas: String = ""
+    @State private var cupoInput: String = ""
     @State private var isSaving = false
 
     private var precioValido: Double? {
@@ -17,11 +18,21 @@ struct EditarAgendaView: View {
         return valor
     }
 
+    /// Cupo ingresado normalizado: nil si vacío (= sin límite).
+    private var cupoIngresado: Int? {
+        guard let valor = Int(cupoInput), valor > 0 else { return nil }
+        return valor
+    }
+
+    private var cupoCambio: Bool {
+        cronogramaItem.cursoTipo == .presencial && cupoIngresado != cronogramaItem.cupo_maximo
+    }
+
     private var hayCambios: Bool {
         let precioCambio = precioValido != nil && precioValido != cronogramaItem.precio_curso
         let fechaCambio = !Calendar.current.isDate(fecha, inSameDayAs: cronogramaItem.fecha)
         let notasCambio = notas != (cronogramaItem.notas ?? "")
-        return precioCambio || fechaCambio || notasCambio
+        return precioCambio || fechaCambio || notasCambio || cupoCambio
     }
 
     var body: some View {
@@ -63,6 +74,24 @@ struct EditarAgendaView: View {
                     Text("Se actualizará la deuda de \(cronogramaItem.inscriptosReales) inscripto(s).")
                         .font(.caption)
                         .foregroundStyle(.orange)
+                }
+            }
+
+            // Sección Cupo (solo presenciales)
+            if cronogramaItem.cursoTipo == .presencial {
+                Section("Cupo") {
+                    HStack {
+                        Text("Cupo máximo")
+                        Spacer()
+                        Text("N°").foregroundStyle(.secondary)
+                        TextField("Sin límite", text: $cupoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                    }
+                    Text("Vacío = sin límite. El cupo se llena solo con pagados.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -110,6 +139,7 @@ struct EditarAgendaView: View {
             precioInput = String(Int(cronogramaItem.precio_curso))
             fecha = cronogramaItem.fecha
             notas = cronogramaItem.notas ?? ""
+            cupoInput = cronogramaItem.cupo_maximo.map(String.init) ?? ""
         }
     }
 
@@ -121,12 +151,14 @@ struct EditarAgendaView: View {
         let nuevaFecha: Date? = Calendar.current.isDate(fecha, inSameDayAs: cronogramaItem.fecha)
             ? nil : ajustarHora(fecha)
         let nuevasNotas: String? = notas != (cronogramaItem.notas ?? "") ? notas : nil
+        // nil = sin cambio; 0 = borrar (backend FieldValue.delete()); >0 = setear.
+        let nuevoCupo: Int? = cupoCambio ? (cupoIngresado ?? 0) : nil
 
         isSaving = true
 
         Task {
             do {
-                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas)
+                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas, nuevoCupo: nuevoCupo)
                 dismiss()
             } catch is CancellationError {
                 isSaving = false
