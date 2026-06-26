@@ -12,6 +12,10 @@ private struct NolaborableDTO: Decodable {
     let fecha: String
 }
 
+private struct NagerFeriadoDTO: Decodable {
+    let date: String
+}
+
 private struct HebcalResponse: Decodable {
     let items: [HebcalItemDTO]
 }
@@ -152,22 +156,33 @@ class AgendaViewModel: ObservableObject {
     }
 
     private func fetchNolaborables(año: Int) async -> Set<DateComponents> {
-        guard let url = URL(string: "https://api.argentinadatos.com/v1/feriados/\(año)"),
-              let (data, _) = try? await URLSession.shared.data(from: url),
-              let lista = try? JSONDecoder().decode([NolaborableDTO].self, from: data)
-        else { return [] }
-
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy-MM-dd"
         fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
 
-        return Set(lista.compactMap { dto -> DateComponents? in
-            guard let date = fmt.date(from: dto.fecha) else { return nil }
+        func parseDate(_ str: String) -> DateComponents? {
+            guard let date = fmt.date(from: str) else { return nil }
             let raw = bsasCalendarVM.dateComponents([.year, .month, .day], from: date)
             var c = DateComponents()
             c.year = raw.year; c.month = raw.month; c.day = raw.day
             return c
-        })
+        }
+
+        // Fuente principal: argentinadatos (incluye puentes turísticos)
+        if let url = URL(string: "https://api.argentinadatos.com/v1/feriados/\(año)"),
+           let (data, _) = try? await URLSession.shared.data(from: url),
+           let lista = try? JSONDecoder().decode([NolaborableDTO].self, from: data),
+           !lista.isEmpty {
+            return Set(lista.compactMap { parseDate($0.fecha) })
+        }
+
+        // Fallback: nager.date (feriados inamovibles, sin puentes turísticos)
+        guard let url = URL(string: "https://date.nager.at/api/v3/PublicHolidays/\(año)/AR"),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let lista = try? JSONDecoder().decode([NagerFeriadoDTO].self, from: data)
+        else { return [] }
+
+        return Set(lista.compactMap { parseDate($0.date) })
     }
 
     private func fetchHebcal(año: Int) async -> Set<DateComponents> {
