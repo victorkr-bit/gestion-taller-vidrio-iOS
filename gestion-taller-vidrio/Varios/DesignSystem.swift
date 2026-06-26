@@ -39,7 +39,8 @@ enum DesignSystem {
         static let alerta    = SwiftUI.Color.orange        // debe, pendiente de pago
         static let peligro   = SwiftUI.Color.red           // acciones destructivas
         static let neutro    = SwiftUI.Color.gray          // sin presupuesto, sin estado
-        static let pendiente = SwiftUI.Color.purple        // pendiente de entrega
+        static let pendiente  = SwiftUI.Color.purple        // pendiente de entrega
+        static let festividad = SwiftUI.Color.teal          // fiestas judías en el calendario
     }
 }
 

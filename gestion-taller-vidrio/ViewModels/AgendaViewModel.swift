@@ -8,7 +8,15 @@ private let bsasCalendarVM: Calendar = {
     return cal
 }()
 
-private struct FeriadoDTOVM: Decodable {
+private struct NolaborableDTO: Decodable {
+    let fecha: String
+}
+
+private struct HebcalResponse: Decodable {
+    let items: [HebcalItemDTO]
+}
+private struct HebcalItemDTO: Decodable {
+    let title: String
     let date: String
 }
 
@@ -25,6 +33,7 @@ class AgendaViewModel: ObservableObject {
 
     // Caché de feriados (por año, persistente en sesión)
     @Published private(set) var feriadosCalendario: Set<DateComponents> = []
+    @Published private(set) var fiestasJudias: Set<DateComponents> = []
     private var feriadosLoaded = false
 
     enum FiltroCronograma: String, CaseIterable, Identifiable {
@@ -128,21 +137,24 @@ class AgendaViewModel: ObservableObject {
         feriadosLoaded = true
         let ahora = Date()
         let inicioMes = bsasCalendarVM.date(from: bsasCalendarVM.dateComponents([.year, .month], from: ahora))!
-        let años = Set((0..<3).compactMap { offset -> Int? in
+        let años = Set((0..<4).compactMap { offset -> Int? in
             guard let mes = bsasCalendarVM.date(byAdding: .month, value: offset, to: inicioMes) else { return nil }
             return bsasCalendarVM.component(.year, from: mes)
         })
-        var todos: Set<DateComponents> = []
+        var todosFeriados: Set<DateComponents> = []
+        var todasJudias: Set<DateComponents> = []
         for año in años {
-            todos.formUnion(await fetchFeriados(año: año))
+            todosFeriados.formUnion(await fetchNolaborables(año: año))
+            todasJudias.formUnion(await fetchHebcal(año: año))
         }
-        feriadosCalendario = todos
+        feriadosCalendario = todosFeriados
+        fiestasJudias = todasJudias
     }
 
-    private func fetchFeriados(año: Int) async -> Set<DateComponents> {
-        guard let url = URL(string: "https://date.nager.at/api/v3/PublicHolidays/\(año)/AR"),
+    private func fetchNolaborables(año: Int) async -> Set<DateComponents> {
+        guard let url = URL(string: "https://api.argentinadatos.com/v1/feriados/\(año)"),
               let (data, _) = try? await URLSession.shared.data(from: url),
-              let lista = try? JSONDecoder().decode([FeriadoDTOVM].self, from: data)
+              let lista = try? JSONDecoder().decode([NolaborableDTO].self, from: data)
         else { return [] }
 
         let fmt = DateFormatter()
@@ -150,13 +162,34 @@ class AgendaViewModel: ObservableObject {
         fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
 
         return Set(lista.compactMap { dto -> DateComponents? in
-            guard let date = fmt.date(from: dto.date) else { return nil }
+            guard let date = fmt.date(from: dto.fecha) else { return nil }
             let raw = bsasCalendarVM.dateComponents([.year, .month, .day], from: date)
-            var comps = DateComponents()
-            comps.year = raw.year
-            comps.month = raw.month
-            comps.day = raw.day
-            return comps
+            var c = DateComponents()
+            c.year = raw.year; c.month = raw.month; c.day = raw.day
+            return c
+        })
+    }
+
+    private func fetchHebcal(año: Int) async -> Set<DateComponents> {
+        let urlStr = "https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=off&nx=off&mf=off&ss=off&mod=off&year=\(año)&i=off&geo=none"
+        guard let url = URL(string: urlStr),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let resp = try? JSONDecoder().decode(HebcalResponse.self, from: data)
+        else { return [] }
+
+        let titulosDeseados = ["Rosh Hashana", "Yom Kippur", "Pesach I", "Pesach II"]
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        fmt.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires")
+
+        return Set(resp.items.compactMap { item -> DateComponents? in
+            guard titulosDeseados.contains(where: { item.title.hasPrefix($0) }),
+                  let date = fmt.date(from: String(item.date.prefix(10)))
+            else { return nil }
+            let raw = bsasCalendarVM.dateComponents([.year, .month, .day], from: date)
+            var c = DateComponents()
+            c.year = raw.year; c.month = raw.month; c.day = raw.day
+            return c
         })
     }
 

@@ -10,6 +10,7 @@ private let bsasCalendar: Calendar = {
 struct CalendarioAgendaView: View {
     let items: [CronogramaItem]
     let feriados: Set<DateComponents>
+    let fiestasJudias: Set<DateComponents>
     var onSeleccionarItem: ((CronogramaItem) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var itemSeleccionado: CronogramaItem?
@@ -31,7 +32,8 @@ struct CalendarioAgendaView: View {
         return [
             inicioMes,
             bsasCalendar.date(byAdding: .month, value: 1, to: inicioMes)!,
-            bsasCalendar.date(byAdding: .month, value: 2, to: inicioMes)!
+            bsasCalendar.date(byAdding: .month, value: 2, to: inicioMes)!,
+            bsasCalendar.date(byAdding: .month, value: 3, to: inicioMes)!
         ]
     }
 
@@ -44,30 +46,37 @@ struct CalendarioAgendaView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: DesignSystem.Espaciado.xl) {
-                    leyenda
-                    ForEach(meses, id: \.self) { mes in
-                        MesCalendarioView(
-                            mesDate: mes,
-                            diasOcupados: diasOcupados,
-                            feriados: feriados,
-                            onTapDia: { dia in
-                                let año = bsasCalendar.component(.year, from: mes)
-                                let mesNum = bsasCalendar.component(.month, from: mes)
-                                if let encontrado = itemParaDia(dia: dia, mes: mesNum, año: año) {
-                                    withAnimation(.snappy(duration: 0.25)) {
-                                        itemSeleccionado = (encontrado == itemSeleccionado) ? nil : encontrado
+            VStack(spacing: 0) {
+                leyenda
+                    .padding(.horizontal, DesignSystem.Espaciado.l)
+                    .padding(.vertical, DesignSystem.Espaciado.m)
+                    .background(Color(.systemGroupedBackground))
+
+                ScrollView {
+                    VStack(spacing: DesignSystem.Espaciado.xl) {
+                        ForEach(meses, id: \.self) { mes in
+                            MesCalendarioView(
+                                mesDate: mes,
+                                diasOcupados: diasOcupados,
+                                feriados: feriados,
+                                fiestasJudias: fiestasJudias,
+                                onTapDia: { dia in
+                                    let año = bsasCalendar.component(.year, from: mes)
+                                    let mesNum = bsasCalendar.component(.month, from: mes)
+                                    if let encontrado = itemParaDia(dia: dia, mes: mesNum, año: año) {
+                                        withAnimation(.snappy(duration: 0.25)) {
+                                            itemSeleccionado = (encontrado == itemSeleccionado) ? nil : encontrado
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
+                    .padding(.horizontal, DesignSystem.Espaciado.l)
+                    .padding(.vertical, DesignSystem.Espaciado.m)
                 }
-                .padding(.horizontal, DesignSystem.Espaciado.l)
-                .padding(.vertical, DesignSystem.Espaciado.m)
+                .background(Color(.systemGroupedBackground))
             }
-            .background(Color(.systemGroupedBackground))
             .overlay(alignment: .bottom) {
                 if let item = itemSeleccionado {
                     VStack(spacing: 0) {
@@ -104,6 +113,8 @@ struct CalendarioAgendaView: View {
                 .foregroundStyle(DesignSystem.Color.accion)
             Label("Feriado", systemImage: "circle.fill")
                 .foregroundStyle(DesignSystem.Color.alerta)
+            Label("Festividad judía", systemImage: "circle.fill")
+                .foregroundStyle(DesignSystem.Color.festividad)
         }
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -116,6 +127,7 @@ struct MesCalendarioView: View {
     let mesDate: Date
     let diasOcupados: Set<DateComponents>
     let feriados: Set<DateComponents>
+    let fiestasJudias: Set<DateComponents>
     var onTapDia: ((Int) -> Void)? = nil
 
     private let diasSemana = ["L", "M", "X", "J", "V", "S", "D"]
@@ -173,6 +185,7 @@ struct MesCalendarioView: View {
                             dia: dia,
                             ocupado: ocupado,
                             feriado: esFeriado(dia: dia),
+                            esJudio: esJudio(dia: dia),
                             onTap: ocupado ? { onTapDia?(dia) } : nil
                         )
                     } else {
@@ -196,29 +209,34 @@ struct MesCalendarioView: View {
 
     private func estaOcupado(dia: Int) -> Bool { diasOcupados.contains(comps(dia: dia)) }
     private func esFeriado(dia: Int) -> Bool { feriados.contains(comps(dia: dia)) }
+    private func esJudio(dia: Int) -> Bool { fiestasJudias.contains(comps(dia: dia)) }
 }
 
 struct DiaCalendarioView: View {
     let dia: Int
     let ocupado: Bool
     let feriado: Bool
+    let esJudio: Bool
     var onTap: (() -> Void)? = nil
 
     private var fondoColor: SwiftUI.Color {
         if ocupado { return DesignSystem.Color.accion.opacity(0.12) }
         if feriado { return DesignSystem.Color.alerta.opacity(0.12) }
+        if esJudio { return DesignSystem.Color.festividad.opacity(0.12) }
         return .clear
     }
 
     private var textoColor: SwiftUI.Color {
         if ocupado { return DesignSystem.Color.accion }
         if feriado { return DesignSystem.Color.alerta }
+        if esJudio { return DesignSystem.Color.festividad }
         return .primary
     }
 
     private var puntoColor: SwiftUI.Color {
         if feriado { return DesignSystem.Color.alerta }
         if ocupado { return DesignSystem.Color.accion }
+        if esJudio { return DesignSystem.Color.festividad }
         return .clear
     }
 
@@ -226,7 +244,7 @@ struct DiaCalendarioView: View {
         VStack(spacing: 2) {
             Text("\(dia)")
                 .font(.callout)
-                .fontWeight((ocupado || feriado) ? .semibold : .regular)
+                .fontWeight((ocupado || feriado || esJudio) ? .semibold : .regular)
                 .foregroundStyle(textoColor)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(fondoColor))

@@ -82,6 +82,7 @@ struct AgendaView: View {
                 CalendarioAgendaView(
                     items: agendaVM.cursosProximos,
                     feriados: agendaVM.feriadosCalendario,
+                    fiestasJudias: agendaVM.fiestasJudias,
                     onSeleccionarItem: { item in
                         // Ya estamos en la tab de cronograma (el calendario se abre desde
                         // Agenda), así que append directo sin el defer de navigateToCourseDetail.
