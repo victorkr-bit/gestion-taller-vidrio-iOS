@@ -5,8 +5,8 @@ struct ContactosView: View {
     @StateObject private var viewModel: ContactosViewModel
     let detailVM: ContactoDetailViewModel
 
-    init(contactosRepo: any ContactosRepositorio, detailVM: ContactoDetailViewModel) {
-        _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: contactosRepo))
+    init(contactosRepo: any ContactosRepositorio, tallerRepo: any TallerRepositorio, detailVM: ContactoDetailViewModel) {
+        _viewModel = StateObject(wrappedValue: ContactosViewModel(repository: contactosRepo, tallerRepo: tallerRepo))
         self.detailVM = detailVM
     }
 
@@ -63,7 +63,10 @@ struct ContactosView: View {
                             Divider()
 
                             Button(role: .destructive) {
-                                contactoToDelete = contacto
+                                Task {
+                                    await viewModel.cargarInscripcionesParaEliminar(contacto: contacto)
+                                    contactoToDelete = contacto
+                                }
                             } label: {
                                 Label("Eliminar Contacto", systemImage: "trash")
                             }
@@ -71,7 +74,11 @@ struct ContactosView: View {
                     }
                     .onDelete { offsets in
                         if let index = offsets.first {
-                            contactoToDelete = viewModel.contactosFiltrados[index]
+                            let contacto = viewModel.contactosFiltrados[index]
+                            Task {
+                                await viewModel.cargarInscripcionesParaEliminar(contacto: contacto)
+                                contactoToDelete = contacto
+                            }
                         }
                     }
                 }
@@ -121,9 +128,10 @@ struct ContactosView: View {
         .errorAlert($viewModel.errorMessage)
         .alert("Eliminar Contacto", isPresented: Binding<Bool>(
             get: { contactoToDelete != nil },
-            set: { if !$0 { contactoToDelete = nil } }
+            set: { if !$0 { contactoToDelete = nil; viewModel.limpiarEstadoEliminacion() } }
         )) {
-            Button("Eliminar", role: .destructive) {
+            Button(viewModel.inscripcionesAlEliminar.isEmpty ? "Eliminar" : "Eliminar de todas formas",
+                   role: .destructive) {
                 if let contacto = contactoToDelete, let index = viewModel.contactosFiltrados.firstIndex(where: { $0.id == contacto.id }) {
                     viewModel.deleteContacto(at: IndexSet(integer: index))
                 }
@@ -131,9 +139,16 @@ struct ContactosView: View {
             }
             Button("Cancelar", role: .cancel) {
                 contactoToDelete = nil
+                viewModel.limpiarEstadoEliminacion()
             }
         } message: {
-            Text("¿Eliminar a \"\(contactoToDelete?.nombreCompleto ?? "")\"? Esta acción no se puede deshacer.")
+            let nombre = contactoToDelete?.nombreCompleto ?? ""
+            let count = viewModel.inscripcionesAlEliminar.count
+            if count == 0 {
+                Text("¿Eliminar a \"\(nombre)\"? Esta acción no se puede deshacer.")
+            } else {
+                Text("¿Eliminar a \"\(nombre)\"? Este contacto tiene \(count) inscripción\(count == 1 ? "" : "es") en cursos. Esta acción no se puede deshacer.")
+            }
         }
     }
 }
@@ -142,7 +157,7 @@ struct ContactosView: View {
 #Preview {
     let c = PreviewContainer.shared
     NavigationStack {
-        ContactosView(contactosRepo: c.contactosRepo, detailVM: c.contactoDetailVM)
+        ContactosView(contactosRepo: c.contactosRepo, tallerRepo: c.tallerRepo, detailVM: c.contactoDetailVM)
     }
     .environmentObject(NavigationManager())
 }

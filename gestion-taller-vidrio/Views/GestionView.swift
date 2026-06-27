@@ -18,7 +18,7 @@ struct GestionView: View {
     var body: some View {
         List {
             Section("Datos Maestros") {
-                NavigationLink(destination: ContactosView(contactosRepo: contactosRepo, detailVM: contactoDetailVM)) {
+                NavigationLink(destination: ContactosView(contactosRepo: contactosRepo, tallerRepo: tallerRepo, detailVM: contactoDetailVM)) {
                     Label("Contactos", systemImage: "person.2.fill")
                 }
 

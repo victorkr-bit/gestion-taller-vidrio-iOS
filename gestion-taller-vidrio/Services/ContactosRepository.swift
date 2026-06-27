@@ -62,12 +62,17 @@ final class ContactosRepository: ContactosRepositorio {
         contactosCache = nil
     }
 
-    /// Borra un contacto.
+    /// Borra un contacto vía Cloud Function (valida pagos en el backend).
     func deleteContacto(contacto: Contacto) async throws {
         guard let id = contacto.id else {
             throw URLError(.cannotRemoveFile)
         }
-        try await db.collection("contactos").document(id).delete()
+        let data: [String: Any] = ["coleccion": "contactos", "id": id]
+        do {
+            _ = try await functions.httpsCallable("borrarEntidad").call(data)
+        } catch {
+            throw FirestoreManager.shared.mapCloudError(error)
+        }
         contactosCache = nil
     }
 }

@@ -13,6 +13,9 @@ class ContactosViewModel: ObservableObject {
 
     private let taskTracker = TaskTracker()
     private let repository: any ContactosRepositorio
+    private let tallerRepo: (any TallerRepositorio)?
+
+    @Published var inscripcionesAlEliminar: [Inscripcion] = []
 
     var contactosFiltrados: [Contacto] {
         if searchText.isEmpty {
@@ -24,8 +27,9 @@ class ContactosViewModel: ObservableObject {
         }
     }
 
-    init(repository: (any ContactosRepositorio)? = nil) {
+    init(repository: (any ContactosRepositorio)? = nil, tallerRepo: (any TallerRepositorio)? = nil) {
         self.repository = repository ?? ContactosRepository()
+        self.tallerRepo = tallerRepo
         fetchContactos()
     }
 
@@ -65,7 +69,15 @@ class ContactosViewModel: ObservableObject {
         fetchContactos()
     }
     
-    // --- MODIFICADO: Borrado Seguro con Filtros ---
+    func cargarInscripcionesParaEliminar(contacto: Contacto) async {
+        guard let id = contacto.id, let repo = tallerRepo else { return }
+        inscripcionesAlEliminar = (try? await repo.fetchInscripcionesByAlumno(alumnoId: id)) ?? []
+    }
+
+    func limpiarEstadoEliminacion() {
+        inscripcionesAlEliminar = []
+    }
+
     func deleteContacto(at offsets: IndexSet) {
         // ¡OJO AQUÍ! Usamos 'contactosFiltrados' para saber a quién borrar,
         // porque el usuario está viendo e interactuando con la lista filtrada.
@@ -88,6 +100,9 @@ class ContactosViewModel: ObservableObject {
                 // Recargamos la lista post-borrado
                 self.fetchContactos()
                 
+            } catch let error as TallerError {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
             } catch {
                 self.errorMessage = "Error al borrar el contacto: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
