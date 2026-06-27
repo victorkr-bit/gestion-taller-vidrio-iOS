@@ -53,7 +53,7 @@ protocol TallerRepositorio: Sendable {
     func fetchCursosHistoricos() async throws -> [CronogramaItem]
     func fetchCronogramaItem(id: String) async throws -> CronogramaItem?
     func saveCronogramaItem(item: CronogramaItem) async throws
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?) async throws
     func deleteCronogramaItem(item: CronogramaItem) async throws
     // Inscripciones
     func fetchInscripciones(cronogramaID: String) async throws -> [Inscripcion]

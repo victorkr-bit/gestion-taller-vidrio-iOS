@@ -111,7 +111,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         proximos.first { $0.id == id } ?? historico.first { $0.id == id }
     }
     func saveCronogramaItem(item: CronogramaItem) async throws {}
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {}
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?) async throws {}
     func deleteCronogramaItem(item: CronogramaItem) async throws {}
 
     func fetchInscripciones(cronogramaID: String) async throws -> [Inscripcion] {

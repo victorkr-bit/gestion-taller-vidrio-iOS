@@ -29,7 +29,10 @@ struct AgendaListView: View {
                                         .lineLimit(1)
 
                                     HStack {
-                                        Label(Formatters.date(item.fecha), systemImage: "calendar")
+                                        Label(
+                                            "\(Formatters.date(item.fecha))  •  \(item.hora_inicio ?? Formatters.time(item.fecha))",
+                                            systemImage: "calendar"
+                                        )
                                         Spacer()
                                         if let cupo = item.cupo_maximo {
                                             Label("\(item.inscriptosReales)/\(cupo)", systemImage: "person.2.fill")

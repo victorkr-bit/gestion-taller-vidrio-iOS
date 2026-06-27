@@ -14,6 +14,11 @@ struct CronogramaItem: Codable, Identifiable, Hashable {
     var cupo_maximo: Int?   // Solo presenciales. Sin valor = sin límite.
     var notas: String?
 
+    // Solo talleres
+    var hora_inicio: String?         // "HH:00", hora de apertura
+    var hora_fin: String?            // "HH:00", hora de cierre
+    var slot_ocupacion: [String: Int]? // "09": 2 — se lee, no se edita desde la app
+
     // Computed property defensiva para la UI
     var inscriptosReales: Int {
         return cant_inscriptos ?? 0

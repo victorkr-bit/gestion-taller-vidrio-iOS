@@ -11,7 +11,11 @@ struct EditarAgendaView: View {
     @State private var fecha: Date = .now
     @State private var notas: String = ""
     @State private var cupoInput: String = ""
+    @State private var horaInicio: String = "09:00"
+    @State private var horaFin: String = "18:00"
     @State private var isSaving = false
+
+    private static let horasDisponibles: [String] = (0..<24).map { String(format: "%02d:00", $0) }
 
     private var precioValido: Double? {
         guard let valor = Double(precioInput), valor >= 0 else { return nil }
@@ -28,11 +32,22 @@ struct EditarAgendaView: View {
         cronogramaItem.cursoTipo == .presencial && cupoIngresado != cronogramaItem.cupo_maximo
     }
 
+    private var horarioCambio: Bool {
+        guard cronogramaItem.cursoTipo == .taller else { return false }
+        return horaInicio != (cronogramaItem.hora_inicio ?? "09:00") ||
+               horaFin != (cronogramaItem.hora_fin ?? "18:00")
+    }
+
+    private var horarioValido: Bool {
+        guard cronogramaItem.cursoTipo == .taller else { return true }
+        return horaFin > horaInicio
+    }
+
     private var hayCambios: Bool {
         let precioCambio = precioValido != nil && precioValido != cronogramaItem.precio_curso
         let fechaCambio = !Calendar.current.isDate(fecha, inSameDayAs: cronogramaItem.fecha)
         let notasCambio = notas != (cronogramaItem.notas ?? "")
-        return precioCambio || fechaCambio || notasCambio || cupoCambio
+        return precioCambio || fechaCambio || notasCambio || cupoCambio || horarioCambio
     }
 
     var body: some View {
@@ -101,6 +116,23 @@ struct EditarAgendaView: View {
                     .lineLimit(3...6)
             }
 
+            // Sección Horario (solo talleres)
+            if cronogramaItem.cursoTipo == .taller {
+                Section("Horario") {
+                    Picker("Hora de inicio", selection: $horaInicio) {
+                        ForEach(Self.horasDisponibles, id: \.self) { Text($0) }
+                    }
+                    Picker("Hora de cierre", selection: $horaFin) {
+                        ForEach(Self.horasDisponibles, id: \.self) { Text($0) }
+                    }
+                    if !horarioValido {
+                        Text("La hora de cierre debe ser mayor a la de inicio.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+
             // Sección 4: Fecha
             Section("Fecha") {
                 DatePicker(
@@ -124,7 +156,7 @@ struct EditarAgendaView: View {
                         Spacer()
                     }
                 }
-                .disabled(!hayCambios || isSaving)
+                .disabled(!hayCambios || !horarioValido || isSaving)
             }
         }
         .dismissibleKeyboard()
@@ -140,6 +172,8 @@ struct EditarAgendaView: View {
             fecha = cronogramaItem.fecha
             notas = cronogramaItem.notas ?? ""
             cupoInput = cronogramaItem.cupo_maximo.map(String.init) ?? ""
+            horaInicio = cronogramaItem.hora_inicio ?? "09:00"
+            horaFin = cronogramaItem.hora_fin ?? "18:00"
         }
     }
 
@@ -153,12 +187,14 @@ struct EditarAgendaView: View {
         let nuevasNotas: String? = notas != (cronogramaItem.notas ?? "") ? notas : nil
         // nil = sin cambio; 0 = borrar (backend FieldValue.delete()); >0 = setear.
         let nuevoCupo: Int? = cupoCambio ? (cupoIngresado ?? 0) : nil
+        let nuevoHoraInicio: String? = (cronogramaItem.cursoTipo == .taller && horaInicio != (cronogramaItem.hora_inicio ?? "09:00")) ? horaInicio : nil
+        let nuevoHoraFin: String? = (cronogramaItem.cursoTipo == .taller && horaFin != (cronogramaItem.hora_fin ?? "18:00")) ? horaFin : nil
 
         isSaving = true
 
         Task {
             do {
-                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas, nuevoCupo: nuevoCupo)
+                try await agendaVM.actualizarCronograma(id: id, nuevoPrecio: nuevoPrecio, nuevaFecha: nuevaFecha, nuevasNotas: nuevasNotas, nuevoCupo: nuevoCupo, horaInicio: nuevoHoraInicio, horaFin: nuevoHoraFin)
                 dismiss()
             } catch is CancellationError {
                 isSaving = false

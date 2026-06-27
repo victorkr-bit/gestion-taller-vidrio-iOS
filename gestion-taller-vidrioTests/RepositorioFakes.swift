@@ -140,7 +140,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var saveCursoLlamadas: [Curso] = []
     private(set) var deleteCursoLlamadas: [Curso] = []
     private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
-    private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?)] = []
+    private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?)] = []
     private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago)] = []
     private(set) var cancelarPreinscripcionLlamadas: [String] = []
 
@@ -240,9 +240,9 @@ final class TallerRepositorioFake: TallerRepositorio {
         try lanzarSiHayError()
     }
 
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?) async throws {
         try lanzarSiHayError()
-        actualizarCronogramaLlamadas.append((id, nuevoPrecio, nuevaFecha, nuevasNotas, nuevoCupo))
+        actualizarCronogramaLlamadas.append((id, nuevoPrecio, nuevaFecha, nuevasNotas, nuevoCupo, horaInicio, horaFin))
     }
 
     func deleteCronogramaItem(item: CronogramaItem) async throws {

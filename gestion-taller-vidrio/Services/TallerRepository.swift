@@ -182,7 +182,8 @@ final class TallerRepository: TallerRepositorio {
     
     /// Actualiza precio, fecha, notas y/o cupo de un cronograma y propaga a inscripciones vía Cloud Function.
     /// `nuevoCupo`: nil = sin cambio; 0 = borrar (backend hace FieldValue.delete()); >0 = setear.
-    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?) async throws {
+    /// `horaInicio`/`horaFin`: solo se envían para talleres ("HH:00").
+    func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String? = nil, horaFin: String? = nil) async throws {
         var nuevosDatos: [String: Any] = [:]
         if let precio = nuevoPrecio {
             nuevosDatos["precio"] = precio
@@ -195,6 +196,12 @@ final class TallerRepository: TallerRepositorio {
         }
         if let cupo = nuevoCupo {
             nuevosDatos["cupo_maximo"] = cupo
+        }
+        if let h = horaInicio {
+            nuevosDatos["hora_inicio"] = h
+        }
+        if let h = horaFin {
+            nuevosDatos["hora_fin"] = h
         }
 
         let data: [String: Any] = [
