@@ -11,10 +11,14 @@ struct AgendaFormView: View {
     @State private var selectedCursoID: String = ""
     @State private var fecha: Date = .now
     @State private var cupoInput: String = ""
+    @State private var horaInicio: String = "09:00"
+    @State private var horaFin: String = "18:00"
+
+    private static let horasDisponibles: [String] = (0..<24).map { String(format: "%02d:00", $0) }
 
     // Validación
     var isFormValid: Bool {
-        !selectedCursoID.isEmpty
+        !selectedCursoID.isEmpty && horarioValido
     }
 
     private var cursoSeleccionado: Curso? {
@@ -23,6 +27,15 @@ struct AgendaFormView: View {
 
     private var esPresencial: Bool {
         cursoSeleccionado?.tipo == .presencial
+    }
+
+    private var esTaller: Bool {
+        cursoSeleccionado?.tipo == .taller
+    }
+
+    private var horarioValido: Bool {
+        guard esTaller else { return true }
+        return horaFin > horaInicio
     }
 
     private var hoy: Date {
@@ -62,6 +75,22 @@ struct AgendaFormView: View {
                     Text("Opcional. Vacío = sin límite.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+            }
+
+            if esTaller {
+                Section("Horario") {
+                    Picker("Hora de inicio", selection: $horaInicio) {
+                        ForEach(Self.horasDisponibles, id: \.self) { Text($0) }
+                    }
+                    Picker("Hora de cierre", selection: $horaFin) {
+                        ForEach(Self.horasDisponibles, id: \.self) { Text($0) }
+                    }
+                    if !horarioValido {
+                        Text("La hora de cierre debe ser mayor a la de inicio.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
 
@@ -110,7 +139,9 @@ struct AgendaFormView: View {
             cursoTipo: selectedCurso.tipo,
             precio_curso: selectedCurso.precio,
             fecha: fechaFinal,
-            cupo_maximo: cupo
+            cupo_maximo: cupo,
+            hora_inicio: selectedCurso.tipo == .taller ? horaInicio : nil,
+            hora_fin: selectedCurso.tipo == .taller ? horaFin : nil
         )
 
         // 3. Llamar al ViewModel para guardar
