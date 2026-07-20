@@ -17,7 +17,7 @@ struct PreinscripcionRowView: View {
     }
 
     var body: some View {
-        CardView {
+        CardView(tint: DesignSystem.Color.alerta) {
             GenericRowView(
                 titulo: preinscripcion.nombreCompleto,
                 subtitulo: preinscripcion.notas.flatMap { $0.isEmpty ? nil : $0 }
