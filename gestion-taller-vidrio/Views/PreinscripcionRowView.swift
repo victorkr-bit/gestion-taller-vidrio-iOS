@@ -38,11 +38,12 @@ struct PreinscripcionRowView: View {
             .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
+            Button {
                 showDescartarAlert = true
             } label: {
                 Label("Descartar", systemImage: "trash.fill")
             }
+            .tint(.red)
         }
         .contextMenu {
             Button {
