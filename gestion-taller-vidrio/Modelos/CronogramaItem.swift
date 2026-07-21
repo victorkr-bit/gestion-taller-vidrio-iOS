@@ -60,6 +60,13 @@ extension CronogramaItem {
         cursoTipo == .presencial ? preinscripcionURL : inscripcionURL
     }
 
+    /// Formato normalizado "preinscriptos/inscriptos/cupo" para cards de cursos presenciales.
+    /// Cupo indefinido se muestra como "-".
+    func textoInscriptos(preinscriptos: Int) -> String {
+        let cupoTexto = cupo_maximo.map(String.init) ?? "-"
+        return "\(preinscriptos)/\(inscriptosReales)/\(cupoTexto)"
+    }
+
     var mensajeCompartir: String {
         let fechaFormateada = "\(Formatters.date(fecha)) \(Formatters.time(fecha))"
 
