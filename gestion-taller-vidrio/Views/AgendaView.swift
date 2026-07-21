@@ -127,14 +127,23 @@ struct AgendaView: View {
                 case .presenciales:
                     agendaVM.filtroSeleccionado = .proximos
                     catalogoOnlineVM.stopListening()
+                    inscripcionesVM.subscribeToPreinscriptosGlobal()
                     if agendaVM.cursosHistoricos.isEmpty { agendaVM.fetchCronograma() }
                 case .online:
+                    inscripcionesVM.unsubscribeFromPreinscriptosGlobal()
                     catalogoOnlineVM.subscribeToCatalogoOnline()
                 case .historial:
                     agendaVM.filtroSeleccionado = .historial
                     catalogoOnlineVM.stopListening()
+                    inscripcionesVM.subscribeToPreinscriptosGlobal()
                     if agendaVM.cursosHistoricos.isEmpty { agendaVM.fetchCronograma() }
                 }
+            }
+            .onAppear {
+                inscripcionesVM.subscribeToPreinscriptosGlobal()
+            }
+            .onDisappear {
+                inscripcionesVM.unsubscribeFromPreinscriptosGlobal()
             }
             .navigationDestination(for: CronogramaItem.self) { item in
                 AgendaDetailView(agendaVM: agendaVM, inscripcionesVM: inscripcionesVM, cronogramaItem: item)
