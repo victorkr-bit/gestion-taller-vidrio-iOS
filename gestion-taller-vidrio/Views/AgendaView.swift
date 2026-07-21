@@ -140,7 +140,9 @@ struct AgendaView: View {
                 }
             }
             .onAppear {
-                inscripcionesVM.subscribeToPreinscriptosGlobal()
+                if modoAgenda != .online {
+                    inscripcionesVM.subscribeToPreinscriptosGlobal()
+                }
             }
             .onDisappear {
                 inscripcionesVM.unsubscribeFromPreinscriptosGlobal()
