@@ -70,15 +70,15 @@ struct AgendaDetailView: View {
                                 Divider()
                                 HStack {
                                     VStack(alignment: .center, spacing: 2) {
-                                        if displayItem.cursoTipo == .presencial, let cupo = displayItem.cupo_maximo {
-                                            Text("\(inscripcionesVM.inscripciones.count)/\(cupo)")
+                                        if displayItem.cursoTipo == .presencial {
+                                            Text(displayItem.textoInscriptos(preinscriptos: inscripcionesVM.preinscripciones.count))
                                                 .font(.headline).bold()
                                                 .foregroundStyle(displayItem.estaLleno ? DesignSystem.Color.peligro : DesignSystem.Color.exito)
                                         } else {
                                             Text("\(inscripcionesVM.inscripciones.count)")
                                                 .font(.headline).bold()
                                         }
-                                        Text("inscriptos")
+                                        Text(displayItem.cursoTipo == .presencial ? "pre/insc/cupo" : "inscriptos")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
