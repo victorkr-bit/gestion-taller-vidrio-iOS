@@ -139,6 +139,10 @@ final class TallerRepositorioPreview: TallerRepositorio {
         Task { @MainActor in completion(.success([])) }
         return SuscripcionActiva {}
     }
+    func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        Task { @MainActor in completion(.success([])) }
+        return SuscripcionActiva {}
+    }
     func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {}
     func cancelarPreinscripcion(preinscripcionId: String) async throws {}
 }

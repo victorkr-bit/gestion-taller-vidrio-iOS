@@ -405,6 +405,33 @@ final class TallerRepository: TallerRepositorio {
         return SuscripcionActiva { registration.remove() }
     }
 
+    /// Escucha en tiempo real TODAS las preinscripciones pendientes, sin filtrar por cronograma.
+    /// Usado para mostrar el conteo de preinscriptos en la lista de cards (una card por cronograma).
+    func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        let query = db.collection("preinscripciones")
+            .whereField("estado", isEqualTo: EstadoPreinscripcion.pendiente.rawValue)
+
+        let registration = query.addSnapshotListener { querySnapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let documents = querySnapshot?.documents else {
+                completion(.success([]))
+                return
+            }
+
+            var preinscripciones: [Preinscripcion] = []
+            for doc in documents {
+                if let pre = doc.decodeSafely(as: Preinscripcion.self) {
+                    preinscripciones.append(pre)
+                }
+            }
+            completion(.success(preinscripciones))
+        }
+        return SuscripcionActiva { registration.remove() }
+    }
+
     /// Confirma el pago de una preinscripción vía Cloud Function: crea/busca contacto, crea la
     /// inscripción firme, registra el pago y marca la preinscripción como convertida (transacción atómica).
     func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {

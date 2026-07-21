@@ -128,6 +128,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var inscripcionesCompletions: [String: (Result<[Inscripcion], Error>) -> Void] = [:]
     private(set) var inscripcionesOnlineCompletions: [String: (Result<[Inscripcion], Error>) -> Void] = [:]
     private(set) var preinscripcionesCompletions: [String: (Result<[Preinscripcion], Error>) -> Void] = [:]
+    private(set) var preinscripcionesPendientesCompletion: ((Result<[Preinscripcion], Error>) -> Void)?
     private(set) var cursosProximosCompletion: ((Result<[CronogramaItem], Error>) -> Void)?
     private(set) var cursosCompletion: ((Result<[Curso], Error>) -> Void)?
     private(set) var catalogoOnlineCompletion: ((Result<[Curso], Error>) -> Void)?
@@ -148,6 +149,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var cancelacionesInscripciones: [String: Int] = [:]
     private(set) var cancelacionesInscripcionesOnline: [String: Int] = [:]
     private(set) var cancelacionesPreinscripciones: [String: Int] = [:]
+    private(set) var cancelacionesPreinscripcionesPendientes = 0
     private(set) var cancelacionesCronograma = 0
     private(set) var cancelacionesCatalogo = 0
 
@@ -181,6 +183,12 @@ final class TallerRepositorioFake: TallerRepositorio {
     }
     func emitirErrorPreinscripciones(cronogramaID: String, _ error: Error) {
         preinscripcionesCompletions[cronogramaID]?(.failure(error))
+    }
+    func emitirPreinscripcionesPendientes(_ lista: [Preinscripcion]) {
+        preinscripcionesPendientesCompletion?(.success(lista))
+    }
+    func emitirErrorPreinscripcionesPendientes(_ error: Error) {
+        preinscripcionesPendientesCompletion?(.failure(error))
     }
 
     // MARK: TallerRepositorio
@@ -298,6 +306,11 @@ final class TallerRepositorioFake: TallerRepositorio {
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
         preinscripcionesCompletions[cronogramaID] = completion
         return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripciones[cronogramaID, default: 0] += 1 }
+    }
+
+    func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
+        preinscripcionesPendientesCompletion = completion
+        return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripcionesPendientes += 1 }
     }
 
     func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
