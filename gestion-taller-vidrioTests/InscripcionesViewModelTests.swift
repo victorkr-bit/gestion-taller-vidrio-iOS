@@ -234,4 +234,48 @@ struct InscripcionesViewModelTests {
         #expect(taller.cancelacionesPreinscripciones["c1"] == 1)
         #expect(vm.preinscripciones.isEmpty)
     }
+
+    // MARK: - Preinscriptos globales (por card de lista)
+
+    @Test func preinscriptosGlobalAgrupaPorCronogramaSoloPendientes() {
+        let (vm, taller, _) = makeVM()
+        vm.subscribeToPreinscriptosGlobal()
+
+        taller.emitirPreinscripcionesPendientes([
+            TestFactory.preinscripcion(id: "p1", cronogramaId: "c1", estado: .pendiente),
+            TestFactory.preinscripcion(id: "p2", cronogramaId: "c1", estado: .pendiente),
+            TestFactory.preinscripcion(id: "p3", cronogramaId: "c2", estado: .pendiente),
+            TestFactory.preinscripcion(id: "p4", cronogramaId: "c2", estado: .convertida)
+        ])
+
+        #expect(vm.preinscriptosPorCronograma["c1"] == 2)
+        #expect(vm.preinscriptosPorCronograma["c2"] == 1)
+    }
+
+    @Test func preinscriptosGlobalSinDatosParaUnCronogramaQuedaEnCero() {
+        let (vm, taller, _) = makeVM()
+        vm.subscribeToPreinscriptosGlobal()
+
+        taller.emitirPreinscripcionesPendientes([])
+
+        #expect(vm.preinscriptosPorCronograma["c-inexistente", default: 0] == 0)
+    }
+
+    @Test func errorDelListenerGlobalDePreinscriptosSeteaErrorMessage() {
+        let (vm, taller, _) = makeVM()
+        vm.subscribeToPreinscriptosGlobal()
+        taller.emitirErrorPreinscripcionesPendientes(ErrorDePrueba())
+        #expect(vm.errorMessage != nil)
+    }
+
+    @Test func unsubscribeFromPreinscriptosGlobalCancelaYLimpia() {
+        let (vm, taller, _) = makeVM()
+        vm.subscribeToPreinscriptosGlobal()
+        taller.emitirPreinscripcionesPendientes([TestFactory.preinscripcion(id: "p1", cronogramaId: "c1")])
+
+        vm.unsubscribeFromPreinscriptosGlobal()
+
+        #expect(taller.cancelacionesPreinscripcionesPendientes == 1)
+        #expect(vm.preinscriptosPorCronograma.isEmpty)
+    }
 }

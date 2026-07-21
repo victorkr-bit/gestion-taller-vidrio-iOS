@@ -20,9 +20,13 @@ class InscripcionesViewModel: ObservableObject {
     // Preinscripciones pendientes (solo cursos presenciales), ya filtradas y ordenadas
     @Published var preinscripciones: [Preinscripcion] = []
 
+    // Conteo de preinscriptos pendientes por cronogramaId, para las cards de lista
+    @Published var preinscriptosPorCronograma: [String: Int] = [:]
+
     // Listeners
     private var inscripcionesListener: SuscripcionActiva?
     private var preinscripcionesListener: SuscripcionActiva?
+    private var preinscriptosGlobalListener: SuscripcionActiva?
     private var paymentListeners: [String: SuscripcionActiva] = [:]
     private let taskTracker = TaskTracker()
 
@@ -41,6 +45,7 @@ class InscripcionesViewModel: ObservableObject {
         paymentListeners.values.forEach { $0.remove() }
         inscripcionesListener?.remove()
         preinscripcionesListener?.remove()
+        preinscriptosGlobalListener?.remove()
     }
 
     // MARK: - Lógica de Inscripciones
@@ -250,5 +255,28 @@ class InscripcionesViewModel: ObservableObject {
         preinscripcionesListener?.remove()
         preinscripcionesListener = nil
         preinscripciones = []
+    }
+
+    /// Escucha TODAS las preinscripciones pendientes y las agrupa por cronogramaId.
+    /// Usado por AgendaListView para mostrar el conteo de preinscriptos en cada card.
+    func subscribeToPreinscriptosGlobal() {
+        preinscriptosGlobalListener?.remove()
+        preinscriptosGlobalListener = tallerRepo.listenToPreinscripcionesPendientes { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let lista):
+                let pendientes = lista.filter { $0.estado == .pendiente }
+                self.preinscriptosPorCronograma = Dictionary(grouping: pendientes, by: \.cronogramaId)
+                    .mapValues(\.count)
+            case .failure(let error):
+                self.errorMessage = "Error en preinscriptos: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        }
+    }
+
+    func unsubscribeFromPreinscriptosGlobal() {
+        preinscriptosGlobalListener?.remove()
+        preinscriptosGlobalListener = nil
+        preinscriptosPorCronograma = [:]
     }
 }
