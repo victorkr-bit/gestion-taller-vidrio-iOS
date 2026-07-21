@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AgendaListView: View {
     @ObservedObject var agendaVM: AgendaViewModel
+    @ObservedObject var inscripcionesVM: InscripcionesViewModel
     @EnvironmentObject var navManager: NavigationManager
 
     @Binding var itemToEdit: CronogramaItem?
@@ -34,8 +35,9 @@ struct AgendaListView: View {
                                             systemImage: "calendar"
                                         )
                                         Spacer()
-                                        if let cupo = item.cupo_maximo {
-                                            Label("\(item.inscriptosReales)/\(cupo)", systemImage: "person.2.fill")
+                                        if item.cursoTipo == .presencial {
+                                            let pre = inscripcionesVM.preinscriptosPorCronograma[item.id ?? "", default: 0]
+                                            Label(item.textoInscriptos(preinscriptos: pre), systemImage: "person.2.fill")
                                         } else {
                                             Label("\(item.inscriptosReales)", systemImage: "person.2.fill")
                                         }
@@ -110,6 +112,7 @@ struct AgendaListView: View {
 #Preview {
     NavigationStack {
         AgendaListView(agendaVM: PreviewContainer.shared.agendaVM,
+                       inscripcionesVM: PreviewContainer.shared.inscripcionesVM,
                        itemToEdit: .constant(nil), itemToDelete: .constant(nil),
                        showDeleteAlert: .constant(false), itemToMover: .constant(nil))
     }

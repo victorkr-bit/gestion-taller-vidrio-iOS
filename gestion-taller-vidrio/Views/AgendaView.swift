@@ -47,6 +47,7 @@ struct AgendaView: View {
                 case .presenciales, .historial:
                     AgendaListView(
                         agendaVM: agendaVM,
+                        inscripcionesVM: inscripcionesVM,
                         itemToEdit: $itemToEdit,
                         itemToDelete: $itemToDelete,
                         showDeleteAlert: $showDeleteAlert,
