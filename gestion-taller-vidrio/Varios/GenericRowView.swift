@@ -99,6 +99,9 @@ struct GenericRowView: View {
                 }
                 
                 // 3. Tags (Dejamos un espacio extra arriba si hay tags)
+                //    Se apilan en columna a la derecha. Sirve cuando la izquierda está
+                //    llena (Pedidos/Pagos/Deudores). InscripcionRowView NO usa esta vista:
+                //    tiene layout propio con tags en fila para evitar la cascada.
                 if !tags.isEmpty {
                     VStack(alignment: .trailing, spacing: DesignSystem.Espaciado.xs) {
                         ForEach(tags) { tag in

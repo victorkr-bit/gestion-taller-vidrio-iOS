@@ -1,5 +1,10 @@
 import SwiftUI
 
+// Usa un layout propio a propósito, NO GenericRowView.
+// Una inscripción trae poco en la izquierda (solo el nombre) y varios estados a la
+// derecha; con GenericRowView los tags se apilan en columna y cascadean, dejando la
+// card desbalanceada. Acá van nombre + hora en la línea superior y los tags en fila
+// horizontal al pie. Si lo "consolidás" de vuelta a GenericRowView, vuelve la cascada.
 struct InscripcionRowView: View {
     let inscripcion: Inscripcion
     @ObservedObject var inscripcionesVM: InscripcionesViewModel
