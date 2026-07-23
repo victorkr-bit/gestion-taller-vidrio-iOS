@@ -11,6 +11,20 @@ struct InscripcionRowView: View {
 
     @State private var showDeleteAlert = false
 
+    /// Construye las etiquetas de la inscripción: estado de pago, cantidad de turnos y ocupación del taller.
+    private func tags(ocupacion: Int) -> [TagConfig] {
+        let pagado = inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0
+        let turnos = inscripcion.turnos ?? 0
+
+        return [
+            TagConfig(text: pagado ? "Pagado" : "Debe \(Formatters.money(inscripcion.monto_adeudado))",
+                      color: pagado ? .green : .orange),
+            turnos >= 1 ? TagConfig(text: "\(turnos) \(turnos == 1 ? "turno" : "turnos")", color: .mint) : nil,
+            (inscripcion.cursoTipo == .taller && ocupacion > 0)
+                ? TagConfig(text: "Ocup: \(ocupacion)", color: ocupacion >= 4 ? .red : .blue) : nil
+        ].compactMap { $0 }
+    }
+
     var body: some View {
         Button {
             withAnimation {
@@ -24,25 +38,55 @@ struct InscripcionRowView: View {
             }
         } label: {
             CardView {
-                HStack {
-                    let ocupacion = inscripcionesVM.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
+                let ocupacion = inscripcionesVM.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
 
-                    GenericRowView(
-                        titulo: inscripcion.alumno_nombre,
-                        subtitulo: inscripcion.notas.flatMap { $0.isEmpty ? nil : $0 },
-                        infoSuperior: inscripcion.horario_inicio,
-                        iconoSuperior: "clock",
-                        monto: nil,
-                        tags: [
-                            TagConfig(text: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? "Pagado" : "Debe \(Formatters.money(inscripcion.monto_adeudado))",
-                                      color: inscripcion.estado == .pagado || inscripcion.monto_adeudado <= 0 ? .green : .orange),
-                            inscripcion.turnos ?? 0 > 1 ? TagConfig(text: "\(inscripcion.turnos!) turnos", color: .mint) : nil,
-                            (inscripcion.cursoTipo == .taller && ocupacion > 0) ?
-                                TagConfig(text: "Ocup: \(ocupacion)", color: ocupacion >= 4 ? .red : .blue) : nil
-                        ].compactMap { $0 }
-                    )
+                HStack(alignment: .center, spacing: DesignSystem.Espaciado.m) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
 
-                    Spacer()
+                        // Línea 1: nombre + hora (en la misma línea superior)
+                        HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Espaciado.s) {
+                            Text(inscripcion.alumno_nombre)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Spacer(minLength: DesignSystem.Espaciado.s)
+
+                            if let hora = inscripcion.horario_inicio {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "clock")
+                                        .font(.caption2)
+                                    Text(hora)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        // Línea 2: notas (opcional)
+                        if let notas = inscripcion.notas, !notas.isEmpty {
+                            Text(notas)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                        }
+
+                        // Línea 3: tags en fila horizontal
+                        HStack(spacing: DesignSystem.Espaciado.xs) {
+                            ForEach(tags(ocupacion: ocupacion)) { tag in
+                                Text(tag.text)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, DesignSystem.Espaciado.s)
+                                    .padding(.vertical, DesignSystem.Espaciado.xs)
+                                    .background(tag.color.opacity(0.15))
+                                    .foregroundStyle(tag.color)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
 
                     Image(systemName: "chevron.right")
                         .rotationEffect(.degrees(expandedInscripcionID == inscripcion.id ? 90 : 0))
