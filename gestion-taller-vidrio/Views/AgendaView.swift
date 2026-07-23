@@ -15,6 +15,8 @@ struct AgendaView: View {
     // Acceso al NavigationManager global
     @EnvironmentObject var navManager: NavigationManager
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @State private var modoAgenda: ModoAgenda = .presenciales
 
     // Estado local solo para el sheet de crear
@@ -140,8 +142,14 @@ struct AgendaView: View {
                 }
             }
             .onAppear {
+                agendaVM.refrescarSiCambioDia()
                 if modoAgenda != .online {
                     inscripcionesVM.subscribeToPreinscriptosGlobal()
+                }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    agendaVM.refrescarSiCambioDia()
                 }
             }
             .onDisappear {

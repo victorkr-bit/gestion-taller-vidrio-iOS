@@ -62,6 +62,10 @@ class AgendaViewModel: ObservableObject {
     private var cronogramaListener: SuscripcionActiva?
     private let taskTracker = TaskTracker()
 
+    // Día (inicio del día en Argentina) en el que se armó la suscripción actual.
+    // Sirve para detectar el cruce de medianoche con la app abierta y recomputar el corte.
+    private var diaSuscripcion: Date?
+
     // MARK: - Dependencia
     private let tallerRepo: any TallerRepositorio
 
@@ -76,9 +80,25 @@ class AgendaViewModel: ObservableObject {
 
     // MARK: - Lógica Reactiva
 
+    /// Recomputa el corte de "hoy" y re-suscribe solo si cambió el día.
+    /// Necesario porque el corte queda capturado al armar el listener: con la app
+    /// abierta cruzando medianoche, los cursos de ayer no migran a históricos hasta reiniciar.
+    func refrescarSiCambioDia() {
+        if inicioDiaArgentina() != diaSuscripcion {
+            subscribeToCronograma()
+        }
+    }
+
+    private func inicioDiaArgentina() -> Date {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "America/Argentina/Buenos_Aires") ?? .current
+        return cal.startOfDay(for: Date())
+    }
+
     func subscribeToCronograma() {
         isLoading = true
         errorMessage = nil
+        diaSuscripcion = inicioDiaArgentina()
 
         cronogramaListener?.remove()
 
