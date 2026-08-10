@@ -66,6 +66,13 @@ final class TallerRepository: TallerRepositorio {
         }
     }
     
+    /// Actualiza únicamente la visibilidad del curso en el dropdown de Agenda.
+    /// Update directo (no requiere Cloud Function): no propaga a cronograma/inscripciones.
+    func actualizarVisibilidadCurso(cursoId: String, visible: Bool) async throws {
+        try await db.collection("cursos").document(cursoId)
+            .updateData(["visible_en_agenda": visible])
+    }
+
     /// Borra un curso validando dependencias vía Cloud Function.
     func deleteCurso(curso: Curso) async throws {
         guard let id = curso.id else { throw URLError(.cannotRemoveFile) }

@@ -44,6 +44,7 @@ protocol TallerRepositorio: Sendable {
     func listenToCursos(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva
     func saveCurso(curso: Curso) async throws -> (cronogramas: Int, inscripciones: Int)?
     func deleteCurso(curso: Curso) async throws
+    func actualizarVisibilidadCurso(cursoId: String, visible: Bool) async throws
     // Cursos Online
     func fetchCatalogoOnline() async throws -> [Curso]
     func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva

@@ -92,6 +92,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
     }
     func saveCurso(curso: Curso) async throws -> (cronogramas: Int, inscripciones: Int)? { nil }
     func deleteCurso(curso: Curso) async throws {}
+    func actualizarVisibilidadCurso(cursoId: String, visible: Bool) async throws {}
 
     func fetchCatalogoOnline() async throws -> [Curso] { catalogoOnline }
     func listenToCatalogoOnline(completion: @escaping (Result<[Curso], Error>) -> Void) -> SuscripcionActiva {

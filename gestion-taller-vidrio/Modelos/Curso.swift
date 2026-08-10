@@ -15,6 +15,10 @@ struct Curso: Codable, Identifiable {
     // adelanto (profesor) y pago (usuaria). Solo se define al crear el curso.
     var es_profesor_externo: Bool? = nil
 
+    // Controla si el curso aparece en el dropdown de AgendaFormView al agendar.
+    // nil o true = visible (default); false = oculto. No afecta catálogo online.
+    var visible_en_agenda: Bool? = nil
+
     // Computed property para UI
     var inscriptosTotales: Int {
         return cant_inscriptos ?? 0

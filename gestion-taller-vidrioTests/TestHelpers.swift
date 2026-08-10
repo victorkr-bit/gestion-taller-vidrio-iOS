@@ -95,14 +95,16 @@ enum TestFactory {
         id: String? = "curso-test-id",
         nombre: String = "Curso Test",
         tipo: TipoCurso = .presencial,
-        precio: Double = 10_000
+        precio: Double = 10_000,
+        visibleEnAgenda: Bool? = nil
     ) -> Curso {
         Curso(
             id: id,
             nombre: nombre,
             tipo: tipo,
             precio: precio,
-            cant_inscriptos: nil
+            cant_inscriptos: nil,
+            visible_en_agenda: visibleEnAgenda
         )
     }
 

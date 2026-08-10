@@ -140,6 +140,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var rangosFechaPedidos: [(from: Date, to: Date)] = []
     private(set) var saveCursoLlamadas: [Curso] = []
     private(set) var deleteCursoLlamadas: [Curso] = []
+    private(set) var actualizarVisibilidadCursoLlamadas: [(cursoId: String, visible: Bool)] = []
     private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
     private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?)] = []
     private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago, pagosSplit: [PagoSplitEntry]?)] = []
@@ -212,6 +213,11 @@ final class TallerRepositorioFake: TallerRepositorio {
     func deleteCurso(curso: Curso) async throws {
         try lanzarSiHayError()
         deleteCursoLlamadas.append(curso)
+    }
+
+    func actualizarVisibilidadCurso(cursoId: String, visible: Bool) async throws {
+        try lanzarSiHayError()
+        actualizarVisibilidadCursoLlamadas.append((cursoId, visible))
     }
 
     func fetchCatalogoOnline() async throws -> [Curso] {
