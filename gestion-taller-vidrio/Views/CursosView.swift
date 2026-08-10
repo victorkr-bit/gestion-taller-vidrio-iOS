@@ -20,36 +20,45 @@ struct CursosView: View {
                 } else {
                     List {
                         ForEach(viewModel.cursos) { curso in
-                            Button {
-                                self.cursoToEdit = curso
-                            } label: {
-                                CardView {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            Text(curso.nombre)
-                                                .font(.headline)
-                                                .foregroundStyle(Color.primary)
-                                            
-                                            Text(curso.tipo.descripcion)
-                                                .font(.subheadline)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(curso.tipo.color)
-                                                .padding(4)
-                                                .background(curso.tipo.color.opacity(0.15))
-                                                .cornerRadius(6)
+                            CardView {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Button {
+                                        self.cursoToEdit = curso
+                                    } label: {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text(curso.nombre)
+                                                    .font(.headline)
+                                                    .foregroundStyle(Color.primary)
+
+                                                Text(curso.tipo.descripcion)
+                                                    .font(.subheadline)
+                                                    .fontWeight(.medium)
+                                                    .foregroundStyle(curso.tipo.color)
+                                                    .padding(4)
+                                                    .background(curso.tipo.color.opacity(0.15))
+                                                    .cornerRadius(6)
+                                            }
+
+                                            Spacer()
+
+                                            Text(Formatters.money(curso.precio))
+                                                .font(.title3)
+                                                .fontWeight(.bold)
+                                                .foregroundStyle(Color.accentColor)
                                         }
-                                        
-                                        Spacer()
-                                        
-                                        Text(Formatters.money(curso.precio))
-                                            .font(.title3)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(Color.accentColor)
                                     }
+                                    .buttonStyle(.plain)
+
+                                    Toggle("Visible en agenda", isOn: Binding(
+                                        get: { curso.visible_en_agenda ?? true },
+                                        set: { _ in viewModel.toggleVisibilidad(curso: curso) }
+                                    ))
+                                    .toggleStyle(.switch)
+                                    .font(.caption)
                                 }
                             }
                             .listRowSeparator(.hidden)
-                            .buttonStyle(.plain) // Mantiene el estilo de la card
                         }
                         .onDelete { offsets in
                         if let index = offsets.first {
