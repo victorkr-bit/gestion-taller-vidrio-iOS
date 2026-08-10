@@ -72,4 +72,19 @@ class CursosViewModel: ObservableObject {
             }
         })
     }
+
+    func toggleVisibilidad(curso: Curso) {
+        guard let id = curso.id else { return }
+        let nuevoValor = !(curso.visible_en_agenda ?? true)
+        taskTracker.track(Task {
+            do {
+                try await repository.actualizarVisibilidadCurso(cursoId: id, visible: nuevoValor)
+                if let idx = self.cursos.firstIndex(where: { $0.id == id }) {
+                    self.cursos[idx].visible_en_agenda = nuevoValor
+                }
+            } catch {
+                self.errorMessage = "Error al actualizar visibilidad: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
+    }
 }

@@ -65,4 +65,43 @@ struct CursosViewModelTests {
         #expect(ok)
         #expect(Set(taller.deleteCursoLlamadas.compactMap(\.id)) == ["c1", "c3"])
     }
+
+    @Test func toggleVisibilidadOcultaUnCursoVisiblePorDefecto() async {
+        let taller = TallerRepositorioFake()
+        let vm = CursosViewModel(repository: taller)
+        taller.emitirCursos([TestFactory.curso(id: "c1", nombre: "A")]) // visible_en_agenda == nil
+
+        vm.toggleVisibilidad(curso: vm.cursos[0])
+
+        let ok = await esperarCondicion { taller.actualizarVisibilidadCursoLlamadas.count == 1 }
+        #expect(ok)
+        #expect(taller.actualizarVisibilidadCursoLlamadas.first?.cursoId == "c1")
+        #expect(taller.actualizarVisibilidadCursoLlamadas.first?.visible == false)
+        #expect(vm.cursos.first?.visible_en_agenda == false)
+    }
+
+    @Test func toggleVisibilidadReactivaUnCursoOculto() async {
+        let taller = TallerRepositorioFake()
+        let vm = CursosViewModel(repository: taller)
+        taller.emitirCursos([TestFactory.curso(id: "c1", nombre: "A", visibleEnAgenda: false)])
+
+        vm.toggleVisibilidad(curso: vm.cursos[0])
+
+        let ok = await esperarCondicion { taller.actualizarVisibilidadCursoLlamadas.count == 1 }
+        #expect(ok)
+        #expect(taller.actualizarVisibilidadCursoLlamadas.first?.visible == true)
+        #expect(vm.cursos.first?.visible_en_agenda == true)
+    }
+
+    @Test func toggleVisibilidadConErrorSeteaErrorMessage() async {
+        let taller = TallerRepositorioFake()
+        taller.errorStub = ErrorDePrueba()
+        let vm = CursosViewModel(repository: taller)
+        taller.emitirCursos([TestFactory.curso(id: "c1")])
+
+        vm.toggleVisibilidad(curso: vm.cursos[0])
+
+        let ok = await esperarCondicion { vm.errorMessage != nil }
+        #expect(ok)
+    }
 }
