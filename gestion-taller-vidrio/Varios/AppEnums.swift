@@ -44,6 +44,22 @@ enum TipoCurso: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// Reparto de un Pago en cursos de profesor externo: adelanto (profesor, no entra
+// a caja) o pago (usuaria, entra a caja). Ausente en pagos normales.
+enum CategoriaReparto: String, Codable, CaseIterable, Identifiable {
+    case adelanto = "adelanto"
+    case pago = "pago"
+
+    var id: String { self.rawValue }
+
+    var descripcion: String {
+        switch self {
+        case .adelanto: return "Adelanto (profesor)"
+        case .pago: return "Pago (caja)"
+        }
+    }
+}
+
 // Enum para el estado de la inscripción [cite: 207]
 enum EstadoInscripcion: String, Codable, CaseIterable, Identifiable {
     case inscripto = "Inscripto"

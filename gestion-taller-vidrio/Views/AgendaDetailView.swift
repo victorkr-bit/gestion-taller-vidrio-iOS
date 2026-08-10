@@ -26,6 +26,8 @@ struct AgendaDetailView: View {
 
     var totalAbonado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_abonado } }
     var totalAdeudado: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + $1.monto_adeudado } }
+    var totalAdelanto: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + ($1.total_adelanto ?? 0) } }
+    var totalPago: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + ($1.total_pago ?? 0) } }
 
     private var datosOcupacion: [OcupacionHoraDato] {
         TallerCalculator.calcularOcupacionPorHora(para: inscripcionesVM.inscripciones)
@@ -102,6 +104,25 @@ struct AgendaDetailView: View {
                                     }
                                 }
                                 .fixedSize(horizontal: false, vertical: true)
+                                if displayItem.es_profesor_externo == true {
+                                    Divider()
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Adelanto (profesor)")
+                                                .font(.caption).foregroundStyle(.secondary)
+                                            Text(Formatters.money(totalAdelanto))
+                                                .font(.subheadline).fontWeight(.semibold)
+                                        }
+                                        Spacer()
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text("Pago (caja)")
+                                                .font(.caption).foregroundStyle(.secondary)
+                                            Text(Formatters.money(totalPago))
+                                                .font(.subheadline).fontWeight(.semibold)
+                                                .foregroundStyle(DesignSystem.Color.exito)
+                                        }
+                                    }
+                                }
                                 if let url = displayItem.linkCompartir {
                                     Divider()
                                     HStack(spacing: 12) {
@@ -224,8 +245,8 @@ struct AgendaDetailView: View {
             NavigationStack {
                 RegistrarPagoView(
                     origen: .inscripcion(inscripcion),
-                    onSave: { (pago, origen) in
-                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen)
+                    onSave: { (pago, origen, pagosSplit) in
+                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
                     }
                 )
             }
@@ -243,8 +264,8 @@ struct AgendaDetailView: View {
             NavigationStack {
                 ConfirmarPreinscripcionView(
                     preinscripcion: preinscripcion,
-                    onConfirm: { monto, medio in
-                        try await inscripcionesVM.confirmarPreinscripcion(preinscripcion, monto: monto, medioDePago: medio)
+                    onConfirm: { monto, medio, pagosSplit in
+                        try await inscripcionesVM.confirmarPreinscripcion(preinscripcion, monto: monto, medioDePago: medio, pagosSplit: pagosSplit)
                     }
                 )
             }

@@ -434,12 +434,30 @@ final class TallerRepository: TallerRepositorio {
 
     /// Confirma el pago de una preinscripción vía Cloud Function: crea/busca contacto, crea la
     /// inscripción firme, registra el pago y marca la preinscripción como convertida (transacción atómica).
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
-        let data: [String: Any] = [
-            "preinscripcionId": preinscripcionId,
-            "monto": monto,
-            "medio_de_pago": medioDePago.rawValue
-        ]
+    /// `pagosSplit` (cursos de profesor externo): 1-2 entradas (adelanto/pago), cada una con su
+    /// propio medio de pago — reemplaza monto/medioDePago en el payload.
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {
+        // for-loop en vez de .map: un closure con literales anidados dispara "sending
+        // non-Sendable [String: Any]" en Swift 6 al cruzar el await más abajo.
+        var pagosSplitPayload: [[String: Any]] = []
+        if let pagosSplit {
+            for entry in pagosSplit {
+                pagosSplitPayload.append([
+                    "monto": entry.monto,
+                    "medio_de_pago": entry.medioDePago.rawValue,
+                    "categoria_reparto": entry.categoriaReparto.rawValue
+                ])
+            }
+        }
+
+        var data: [String: Any] = ["preinscripcionId": preinscripcionId]
+        if !pagosSplitPayload.isEmpty {
+            data["pagos_split"] = pagosSplitPayload
+        } else {
+            data["monto"] = monto
+            data["medio_de_pago"] = medioDePago.rawValue
+        }
+
         do {
             _ = try await functions.httpsCallable("confirmarPreinscripcion").call(data)
         } catch {

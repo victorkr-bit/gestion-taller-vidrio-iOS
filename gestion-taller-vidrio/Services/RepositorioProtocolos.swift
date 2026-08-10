@@ -27,7 +27,7 @@ protocol FinanzasRepositorio: Sendable {
     func fetchPagos(origenID: String) async throws -> [Pago]
     func listenToPagos(from: Date?, to: Date?, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva
     func listenToPagos(origenID: String, completion: @escaping (Result<[Pago], Error>) -> Void) -> SuscripcionActiva
-    func registrarPago(pago: Pago, origen: Origen) async throws
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?) async throws
     func editPago(pagoActualizado: Pago, montoAntiguo: Double) async throws
     func deletePago(pago: Pago) async throws
     func saveVentaDirecta(pago: Pago) async throws
@@ -68,7 +68,7 @@ protocol TallerRepositorio: Sendable {
     // Preinscripciones (cursos presenciales)
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
     func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws
     func cancelarPreinscripcion(preinscripcionId: String) async throws
 }
 
@@ -93,6 +93,18 @@ protocol ContactosRepositorio: Sendable {
 extension VentasRepositorio {
     func fetchPedidos() async throws -> [Pedido] { try await fetchPedidos(limit: 50) }
     func savePedido(pedido: Pedido) async throws { try await savePedido(pedido: pedido, existingID: nil) }
+}
+
+extension FinanzasRepositorio {
+    func registrarPago(pago: Pago, origen: Origen) async throws {
+        try await registrarPago(pago: pago, origen: origen, pagosSplit: nil)
+    }
+}
+
+extension TallerRepositorio {
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
+        try await confirmarPreinscripcion(preinscripcionId: preinscripcionId, monto: monto, medioDePago: medioDePago, pagosSplit: nil)
+    }
 }
 
 

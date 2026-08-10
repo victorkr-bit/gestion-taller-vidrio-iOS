@@ -28,12 +28,18 @@ struct Inscripcion: Codable, Identifiable {
     var monto_abonado: Double
     var monto_adeudado: Double
     var estado: EstadoInscripcion   // Enum
-    
+
     // Opcionales (solo aplican a talleres/agenda)
     var horario_inicio: String?
     var turnos: Int?
 
     var notas: String?
+
+    // Denormalizado de Curso.es_profesor_externo. Cuando es true, monto_abonado
+    // se compone de total_adelanto (profesor, no entra a caja) + total_pago (usuaria, caja).
+    var es_profesor_externo: Bool? = nil
+    var total_adelanto: Double? = nil
+    var total_pago: Double? = nil
 }
 
 // Wrapper tolerante para fecha_inscripcion: acepta Timestamp, String ISO8601, o ausencia

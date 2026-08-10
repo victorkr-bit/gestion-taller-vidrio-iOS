@@ -20,4 +20,15 @@ struct Pago: Codable, Identifiable {
     
     // Opcional (null para Venta Directa) [cite: 222]
     var origen_id: String? // Ref a pedidos o inscripciones
+
+    // Solo en cursos de profesor externo: qué parte del reparto es este pago.
+    var categoria_reparto: CategoriaReparto? = nil
+}
+
+/// Una entrada del split adelanto/pago que se manda a `registrarPago`/`confirmarPreinscripcion`
+/// para cursos de profesor externo. 1 o 2 entradas, cada una con su propio medio de pago.
+struct PagoSplitEntry {
+    var monto: Double
+    var medioDePago: MedioDePago
+    var categoriaReparto: CategoriaReparto
 }

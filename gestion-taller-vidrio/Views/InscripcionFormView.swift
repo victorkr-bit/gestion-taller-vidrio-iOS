@@ -38,7 +38,13 @@ struct InscripcionFormView: View {
     @State private var totalAPagar: Double = 0.0
     @State private var totalAPagarInput: String = "0"
     @State private var medioDePago: MedioDePago = .transferencia
-    
+
+    // Split adelanto/pago (solo alta nueva de curso de profesor externo)
+    @State private var adelantoInput: String = ""
+    @State private var adelantoMedio: MedioDePago = .efectivo
+    @State private var pagoInput: String = ""
+    @State private var pagoMedio: MedioDePago = .efectivo
+
     @State private var notas: String = ""
 
     // --- ESTADOS DE TALLER ---
@@ -71,11 +77,22 @@ struct InscripcionFormView: View {
     }
     
     private var esTaller: Bool { return origenTipo == .taller }
-    
+
+    private var esProfesorExterno: Bool {
+        if let i = inscripcionToEdit { return i.es_profesor_externo == true }
+        if let c = cronogramaItem { return c.es_profesor_externo == true }
+        if let k = curso { return k.es_profesor_externo == true }
+        return false
+    }
+
+    private var adelanto: Double { Double(adelantoInput) ?? 0 }
+    private var pagoSplitMonto: Double { Double(pagoInput) ?? 0 }
+    private var montoTotalAPagar: Double { esProfesorExterno ? adelanto + pagoSplitMonto : totalAPagar }
+
     // Validación
     var isFormValid: Bool {
         !alumnoId.isEmpty && precioTotal >= 0 &&
-        totalAPagar >= 0 && totalAPagar <= precioTotal
+        montoTotalAPagar >= 0 && montoTotalAPagar <= precioTotal
     }
     
     private func recalcularTotal() {
@@ -225,29 +242,45 @@ struct InscripcionFormView: View {
             // SECCIÓN 4: PAGO AL INSCRIBIRSE (SOLO MODO NUEVO)
             // -----------------------------------------------------------
             if inscripcionToEdit == nil {
-                Section("Pago al Inscribirse") {
-                    HStack {
-                        Text("Total a Pagar")
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Text("$").foregroundStyle(.secondary)
-                        TextField("0", text: $totalAPagarInput.numericOnly())
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
-                            .onChange(of: totalAPagarInput) { _, newValue in
-                                self.totalAPagar = Double(newValue) ?? 0.0
+                if esProfesorExterno {
+                    Section {
+                        HStack {
+                            Text("Adelanto (profesor)")
+                            Spacer()
+                            Text("$").foregroundStyle(.secondary)
+                            TextField("0", text: $adelantoInput.numericOnly())
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                        }
+                        Picker("Medio", selection: $adelantoMedio) {
+                            ForEach(MedioDePago.allCases) { medio in
+                                Text(medio.rawValue).tag(medio)
                             }
+                        }
+                    } header: {
+                        Text("Adelanto (profesor)")
+                    } footer: {
+                        Text("No entra a la caja de la usuaria.")
                     }
 
-                    if totalAPagar > 0 {
-                        Picker("Medio de Pago", selection: $medioDePago) {
+                    Section("Pago (caja)") {
+                        HStack {
+                            Text("Pago (caja)")
+                            Spacer()
+                            Text("$").foregroundStyle(.secondary)
+                            TextField("0", text: $pagoInput.numericOnly())
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                        }
+                        Picker("Medio", selection: $pagoMedio) {
                             ForEach(MedioDePago.allCases) { medio in
                                 Text(medio.rawValue).tag(medio)
                             }
                         }
 
-                        let deudaResultante = precioTotal - totalAPagar
+                        let deudaResultante = precioTotal - montoTotalAPagar
                         HStack {
                             Text("Deuda resultante")
                                 .font(.subheadline)
@@ -256,6 +289,41 @@ struct InscripcionFormView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(deudaResultante > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
+                        }
+                    }
+                } else {
+                    Section("Pago al Inscribirse") {
+                        HStack {
+                            Text("Total a Pagar")
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text("$").foregroundStyle(.secondary)
+                            TextField("0", text: $totalAPagarInput.numericOnly())
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                                .onChange(of: totalAPagarInput) { _, newValue in
+                                    self.totalAPagar = Double(newValue) ?? 0.0
+                                }
+                        }
+
+                        if totalAPagar > 0 {
+                            Picker("Medio de Pago", selection: $medioDePago) {
+                                ForEach(MedioDePago.allCases) { medio in
+                                    Text(medio.rawValue).tag(medio)
+                                }
+                            }
+
+                            let deudaResultante = precioTotal - totalAPagar
+                            HStack {
+                                Text("Deuda resultante")
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(Formatters.money(deudaResultante))
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(deudaResultante > 0 ? DesignSystem.Color.alerta : DesignSystem.Color.exito)
+                            }
                         }
                     }
                 }
@@ -409,7 +477,10 @@ struct InscripcionFormView: View {
         inscripcion.alumnoId = alumnoId
         inscripcion.alumno_nombre = alumno_nombre
         inscripcion.precio_curso = precioTotal
-        
+        if esProfesorExterno {
+            inscripcion.es_profesor_externo = true
+        }
+
         if let inscripcionExistente = inscripcionToEdit {
             inscripcion.monto_adeudado = precioTotal - inscripcionExistente.monto_abonado
             inscripcion.estado = (inscripcion.monto_adeudado <= 0) ? .pagado : .inscripto
@@ -432,6 +503,16 @@ struct InscripcionFormView: View {
 
         if inscripcionToEdit != nil {
             inscripcionesVM.saveInscripcion(inscripcion: inscripcion)
+        } else if esProfesorExterno {
+            var entries: [PagoSplitEntry] = []
+            if adelanto > 0 { entries.append(PagoSplitEntry(monto: adelanto, medioDePago: adelantoMedio, categoriaReparto: .adelanto)) }
+            if pagoSplitMonto > 0 { entries.append(PagoSplitEntry(monto: pagoSplitMonto, medioDePago: pagoMedio, categoriaReparto: .pago)) }
+            inscripcionesVM.guardarInscripcionConPago(
+                inscripcion: inscripcion,
+                montoPago: montoTotalAPagar,
+                medioDePago: adelantoMedio,
+                pagosSplit: entries
+            )
         } else {
             inscripcionesVM.guardarInscripcionConPago(
                 inscripcion: inscripcion,

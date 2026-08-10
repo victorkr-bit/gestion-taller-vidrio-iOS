@@ -87,7 +87,9 @@ class MetricasViewModel: ObservableObject {
             guard let self = self else { return }
             self.isLoading = false
             switch result {
-            case .success(let pagos):
+            case .success(let pagosCrudos):
+                // Los pagos "adelanto" (cursos de profesor externo) no son caja de la usuaria.
+                let pagos = pagosCrudos.filter { $0.categoria_reparto != .adelanto }
                 self.pagosDelMes = pagos
                 self.totalIngresosMes = pagos.reduce(0) { $0 + $1.monto }
                 self.recalcularDatosGraficos(pagos)

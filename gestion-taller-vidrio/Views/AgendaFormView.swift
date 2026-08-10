@@ -133,7 +133,7 @@ struct AgendaFormView: View {
 
         // 2. Crear el nuevo CronogramaItem con la fecha ajustada
         let cupo: Int? = (selectedCurso.tipo == .presencial) ? Int(cupoInput).flatMap { $0 > 0 ? $0 : nil } : nil
-        let newItem = CronogramaItem(
+        var newItem = CronogramaItem(
             cursoId: selectedCurso.id ?? "",
             cursoNombre: selectedCurso.nombre,
             cursoTipo: selectedCurso.tipo,
@@ -143,6 +143,9 @@ struct AgendaFormView: View {
             hora_inicio: selectedCurso.tipo == .taller ? horaInicio : nil,
             hora_fin: selectedCurso.tipo == .taller ? horaFin : nil
         )
+        if selectedCurso.es_profesor_externo == true {
+            newItem.es_profesor_externo = true
+        }
 
         // 3. Llamar al ViewModel para guardar
         agendaVM.saveCronogramaItem(item: newItem)

@@ -88,7 +88,7 @@ struct PedidosView: View {
             NavigationStack {
                 RegistrarPagoView(
                     origen: .pedido(pedido),
-                    onSave: { (pago, origen) in
+                    onSave: { (pago, origen, _) in
                         try await viewModel.registrarPago(pago: pago, origen: origen)
                     }
                 )

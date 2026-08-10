@@ -29,6 +29,7 @@ struct Preinscripcion: Identifiable, Codable, Hashable {
     let fecha_preinscripcion: Timestamp?  // nil un instante por serverTimestamp recién creado
     let contacto_id: String?
     let inscripcion_id: String?
+    let es_profesor_externo: Bool?
 
     var nombreCompleto: String { "\(nombre) \(apellido)" }
 

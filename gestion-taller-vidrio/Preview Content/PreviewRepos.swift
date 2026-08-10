@@ -43,7 +43,7 @@ final class FinanzasRepositorioPreview: FinanzasRepositorio {
         return SuscripcionActiva {}
     }
 
-    func registrarPago(pago: Pago, origen: Origen) async throws {}
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?) async throws {}
     func editPago(pagoActualizado: Pago, montoAntiguo: Double) async throws {}
     func deletePago(pago: Pago) async throws {}
     func saveVentaDirecta(pago: Pago) async throws {}
@@ -143,7 +143,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         Task { @MainActor in completion(.success([])) }
         return SuscripcionActiva {}
     }
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {}
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {}
     func cancelarPreinscripcion(preinscripcionId: String) async throws {}
 }
 

@@ -95,8 +95,8 @@ struct OnlineCourseDetailView: View {
             NavigationStack {
                 RegistrarPagoView(
                     origen: .inscripcion(inscripcion),
-                    onSave: { (pago, origen) in
-                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen)
+                    onSave: { (pago, origen, pagosSplit) in
+                        try await inscripcionesVM.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
                     }
                 )
             }
