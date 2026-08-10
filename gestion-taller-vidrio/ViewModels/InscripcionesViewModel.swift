@@ -127,7 +127,7 @@ class InscripcionesViewModel: ObservableObject {
 
     func deleteInscripcion(_ inscripcion: Inscripcion) {
         guard inscripcion.monto_abonado == 0 else {
-            errorMessage = "No se puede eliminar la inscripción porque tiene pagos registrados. Eliminá los pagos primero."
+            errorMessage = "No se puede eliminar la inscripción porque tiene pagos registrados (puede incluir un adelanto que no aparece en Caja). Tocá la fila para ver el detalle de pagos y borrarlos primero."
             return
         }
 
@@ -196,6 +196,18 @@ class InscripcionesViewModel: ObservableObject {
     func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]? = nil) async throws {
         errorMessage = nil
         try await finanzasRepo.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
+    }
+
+    /// Borra un pago desde el acordeón de una inscripción (incluye los de categoría "adelanto",
+    /// que no aparecen en la Caja global y por eso necesitan poder borrarse desde acá).
+    func deletePago(_ pago: Pago) {
+        taskTracker.track(Task {
+            do {
+                try await finanzasRepo.deletePago(pago: pago)
+            } catch {
+                self.errorMessage = "No se pudo borrar el pago: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
     }
 
     func moverInscripcion(inscripcionId: String, destinoCronogramaId: String, adoptarPrecio: Bool) async throws {
