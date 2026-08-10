@@ -50,12 +50,21 @@ struct CursosView: View {
                                     }
                                     .buttonStyle(.plain)
 
-                                    Toggle("Visible en agenda", isOn: Binding(
-                                        get: { curso.visible_en_agenda ?? true },
-                                        set: { _ in viewModel.toggleVisibilidad(curso: curso) }
-                                    ))
-                                    .toggleStyle(.switch)
-                                    .font(.caption)
+                                    HStack {
+                                        Text("Visible en agenda")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+
+                                        Spacer()
+
+                                        Toggle("", isOn: Binding(
+                                            get: { curso.visible_en_agenda ?? true },
+                                            set: { _ in viewModel.toggleVisibilidad(curso: curso) }
+                                        ))
+                                        .labelsHidden()
+                                        .toggleStyle(.switch)
+                                        .scaleEffect(0.8, anchor: .trailing)
+                                    }
                                 }
                             }
                             .listRowSeparator(.hidden)
