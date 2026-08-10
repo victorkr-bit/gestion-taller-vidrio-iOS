@@ -145,6 +145,7 @@ class AgendaViewModel: ObservableObject {
         taskTracker.track(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
+                    .filter { $0.visible_en_agenda ?? true }
                     .sorted { $0.nombre.localizedStandardCompare($1.nombre) == .orderedAscending }
             } catch is CancellationError {
                 // Tarea cancelada por ciclo de vida — no mostrar al usuario.
