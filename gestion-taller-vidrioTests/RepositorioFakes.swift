@@ -23,7 +23,7 @@ final class FinanzasRepositorioFake: FinanzasRepositorio {
     private(set) var pagosPorOrigenCompletions: [String: (Result<[Pago], Error>) -> Void] = [:]
 
     // Registro de llamadas
-    private(set) var registrarPagoLlamadas: [(pago: Pago, origen: Origen)] = []
+    private(set) var registrarPagoLlamadas: [(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?)] = []
     private(set) var editPagoLlamadas: [(pago: Pago, montoAntiguo: Double)] = []
     private(set) var deletePagoLlamadas: [Pago] = []
     private(set) var ventaDirectaLlamadas: [Pago] = []
@@ -65,9 +65,9 @@ final class FinanzasRepositorioFake: FinanzasRepositorio {
         return SuscripcionActiva { [weak self] in self?.cancelacionesPorOrigen[origenID, default: 0] += 1 }
     }
 
-    func registrarPago(pago: Pago, origen: Origen) async throws {
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?) async throws {
         try lanzarSiHayError()
-        registrarPagoLlamadas.append((pago, origen))
+        registrarPagoLlamadas.append((pago, origen, pagosSplit))
     }
 
     func editPago(pagoActualizado: Pago, montoAntiguo: Double) async throws {
@@ -142,7 +142,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var deleteCursoLlamadas: [Curso] = []
     private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
     private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?)] = []
-    private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago)] = []
+    private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago, pagosSplit: [PagoSplitEntry]?)] = []
     private(set) var cancelarPreinscripcionLlamadas: [String] = []
 
     // Spies de cancelación
@@ -313,9 +313,9 @@ final class TallerRepositorioFake: TallerRepositorio {
         return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripcionesPendientes += 1 }
     }
 
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {
         try lanzarSiHayError()
-        confirmarPreinscripcionLlamadas.append((preinscripcionId, monto, medioDePago))
+        confirmarPreinscripcionLlamadas.append((preinscripcionId, monto, medioDePago, pagosSplit))
     }
 
     func cancelarPreinscripcion(preinscripcionId: String) async throws {

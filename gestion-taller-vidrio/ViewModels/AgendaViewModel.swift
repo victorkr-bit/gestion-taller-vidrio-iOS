@@ -142,10 +142,10 @@ class AgendaViewModel: ObservableObject {
     }
 
     func fetchCursos() {
-        guard cursos.isEmpty else { return }
         taskTracker.track(Task {
             do {
                 self.cursos = try await tallerRepo.fetchCursos()
+                    .sorted { $0.nombre.localizedStandardCompare($1.nombre) == .orderedAscending }
             } catch is CancellationError {
                 // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {

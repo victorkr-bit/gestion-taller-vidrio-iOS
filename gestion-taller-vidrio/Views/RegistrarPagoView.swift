@@ -7,72 +7,146 @@ struct RegistrarPagoView: View {
     let origen: Origen
     
     // Recibe el closure de guardado desde el ViewModel padre
-    let onSave: (Pago, Origen) async throws -> Void
-    
+    let onSave: (Pago, Origen, [PagoSplitEntry]?) async throws -> Void
+
     @Environment(\.dismiss) var dismiss
-    
+
     // --- Estado del Formulario ---
     @State private var monto: Double = 0.0
     @State private var montoInput: String = "" // Input manual
-    
+
     @State private var medio_de_pago: MedioDePago = .transferencia
     @State private var fecha: Date = Date()
     @State private var notas: String = ""
-    
+
+    // Split adelanto/pago (solo inscripciones de profesor externo)
+    @State private var adelantoInput: String = ""
+    @State private var adelantoMedio: MedioDePago = .efectivo
+    @State private var pagoInput: String = ""
+    @State private var pagoMedio: MedioDePago = .efectivo
+
     // Estados de Control
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    private var esProfesorExterno: Bool {
+        if case .inscripcion(let inscripcion) = origen { return inscripcion.es_profesor_externo == true }
+        return false
+    }
+
+    private var adelanto: Double { Double(adelantoInput) ?? 0 }
+    private var pagoSplitMonto: Double { Double(pagoInput) ?? 0 }
+    private var montoTotal: Double { esProfesorExterno ? adelanto + pagoSplitMonto : monto }
+
     var isFormValid: Bool {
-        monto > 0 && !isSaving && monto <= origen.montoAdeudado
+        guard !isSaving else { return false }
+        guard montoTotal <= origen.montoAdeudado else { return false }
+        return esProfesorExterno ? (adelanto > 0 || pagoSplitMonto > 0) : monto > 0
     }
 
     private var excedeDeuda: Bool {
-        monto > origen.montoAdeudado && origen.montoAdeudado > 0
+        montoTotal > origen.montoAdeudado && origen.montoAdeudado > 0
     }
     
     var body: some View {
         Form {
-            Section("Datos del Pago") {
-                
-                // --- CAMPO DE MONTO ---
-                HStack {
-                    Text("Monto a Pagar")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    Text("$")
-                        .foregroundStyle(.secondary)
-                        .font(.headline)
-                    
-                    TextField("0", text: $montoInput.numericOnly())
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .font(.headline)
-                        .foregroundStyle(DesignSystem.Color.accion)
-                        .frame(width: 140)
-                        .disabled(isSaving)
-                        .onChange(of: montoInput) { _, newValue in
-                            self.monto = Double(newValue) ?? 0.0
+            if esProfesorExterno {
+                Section {
+                    HStack {
+                        Text("Adelanto (profesor)")
+                        Spacer()
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("0", text: $adelantoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .disabled(isSaving)
+                    }
+                    Picker("Medio", selection: $adelantoMedio) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
                         }
+                    }
+                    .disabled(isSaving)
+                } header: {
+                    Text("Adelanto (profesor)")
+                } footer: {
+                    Text("No entra a la caja de la usuaria.")
                 }
-                
+
+                Section("Pago (caja)") {
+                    HStack {
+                        Text("Pago (caja)")
+                        Spacer()
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("0", text: $pagoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .disabled(isSaving)
+                    }
+                    Picker("Medio", selection: $pagoMedio) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
+                        }
+                    }
+                    .disabled(isSaving)
+                }
+
                 if excedeDeuda {
                     Text("El monto no puede superar la deuda de \(Formatters.money(origen.montoAdeudado))")
                         .font(.caption)
                         .foregroundStyle(DesignSystem.Color.peligro)
                 }
 
-                Picker("Medio de Pago", selection: $medio_de_pago) {
-                    ForEach(MedioDePago.allCases) { medio in
-                        Text(medio.rawValue).tag(medio)
-                    }
+                Section {
+                    DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
+                        .disabled(isSaving)
                 }
-                .disabled(isSaving)
-                
-                DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
+            } else {
+                Section("Datos del Pago") {
+
+                    // --- CAMPO DE MONTO ---
+                    HStack {
+                        Text("Monto a Pagar")
+                            .font(.headline)
+
+                        Spacer()
+
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                            .font(.headline)
+
+                        TextField("0", text: $montoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(.headline)
+                            .foregroundStyle(DesignSystem.Color.accion)
+                            .frame(width: 140)
+                            .disabled(isSaving)
+                            .onChange(of: montoInput) { _, newValue in
+                                self.monto = Double(newValue) ?? 0.0
+                            }
+                    }
+
+                    if excedeDeuda {
+                        Text("El monto no puede superar la deuda de \(Formatters.money(origen.montoAdeudado))")
+                            .font(.caption)
+                            .foregroundStyle(DesignSystem.Color.peligro)
+                    }
+
+                    Picker("Medio de Pago", selection: $medio_de_pago) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
+                        }
+                    }
                     .disabled(isSaving)
+
+                    DatePicker("Fecha", selection: $fecha, displayedComponents: .date)
+                        .disabled(isSaving)
+                }
             }
             
             Section("Información Adicional") {
@@ -167,11 +241,19 @@ struct RegistrarPagoView: View {
         // Es imposible que el usuario toque dos veces.
         isSaving = true
         errorMessage = nil
-        
+
+        let pagosSplit: [PagoSplitEntry]? = {
+            guard esProfesorExterno else { return nil }
+            var entries: [PagoSplitEntry] = []
+            if adelanto > 0 { entries.append(PagoSplitEntry(monto: adelanto, medioDePago: adelantoMedio, categoriaReparto: .adelanto)) }
+            if pagoSplitMonto > 0 { entries.append(PagoSplitEntry(monto: pagoSplitMonto, medioDePago: pagoMedio, categoriaReparto: .pago)) }
+            return entries
+        }()
+
         let pago = Pago(
             fecha: fecha,
-            monto: monto,
-            medio_de_pago: medio_de_pago,
+            monto: montoTotal,
+            medio_de_pago: esProfesorExterno ? (pagosSplit?.first?.medioDePago ?? medio_de_pago) : medio_de_pago,
             cliente_id: origen.clienteID,
             cliente_nombre: origen.clienteNombre,
             tipo_venta: origen.tipoVenta,
@@ -180,12 +262,12 @@ struct RegistrarPagoView: View {
             descripcion_origen: origen.descripcionOrigen,
             origen_id: origen.id
         )
-        
+
         Task {
             do {
                 // 2. LLAMADA AL BACKEND
                 // Esto puede tardar 1, 3 o 10 segundos. La UI sigue bloqueada.
-                try await onSave(pago, origen)
+                try await onSave(pago, origen, pagosSplit)
                 
                 // 3. ÉXITO -> CERRAR
                 // Solo cerramos si la línea anterior no lanzó error.

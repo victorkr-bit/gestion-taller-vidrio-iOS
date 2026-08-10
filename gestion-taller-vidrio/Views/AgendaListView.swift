@@ -24,10 +24,18 @@ struct AgendaListView: View {
                         } label: {
                             CardView {
                                 VStack(alignment: .leading, spacing: DesignSystem.Espaciado.xs) {
-                                    Text(item.cursoNombre)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
+                                    HStack(spacing: DesignSystem.Espaciado.xs) {
+                                        Text(item.cursoNombre)
+                                            .font(.headline)
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+
+                                        if item.es_profesor_externo == true {
+                                            Image(systemName: "figure.walk.suitcase.rolling.circle")
+                                                .foregroundStyle(.orange)
+                                                .accessibilityLabel("Profesor externo")
+                                        }
+                                    }
 
                                     HStack {
                                         Label(

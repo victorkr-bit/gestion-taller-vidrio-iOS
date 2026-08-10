@@ -11,6 +11,7 @@ struct CursoFormView: View {
     @State private var nombre: String = ""
     @State private var tipo: TipoCurso = .presencial // Valor default
     @State private var precio: Double = 0.0
+    @State private var esProfesorExterno: Bool = false
 
     @State private var actualizacionInfo: (cronogramas: Int, inscripciones: Int)?
     @State private var mostrarAlertaActualizacion = false
@@ -50,6 +51,13 @@ struct CursoFormView: View {
                 // Tarea 2.2: TextField para Double (precio)
                 TextField("Precio", value: $precio, formatter: currencyFormatter)
                     .keyboardType(.decimalPad)
+
+                if cursoToEdit == nil && tipo == .presencial {
+                    Toggle("Curso de profesor externo", isOn: $esProfesorExterno)
+                    Text("Habilita el reparto adelanto (profesor) / pago (caja) al registrar cobros. No se puede cambiar después de creado.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             
             Section {
@@ -100,6 +108,9 @@ struct CursoFormView: View {
         curso.nombre = nombre.trimmingCharacters(in: .whitespaces)
         curso.tipo = tipo
         curso.precio = precio
+        if cursoToEdit == nil && tipo == .presencial && esProfesorExterno {
+            curso.es_profesor_externo = true
+        }
 
         let resultado = await viewModel.saveCurso(curso: curso)
 

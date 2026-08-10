@@ -5,20 +5,33 @@ import SwiftUI
 struct ConfirmarPreinscripcionView: View {
 
     let preinscripcion: Preinscripcion
-    /// Closure de confirmación: monto + medio de pago. Lanza si el backend rechaza.
-    let onConfirm: (_ monto: Double, _ medio: MedioDePago) async throws -> Void
+    /// Closure de confirmación: monto + medio de pago, o `pagosSplit` (cursos de profesor externo).
+    /// Lanza si el backend rechaza.
+    let onConfirm: (_ monto: Double, _ medio: MedioDePago, _ pagosSplit: [PagoSplitEntry]?) async throws -> Void
 
     @Environment(\.dismiss) var dismiss
+
+    private var esProfesorExterno: Bool { preinscripcion.es_profesor_externo == true }
 
     @State private var monto: Double = 0.0
     @State private var montoInput: String = ""
     @State private var medio_de_pago: MedioDePago = .transferencia
 
+    // Split adelanto/pago (solo cursos de profesor externo)
+    @State private var adelantoInput: String = ""
+    @State private var adelantoMedio: MedioDePago = .efectivo
+    @State private var pagoInput: String = ""
+    @State private var pagoMedio: MedioDePago = .efectivo
+
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    private var adelanto: Double { Double(adelantoInput) ?? 0 }
+    private var pagoSplitMonto: Double { Double(pagoInput) ?? 0 }
+    private var montoTotal: Double { esProfesorExterno ? adelanto + pagoSplitMonto : monto }
+
     private var deudaResultante: Double {
-        max(0, preinscripcion.precio_curso - monto)
+        max(0, preinscripcion.precio_curso - montoTotal)
     }
 
     private var esPagoTotal: Bool {
@@ -26,7 +39,8 @@ struct ConfirmarPreinscripcionView: View {
     }
 
     private var isFormValid: Bool {
-        monto > 0 && !isSaving
+        guard !isSaving else { return false }
+        return esProfesorExterno ? (adelanto > 0 || pagoSplitMonto > 0) : monto > 0
     }
 
     var body: some View {
@@ -47,32 +61,80 @@ struct ConfirmarPreinscripcionView: View {
                 .padding(.vertical, 4)
             }
 
-            Section("Datos del Pago") {
-                HStack {
-                    Text("Monto a Pagar")
-                        .font(.headline)
-                    Spacer()
-                    Text("$")
-                        .foregroundStyle(.secondary)
-                        .font(.headline)
-                    TextField("0", text: $montoInput.numericOnly())
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .font(.headline)
-                        .foregroundStyle(DesignSystem.Color.accion)
-                        .frame(width: 140)
-                        .disabled(isSaving)
-                        .onChange(of: montoInput) { _, newValue in
-                            self.monto = Double(newValue) ?? 0.0
+            if esProfesorExterno {
+                Section {
+                    HStack {
+                        Text("Adelanto (profesor)")
+                        Spacer()
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("0", text: $adelantoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .disabled(isSaving)
+                    }
+                    Picker("Medio", selection: $adelantoMedio) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
                         }
+                    }
+                    .disabled(isSaving)
+                } header: {
+                    Text("Adelanto (profesor)")
+                } footer: {
+                    Text("No entra a la caja de la usuaria.")
                 }
 
-                Picker("Medio de Pago", selection: $medio_de_pago) {
-                    ForEach(MedioDePago.allCases) { medio in
-                        Text(medio.rawValue).tag(medio)
+                Section {
+                    HStack {
+                        Text("Pago (caja)")
+                        Spacer()
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("0", text: $pagoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .disabled(isSaving)
                     }
+                    Picker("Medio", selection: $pagoMedio) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
+                        }
+                    }
+                    .disabled(isSaving)
+                } header: {
+                    Text("Pago (caja)")
                 }
-                .disabled(isSaving)
+            } else {
+                Section("Datos del Pago") {
+                    HStack {
+                        Text("Monto a Pagar")
+                            .font(.headline)
+                        Spacer()
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                            .font(.headline)
+                        TextField("0", text: $montoInput.numericOnly())
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(.headline)
+                            .foregroundStyle(DesignSystem.Color.accion)
+                            .frame(width: 140)
+                            .disabled(isSaving)
+                            .onChange(of: montoInput) { _, newValue in
+                                self.monto = Double(newValue) ?? 0.0
+                            }
+                    }
+
+                    Picker("Medio de Pago", selection: $medio_de_pago) {
+                        ForEach(MedioDePago.allCases) { medio in
+                            Text(medio.rawValue).tag(medio)
+                        }
+                    }
+                    .disabled(isSaving)
+                }
             }
 
             Section("Resumen") {
@@ -135,7 +197,18 @@ struct ConfirmarPreinscripcionView: View {
 
         Task {
             do {
-                try await onConfirm(monto, medio_de_pago)
+                if esProfesorExterno {
+                    var entries: [PagoSplitEntry] = []
+                    if adelanto > 0 {
+                        entries.append(PagoSplitEntry(monto: adelanto, medioDePago: adelantoMedio, categoriaReparto: .adelanto))
+                    }
+                    if pagoSplitMonto > 0 {
+                        entries.append(PagoSplitEntry(monto: pagoSplitMonto, medioDePago: pagoMedio, categoriaReparto: .pago))
+                    }
+                    try await onConfirm(montoTotal, adelantoMedio, entries)
+                } else {
+                    try await onConfirm(monto, medio_de_pago, nil)
+                }
                 dismiss()
             } catch {
                 self.errorMessage = FirestoreManager.mensajeAmigable(error)

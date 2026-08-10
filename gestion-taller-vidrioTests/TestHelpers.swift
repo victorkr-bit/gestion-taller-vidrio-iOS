@@ -157,7 +157,8 @@ enum TestFactory {
         telefono: String? = nil,
         notas: String? = nil,
         fechaCurso: Date = Date(timeIntervalSince1970: 1_750_000_000),
-        fechaPreinscripcion: Date? = Date(timeIntervalSince1970: 1_749_000_000)
+        fechaPreinscripcion: Date? = Date(timeIntervalSince1970: 1_749_000_000),
+        esProfesorExterno: Bool? = nil
     ) -> Preinscripcion {
         Preinscripcion(
             id: id,
@@ -174,7 +175,8 @@ enum TestFactory {
             estado: estado,
             fecha_preinscripcion: fechaPreinscripcion.map { Timestamp(date: $0) },
             contacto_id: nil,
-            inscripcion_id: nil
+            inscripcion_id: nil,
+            es_profesor_externo: esProfesorExterno
         )
     }
 }

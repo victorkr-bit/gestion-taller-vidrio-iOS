@@ -14,6 +14,9 @@ struct CronogramaItem: Codable, Identifiable, Hashable {
     var cupo_maximo: Int?   // Solo presenciales. Sin valor = sin límite.
     var notas: String?
 
+    // Denormalizado de Curso.es_profesor_externo al crear la fecha.
+    var es_profesor_externo: Bool? = nil
+
     // Solo talleres
     var hora_inicio: String?         // "HH:00", hora de apertura
     var hora_fin: String?            // "HH:00", hora de cierre

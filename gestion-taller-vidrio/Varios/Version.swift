@@ -2,7 +2,7 @@
 import Foundation
 
 struct AppVersion {
-    static let version = "26.06.26"
-    static let gitHash = "46ff28b"
+    static let version = "26.08.10"
+    static let gitHash = "7b35055"
     static let fullVersion = "v\(version) (\(gitHash))"
 }

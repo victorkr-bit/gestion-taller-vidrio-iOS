@@ -98,34 +98,68 @@ final class FinanzasRepository: FinanzasRepositorio {
     // MARK: - Gestión de Pagos (Cloud Functions)
     
     /// Registra un pago y actualiza saldo del origen vía Cloud Function.
-    func registrarPago(pago: Pago, origen: Origen) async throws {
-        // 1. Preparar payload
-        var data: [String: Any] = [
-            "monto": pago.monto,
-            "medio_de_pago": pago.medio_de_pago.rawValue,
-            "notas": pago.notas ?? "",
-            "fecha": Formatters.iso8601.string(from: pago.fecha),
-            "descripcion": pago.descripcion_origen,
-            "tipo_venta": pago.tipo_venta.rawValue
-        ]
-        
-        // 2. Configurar origen
+    /// `pagosSplit` (cursos de profesor externo): 1-2 entradas (adelanto/pago), cada una
+    /// con su propio medio de pago — reemplaza monto/medio_de_pago en el payload.
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?) async throws {
+        // 1. Configurar origen
+        let origenTipo: String
+        let origenId: String
+        let clienteNombre: String
+        let clienteId: String
         switch origen {
         case .pedido(let pedido):
             guard let id = pedido.id else { throw FirestoreManager.shared.mapCloudError(NSError(domain: FunctionsErrorDomain, code: FunctionsErrorCode.notFound.rawValue)) }
-            data["origenTipo"] = "pedido"
-            data["origenId"] = id
-            data["cliente_nombre"] = pedido.cliente_nombre
-            data["cliente_id"] = pedido.cliente_id
-            
+            origenTipo = "pedido"
+            origenId = id
+            clienteNombre = pedido.cliente_nombre
+            clienteId = pedido.cliente_id
+
         case .inscripcion(let inscripcion):
             guard let id = inscripcion.id else { throw FirestoreManager.shared.mapCloudError(NSError(domain: FunctionsErrorDomain, code: FunctionsErrorCode.notFound.rawValue)) }
-            data["origenTipo"] = "inscripcion"
-            data["origenId"] = id
-            data["cliente_nombre"] = inscripcion.alumno_nombre
-            data["cliente_id"] = inscripcion.alumnoId
+            origenTipo = "inscripcion"
+            origenId = id
+            clienteNombre = inscripcion.alumno_nombre
+            clienteId = inscripcion.alumnoId
         }
-        
+
+        // 2. Extraer campos de `pago` a valores simples
+        let pagoNotas = pago.notas ?? ""
+        let pagoFecha = Formatters.iso8601.string(from: pago.fecha)
+        let pagoDescripcion = pago.descripcion_origen
+        let pagoTipoVenta = pago.tipo_venta.rawValue
+        let pagoMonto = pago.monto
+        let pagoMedio = pago.medio_de_pago.rawValue
+
+        // 3. Armar el array de pagos_split con un for-loop (sin closures: .map con literales
+        //    anidados dispara "sending non-Sendable [String: Any]" en Swift 6 al cruzar el await).
+        var pagosSplitPayload: [[String: Any]] = []
+        if let pagosSplit {
+            for entry in pagosSplit {
+                pagosSplitPayload.append([
+                    "monto": entry.monto,
+                    "medio_de_pago": entry.medioDePago.rawValue,
+                    "categoria_reparto": entry.categoriaReparto.rawValue
+                ])
+            }
+        }
+
+        var data: [String: Any] = [
+            "notas": pagoNotas,
+            "fecha": pagoFecha,
+            "descripcion": pagoDescripcion,
+            "tipo_venta": pagoTipoVenta,
+            "origenTipo": origenTipo,
+            "origenId": origenId,
+            "cliente_nombre": clienteNombre,
+            "cliente_id": clienteId
+        ]
+        if !pagosSplitPayload.isEmpty {
+            data["pagos_split"] = pagosSplitPayload
+        } else {
+            data["monto"] = pagoMonto
+            data["medio_de_pago"] = pagoMedio
+        }
+
         do {
             _ = try await functions.httpsCallable("registrarPago").call(data)
         } catch {

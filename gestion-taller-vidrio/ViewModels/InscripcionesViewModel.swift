@@ -99,16 +99,17 @@ class InscripcionesViewModel: ObservableObject {
         })
     }
 
-    func guardarInscripcionConPago(inscripcion: Inscripcion, montoPago: Double, medioDePago: MedioDePago) {
+    func guardarInscripcionConPago(inscripcion: Inscripcion, montoPago: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]? = nil) {
         taskTracker.track(Task {
             do {
                 let saved = try await tallerRepo.saveInscripcion(inscripcion: inscripcion)
-                guard montoPago > 0 else { return }
+                let montoTotal = pagosSplit?.reduce(0) { $0 + $1.monto } ?? montoPago
+                guard montoTotal > 0 else { return }
                 let origen = Origen.inscripcion(saved)
                 let pago = Pago(
                     fecha: Date(),
-                    monto: montoPago,
-                    medio_de_pago: medioDePago,
+                    monto: montoTotal,
+                    medio_de_pago: pagosSplit?.first?.medioDePago ?? medioDePago,
                     cliente_id: origen.clienteID,
                     cliente_nombre: origen.clienteNombre,
                     tipo_venta: origen.tipoVenta,
@@ -117,7 +118,7 @@ class InscripcionesViewModel: ObservableObject {
                     descripcion_origen: origen.descripcionOrigen,
                     origen_id: origen.id
                 )
-                try await finanzasRepo.registrarPago(pago: pago, origen: origen)
+                try await finanzasRepo.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
             } catch {
                 self.errorMessage = FirestoreManager.mensajeAmigable(error)
             }
@@ -126,7 +127,7 @@ class InscripcionesViewModel: ObservableObject {
 
     func deleteInscripcion(_ inscripcion: Inscripcion) {
         guard inscripcion.monto_abonado == 0 else {
-            errorMessage = "No se puede eliminar la inscripción porque tiene pagos registrados. Eliminá los pagos primero."
+            errorMessage = "No se puede eliminar la inscripción porque tiene pagos registrados (puede incluir un adelanto que no aparece en Caja). Tocá la fila para ver el detalle de pagos y borrarlos primero."
             return
         }
 
@@ -192,9 +193,21 @@ class InscripcionesViewModel: ObservableObject {
         pagosPorInscripcion.removeAll()
     }
 
-    func registrarPago(pago: Pago, origen: Origen) async throws {
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]? = nil) async throws {
         errorMessage = nil
-        try await finanzasRepo.registrarPago(pago: pago, origen: origen)
+        try await finanzasRepo.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
+    }
+
+    /// Borra un pago desde el acordeón de una inscripción (incluye los de categoría "adelanto",
+    /// que no aparecen en la Caja global y por eso necesitan poder borrarse desde acá).
+    func deletePago(_ pago: Pago) {
+        taskTracker.track(Task {
+            do {
+                try await finanzasRepo.deletePago(pago: pago)
+            } catch {
+                self.errorMessage = "No se pudo borrar el pago: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
     }
 
     func moverInscripcion(inscripcionId: String, destinoCronogramaId: String, adoptarPrecio: Bool) async throws {
@@ -233,10 +246,10 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     /// Confirma el pago de una preinscripción. En éxito, el listener la quita sola (pasa a `convertida`).
-    func confirmarPreinscripcion(_ preinscripcion: Preinscripcion, monto: Double, medioDePago: MedioDePago) async throws {
+    func confirmarPreinscripcion(_ preinscripcion: Preinscripcion, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]? = nil) async throws {
         guard let id = preinscripcion.id else { return }
         errorMessage = nil
-        try await tallerRepo.confirmarPreinscripcion(preinscripcionId: id, monto: monto, medioDePago: medioDePago)
+        try await tallerRepo.confirmarPreinscripcion(preinscripcionId: id, monto: monto, medioDePago: medioDePago, pagosSplit: pagosSplit)
     }
 
     /// Descarta una preinscripción (la marca como cancelada).

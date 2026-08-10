@@ -101,7 +101,8 @@ class PagosViewModel: ObservableObject {
             
             switch result {
             case .success(let pagosNuevos):
-                self.pagos = pagosNuevos
+                // Los pagos "adelanto" (cursos de profesor externo) no entran a la caja de la usuaria.
+                self.pagos = pagosNuevos.filter { $0.categoria_reparto != .adelanto }
             case .failure(let error):
                 self.errorMessage = "Error sincronizando pagos: \(FirestoreManager.mensajeAmigable(error))"
             }

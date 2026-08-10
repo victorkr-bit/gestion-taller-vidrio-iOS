@@ -60,13 +60,15 @@ class ChartsViewModel: ObservableObject {
     }
 
     private func calcularFacturacionAnual(pagos: [Pago]) {
+        // Los pagos "adelanto" (cursos de profesor externo) no son caja de la usuaria.
+        let pagosCaja = pagos.filter { $0.categoria_reparto != .adelanto }
         let cal = Calendar.current
         let now = Date()
         facturacionAnual = (0..<13).map { i in
             let date = cal.date(byAdding: .month, value: -i, to: now)!
             let m = cal.component(.month, from: date)
             let a = cal.component(.year, from: date)
-            let total = pagos
+            let total = pagosCaja
                 .filter { cal.component(.month, from: $0.fecha) == m && cal.component(.year, from: $0.fecha) == a }
                 .reduce(0) { $0 + $1.monto }
             return DatoMensual(mes: m, año: a, total: total)
