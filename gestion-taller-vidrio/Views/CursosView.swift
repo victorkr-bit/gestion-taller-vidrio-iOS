@@ -7,11 +7,24 @@ struct CursosView: View {
     init(tallerRepo: any TallerRepositorio) {
         _viewModel = StateObject(wrappedValue: CursosViewModel(repository: tallerRepo))
     }
-    
+
     @State private var cursoToEdit: Curso?
     @State private var isCreatingNew = false
     @State private var cursoToDelete: Curso?
-    
+    @State private var archivadosExpandido = false
+
+    private var cursosActivos: [Curso] {
+        viewModel.cursos.filter { $0.visible_en_agenda ?? true }
+    }
+
+    private var cursosArchivados: [Curso] {
+        viewModel.cursos.filter { $0.visible_en_agenda == false }
+    }
+
+    private func cursos(de tipo: TipoCurso) -> [Curso] {
+        cursosActivos.filter { $0.tipo == tipo }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -19,61 +32,42 @@ struct CursosView: View {
                     ProgressView("Cargando cursos...")
                 } else {
                     List {
-                        ForEach(viewModel.cursos) { curso in
-                            CardView {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Button {
-                                        self.cursoToEdit = curso
-                                    } label: {
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 8) {
-                                                Text(curso.nombre)
-                                                    .font(.headline)
-                                                    .foregroundStyle(Color.primary)
-
-                                                Text(curso.tipo.descripcion)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                    .foregroundStyle(curso.tipo.color)
-                                                    .padding(4)
-                                                    .background(curso.tipo.color.opacity(0.15))
-                                                    .cornerRadius(6)
-                                            }
-
-                                            Spacer()
-
-                                            Text(Formatters.money(curso.precio))
-                                                .font(.title3)
-                                                .fontWeight(.bold)
-                                                .foregroundStyle(Color.accentColor)
+                        ForEach(TipoCurso.allCases) { tipo in
+                            let cursosDelTipo = cursos(de: tipo)
+                            if !cursosDelTipo.isEmpty {
+                                Section(tipo.descripcion) {
+                                    ForEach(cursosDelTipo) { curso in
+                                        CursoRowView(curso: curso, viewModel: viewModel) {
+                                            cursoToEdit = curso
                                         }
-                                    }
-                                    .buttonStyle(.plain)
-
-                                    HStack {
-                                        Text("Visible en agenda")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-
-                                        Spacer()
-
-                                        Toggle("", isOn: Binding(
-                                            get: { curso.visible_en_agenda ?? true },
-                                            set: { _ in viewModel.toggleVisibilidad(curso: curso) }
-                                        ))
-                                        .labelsHidden()
-                                        .toggleStyle(.switch)
-                                        .scaleEffect(0.8, anchor: .trailing)
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                cursoToDelete = curso
+                                            } label: {
+                                                Label("Eliminar", systemImage: "trash")
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            .listRowSeparator(.hidden)
                         }
-                        .onDelete { offsets in
-                        if let index = offsets.first {
-                            cursoToDelete = viewModel.cursos[index]
+
+                        if !cursosArchivados.isEmpty {
+                            DisclosureGroup("Archivados (\(cursosArchivados.count))", isExpanded: $archivadosExpandido) {
+                                ForEach(cursosArchivados) { curso in
+                                    CursoRowView(curso: curso, viewModel: viewModel) {
+                                        cursoToEdit = curso
+                                    }
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            cursoToDelete = curso
+                                        } label: {
+                                            Label("Eliminar", systemImage: "trash")
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -91,7 +85,7 @@ struct CursosView: View {
                     }
                 }
             }
-            
+
             .sheet(isPresented: $isCreatingNew) {
                 NavigationStack {
                     CursoFormView(
@@ -100,7 +94,7 @@ struct CursosView: View {
                     )
                 }
             }
-            
+
             .sheet(item: $cursoToEdit) { curso in
                 NavigationStack {
                     CursoFormView(
@@ -109,7 +103,7 @@ struct CursosView: View {
                     )
                 }
             }
-            
+
             .errorAlert($viewModel.errorMessage)
             .alert("Eliminar Curso", isPresented: Binding<Bool>(
                 get: { cursoToDelete != nil },
