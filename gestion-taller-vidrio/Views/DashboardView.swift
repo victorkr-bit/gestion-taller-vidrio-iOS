@@ -18,8 +18,8 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: DesignSystem.Espaciado.xl) {
-                proximasActividadesSection
                 kpiGrid
+                proximasActividadesSection
                 Spacer(minLength: 50)
             }
             .padding(.vertical)
@@ -116,9 +116,13 @@ struct DashboardView: View {
 
     // MARK: - KPI Grid (Ingresos + A Cobrar / Deuda)
 
+    private var ultimosMesesFacturacion: [DatoMensual] {
+        Array(chartsVM.facturacionAnual.prefix(3).reversed())
+    }
+
     private var kpiGrid: some View {
         VStack(spacing: DesignSystem.Espaciado.s) {
-            HStack(spacing: DesignSystem.Espaciado.l) {
+            HStack(alignment: .top, spacing: DesignSystem.Espaciado.l) {
                 Button { navManager.selectedTab = .pagos } label: {
                     KpiCardView(
                         titulo: "Ingresos",
@@ -130,27 +134,71 @@ struct DashboardView: View {
                 }
                 .buttonStyle(.plain)
 
+                NavigationLink {
+                    FacturacionView(metricasVM: metricasVM, chartsVM: chartsVM, filter: filter)
+                } label: {
+                    facturacionMiniChart
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: DesignSystem.Espaciado.l) {
                 KpiCardView(
                     titulo: "A Cobrar",
                     valor: metricasVM.totalMontoCobrar,
                     icon: "clock.fill",
                     color: DesignSystem.Color.pendiente
                 )
-            }
 
-            NavigationLink {
-                DeudoresView(viewModel: deudoresVM)
-            } label: {
-                KpiCardView(
-                    titulo: "Deuda vencida",
-                    valor: metricasVM.totalDeudaReal,
-                    icon: "exclamationmark.circle.fill",
-                    color: DesignSystem.Color.peligro
-                )
+                NavigationLink {
+                    DeudoresView(viewModel: deudoresVM)
+                } label: {
+                    KpiCardView(
+                        titulo: "Deuda vencida",
+                        valor: metricasVM.totalDeudaReal,
+                        icon: "exclamationmark.circle.fill",
+                        color: DesignSystem.Color.peligro
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal)
+    }
+
+    private var maxFacturacionUltimosMeses: Double {
+        ultimosMesesFacturacion.map(\.total).max() ?? 1
+    }
+
+    private var facturacionMiniChart: some View {
+        Chart(ultimosMesesFacturacion) { dato in
+            BarMark(
+                x: .value("Mes", String(dato.label.prefix(3))),
+                y: .value("Total", dato.total)
+            )
+            .foregroundStyle(dato.esMesActual ? DesignSystem.Color.accion : DesignSystem.Color.accion.opacity(0.5))
+            .cornerRadius(DesignSystem.Radio.grafico)
+            .annotation(position: .top) {
+                if dato.total > 0 {
+                    Text(Formatters.compactMoney(dato.total))
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                }
+            }
+        }
+        .chartYAxis(.hidden)
+        .chartYScale(domain: 0...(maxFacturacionUltimosMeses * 1.35))
+        .chartXAxis {
+            AxisMarks { _ in
+                AxisValueLabel().font(.system(size: 8))
+            }
+        }
+        .padding(DesignSystem.Espaciado.s)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.input))
+        .sombraTarjeta(DesignSystem.Sombra.panel)
     }
 
     // MARK: - Gráfico de Ocupación
