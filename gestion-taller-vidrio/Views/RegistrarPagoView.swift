@@ -29,6 +29,16 @@ struct RegistrarPagoView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    init(
+        origen: Origen,
+        fechaInicial: Date = Date(),
+        onSave: @escaping (Pago, Origen, [PagoSplitEntry]?) async throws -> Void
+    ) {
+        self.origen = origen
+        self.onSave = onSave
+        _fecha = State(initialValue: fechaInicial)
+    }
+
     private var esProfesorExterno: Bool {
         if case .inscripcion(let inscripcion) = origen { return inscripcion.es_profesor_externo == true }
         return false

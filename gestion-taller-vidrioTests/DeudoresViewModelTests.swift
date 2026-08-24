@@ -111,4 +111,33 @@ struct DeudoresViewModelTests {
         let item = await vm.fetchCronogramaItem(id: "c9")
         #expect(item?.id == "c9")
     }
+
+    @Test func registrarPagoDelegaAlRepoYRefrescaLaLista() async throws {
+        let finanzas = FinanzasRepositorioFake()
+        let vm = DeudoresViewModel(finanzasRepository: finanzas, tallerRepository: TallerRepositorioFake())
+        _ = await esperarCondicion { finanzas.fetchDeudoresLlamadas == 1 }
+
+        let pedido = TestFactory.pedido(id: "p1")
+        let pago = TestFactory.pago(origenID: "p1")
+
+        try await vm.registrarPago(pago: pago, origen: .pedido(pedido), pagosSplit: nil)
+
+        #expect(finanzas.registrarPagoLlamadas.count == 1)
+        #expect(finanzas.fetchDeudoresLlamadas == 2)
+    }
+
+    @Test func registrarPagoConErrorNoRefrescaLaLista() async {
+        let finanzas = FinanzasRepositorioFake()
+        let vm = DeudoresViewModel(finanzasRepository: finanzas, tallerRepository: TallerRepositorioFake())
+        _ = await esperarCondicion { finanzas.fetchDeudoresLlamadas == 1 }
+
+        finanzas.errorStub = ErrorDePrueba()
+        let pedido = TestFactory.pedido(id: "p1")
+        let pago = TestFactory.pago(origenID: "p1")
+
+        await #expect(throws: ErrorDePrueba.self) {
+            try await vm.registrarPago(pago: pago, origen: .pedido(pedido), pagosSplit: nil)
+        }
+        #expect(finanzas.fetchDeudoresLlamadas == 1)
+    }
 }

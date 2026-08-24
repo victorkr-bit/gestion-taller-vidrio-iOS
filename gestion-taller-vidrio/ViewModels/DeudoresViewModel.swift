@@ -66,17 +66,28 @@ class DeudoresViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         taskTracker.track(Task {
-            do {
-                self.deudores = try await repository.fetchDeudores()
-                self.isLoading = false
-            } catch {
-                self.errorMessage = "Error al cargar deudores: \(FirestoreManager.mensajeAmigable(error))"
-                self.isLoading = false
-            }
+            await cargarDeudores()
         })
     }
 
     func fetchCronogramaItem(id: String) async -> CronogramaItem? {
         return try? await tallerRepository.fetchCronogramaItem(id: id)
+    }
+
+    func registrarPago(pago: Pago, origen: Origen, pagosSplit: [PagoSplitEntry]?) async throws {
+        try await repository.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
+        isLoading = true
+        errorMessage = nil
+        await cargarDeudores()
+    }
+
+    private func cargarDeudores() async {
+        do {
+            self.deudores = try await repository.fetchDeudores()
+            self.isLoading = false
+        } catch {
+            self.errorMessage = "Error al cargar deudores: \(FirestoreManager.mensajeAmigable(error))"
+            self.isLoading = false
+        }
     }
 }

@@ -5,6 +5,8 @@ struct DeudoresView: View {
     @ObservedObject var viewModel: DeudoresViewModel
     @EnvironmentObject var navigationManager: NavigationManager
 
+    @State private var deudorSeleccionado: DeudorItem?
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -58,6 +60,14 @@ struct DeudoresView: View {
                         }
                         .buttonStyle(.plain)
                         .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                deudorSeleccionado = deudor
+                            } label: {
+                                Label("Registrar pago", systemImage: "dollarsign.circle.fill")
+                            }
+                            .tint(DesignSystem.Color.exito)
+                        }
                     }
                 }
                 .listStyle(.plain)
@@ -106,6 +116,13 @@ struct DeudoresView: View {
         .errorAlert($viewModel.errorMessage)
         .onAppear {
             viewModel.fetchDeudores()
+        }
+        .sheet(item: $deudorSeleccionado) { deudor in
+            NavigationStack {
+                RegistrarPagoView(origen: deudor.origen, fechaInicial: deudor.fecha) { pago, origen, pagosSplit in
+                    try await viewModel.registrarPago(pago: pago, origen: origen, pagosSplit: pagosSplit)
+                }
+            }
         }
     }
 
