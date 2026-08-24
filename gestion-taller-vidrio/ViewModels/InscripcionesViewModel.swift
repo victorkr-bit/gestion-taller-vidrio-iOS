@@ -246,10 +246,12 @@ class InscripcionesViewModel: ObservableObject {
     }
 
     /// Confirma el pago de una preinscripción. En éxito, el listener la quita sola (pasa a `convertida`).
-    func confirmarPreinscripcion(_ preinscripcion: Preinscripcion, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]? = nil) async throws {
+    /// `contactoId`/`forzarContactoNuevo`: resolución manual del contacto elegida por el admin en
+    /// `ConfirmarPreinscripcionView` (ver `ContactoMatching`); si ambos son `nil` el backend matchea automático.
+    func confirmarPreinscripcion(_ preinscripcion: Preinscripcion, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]? = nil, contactoId: String? = nil, forzarContactoNuevo: Bool? = nil) async throws {
         guard let id = preinscripcion.id else { return }
         errorMessage = nil
-        try await tallerRepo.confirmarPreinscripcion(preinscripcionId: id, monto: monto, medioDePago: medioDePago, pagosSplit: pagosSplit)
+        try await tallerRepo.confirmarPreinscripcion(preinscripcionId: id, monto: monto, medioDePago: medioDePago, pagosSplit: pagosSplit, contactoId: contactoId, forzarContactoNuevo: forzarContactoNuevo)
     }
 
     /// Descarta una preinscripción (la marca como cancelada).

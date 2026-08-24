@@ -5,9 +5,11 @@ import SwiftUI
 struct ConfirmarPreinscripcionView: View {
 
     let preinscripcion: Preinscripcion
-    /// Closure de confirmación: monto + medio de pago, o `pagosSplit` (cursos de profesor externo).
-    /// Lanza si el backend rechaza.
-    let onConfirm: (_ monto: Double, _ medio: MedioDePago, _ pagosSplit: [PagoSplitEntry]?) async throws -> Void
+    let contactosRepo: any ContactosRepositorio
+    /// Closure de confirmación: monto + medio de pago, `pagosSplit` (cursos de profesor externo),
+    /// y la resolución manual de contacto (`contactoId`/`forzarContactoNuevo`, ambos `nil` si el
+    /// admin no intervino y el backend debe matchear automático). Lanza si el backend rechaza.
+    let onConfirm: (_ monto: Double, _ medio: MedioDePago, _ pagosSplit: [PagoSplitEntry]?, _ contactoId: String?, _ forzarContactoNuevo: Bool?) async throws -> Void
 
     @Environment(\.dismiss) var dismiss
 
@@ -22,6 +24,15 @@ struct ConfirmarPreinscripcionView: View {
     @State private var adelantoMedio: MedioDePago = .efectivo
     @State private var pagoInput: String = ""
     @State private var pagoMedio: MedioDePago = .efectivo
+
+    // Preview local de contacto (matching normalizado, espejo del backend)
+    @State private var cargandoContactos = true
+    @State private var contactos: [Contacto] = []
+    @State private var matchAutomatico: Contacto?
+    @State private var forzarNuevo = false
+    @State private var contactoManualId = ""
+    @State private var contactoManualNombre = ""
+    @State private var mostrandoSelector = false
 
     @State private var isSaving = false
     @State private var errorMessage: String?
@@ -59,6 +70,76 @@ struct ConfirmarPreinscripcionView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
+            }
+
+            Section("Contacto") {
+                if cargandoContactos {
+                    HStack {
+                        ProgressView()
+                        Text("Buscando contacto...")
+                            .foregroundStyle(.secondary)
+                    }
+                } else if !contactoManualId.isEmpty {
+                    // Elección manual: pisa tanto el match automático como "forzar nuevo".
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label(contactoManualNombre, systemImage: "person.fill.checkmark")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.Color.exito)
+                        HStack(spacing: 16) {
+                            Button("Cambiar") { mostrandoSelector = true }
+                            Button("Quitar selección") {
+                                contactoManualId = ""
+                                contactoManualNombre = ""
+                            }
+                        }
+                        .font(.caption)
+                    }
+                } else if forzarNuevo {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Se creará un contacto nuevo", systemImage: "person.badge.plus")
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 16) {
+                            Button("Deshacer") {
+                                forzarNuevo = false
+                                matchAutomatico = ContactoMatching.encontrarMatch(
+                                    nombre: preinscripcion.nombre,
+                                    apellido: preinscripcion.apellido,
+                                    email: preinscripcion.email,
+                                    telefono: preinscripcion.telefono,
+                                    en: contactos
+                                )
+                            }
+                            Button("Elegir otro contacto") { mostrandoSelector = true }
+                        }
+                        .font(.caption)
+                    }
+                } else if let match = matchAutomatico {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label(match.nombreCompleto, systemImage: "person.fill.checkmark")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(DesignSystem.Color.exito)
+                        if let resumen = match.email?.isEmpty == false ? match.email : match.telefono {
+                            Text(resumen)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        HStack(spacing: 16) {
+                            Button("No es la misma persona") {
+                                forzarNuevo = true
+                                matchAutomatico = nil
+                            }
+                            Button("Elegir otro contacto") { mostrandoSelector = true }
+                        }
+                        .font(.caption)
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Se creará un contacto nuevo", systemImage: "person.badge.plus")
+                            .foregroundStyle(.secondary)
+                        Button("Buscar contacto existente") { mostrandoSelector = true }
+                            .font(.caption)
+                    }
+                }
             }
 
             if esProfesorExterno {
@@ -189,11 +270,43 @@ struct ConfirmarPreinscripcionView: View {
                 montoInput = String(Int(preinscripcion.precio_curso))
             }
         }
+        .task {
+            let listaContactos = (try? await contactosRepo.fetchContactos()) ?? []
+            contactos = listaContactos
+            matchAutomatico = ContactoMatching.encontrarMatch(
+                nombre: preinscripcion.nombre,
+                apellido: preinscripcion.apellido,
+                email: preinscripcion.email,
+                telefono: preinscripcion.telefono,
+                en: listaContactos
+            )
+            cargandoContactos = false
+        }
+        .sheet(isPresented: $mostrandoSelector) {
+            NavigationStack {
+                SelectorContactoView(
+                    contactos: contactos,
+                    selectedID: $contactoManualId,
+                    selectedNombre: $contactoManualNombre
+                )
+            }
+        }
+        .onChange(of: contactoManualId) { _, nuevoId in
+            // Elegir un contacto a mano pisa "forzar nuevo" (payload no puede mandar ambos).
+            if !nuevoId.isEmpty {
+                forzarNuevo = false
+            }
+        }
     }
 
     private func confirmar() {
         isSaving = true
         errorMessage = nil
+
+        // Resolución manual de contacto: solo se manda si el admin intervino (forzó nuevo o
+        // eligió uno distinto a mano). Sin intervención, el backend matchea automático.
+        let contactoId = contactoManualId.isEmpty ? nil : contactoManualId
+        let forzarContactoNuevo = forzarNuevo ? true : nil
 
         Task {
             do {
@@ -205,9 +318,9 @@ struct ConfirmarPreinscripcionView: View {
                     if pagoSplitMonto > 0 {
                         entries.append(PagoSplitEntry(monto: pagoSplitMonto, medioDePago: pagoMedio, categoriaReparto: .pago))
                     }
-                    try await onConfirm(montoTotal, adelantoMedio, entries)
+                    try await onConfirm(montoTotal, adelantoMedio, entries, contactoId, forzarContactoNuevo)
                 } else {
-                    try await onConfirm(monto, medio_de_pago, nil)
+                    try await onConfirm(monto, medio_de_pago, nil, contactoId, forzarContactoNuevo)
                 }
                 dismiss()
             } catch {

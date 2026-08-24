@@ -144,7 +144,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         Task { @MainActor in completion(.success([])) }
         return SuscripcionActiva {}
     }
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {}
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?, contactoId: String?, forzarContactoNuevo: Bool?) async throws {}
     func cancelarPreinscripcion(preinscripcionId: String) async throws {}
 }
 

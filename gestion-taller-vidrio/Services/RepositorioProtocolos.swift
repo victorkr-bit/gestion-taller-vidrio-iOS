@@ -69,7 +69,7 @@ protocol TallerRepositorio: Sendable {
     // Preinscripciones (cursos presenciales)
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
     func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?, contactoId: String?, forzarContactoNuevo: Bool?) async throws
     func cancelarPreinscripcion(preinscripcionId: String) async throws
 }
 
@@ -104,7 +104,7 @@ extension FinanzasRepositorio {
 
 extension TallerRepositorio {
     func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
-        try await confirmarPreinscripcion(preinscripcionId: preinscripcionId, monto: monto, medioDePago: medioDePago, pagosSplit: nil)
+        try await confirmarPreinscripcion(preinscripcionId: preinscripcionId, monto: monto, medioDePago: medioDePago, pagosSplit: nil, contactoId: nil, forzarContactoNuevo: nil)
     }
 }
 

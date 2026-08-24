@@ -143,7 +143,7 @@ final class TallerRepositorioFake: TallerRepositorio {
     private(set) var actualizarVisibilidadCursoLlamadas: [(cursoId: String, visible: Bool)] = []
     private(set) var fetchInscripcionesByAlumnoLlamadas: [String] = []
     private(set) var actualizarCronogramaLlamadas: [(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?)] = []
-    private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago, pagosSplit: [PagoSplitEntry]?)] = []
+    private(set) var confirmarPreinscripcionLlamadas: [(id: String, monto: Double, medio: MedioDePago, pagosSplit: [PagoSplitEntry]?, contactoId: String?, forzarContactoNuevo: Bool?)] = []
     private(set) var cancelarPreinscripcionLlamadas: [String] = []
 
     // Spies de cancelación
@@ -319,9 +319,9 @@ final class TallerRepositorioFake: TallerRepositorio {
         return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripcionesPendientes += 1 }
     }
 
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?, contactoId: String?, forzarContactoNuevo: Bool?) async throws {
         try lanzarSiHayError()
-        confirmarPreinscripcionLlamadas.append((preinscripcionId, monto, medioDePago, pagosSplit))
+        confirmarPreinscripcionLlamadas.append((preinscripcionId, monto, medioDePago, pagosSplit, contactoId, forzarContactoNuevo))
     }
 
     func cancelarPreinscripcion(preinscripcionId: String) async throws {

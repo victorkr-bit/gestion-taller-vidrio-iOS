@@ -443,7 +443,9 @@ final class TallerRepository: TallerRepositorio {
     /// inscripción firme, registra el pago y marca la preinscripción como convertida (transacción atómica).
     /// `pagosSplit` (cursos de profesor externo): 1-2 entradas (adelanto/pago), cada una con su
     /// propio medio de pago — reemplaza monto/medioDePago en el payload.
-    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?) async throws {
+    /// `contactoId`: usa ese contacto existente directamente (elegido a mano), sin matching automático.
+    /// `forzarContactoNuevo`: crea un contacto nuevo sin matchear (el admin confirmó que es otra persona).
+    func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago, pagosSplit: [PagoSplitEntry]?, contactoId: String?, forzarContactoNuevo: Bool?) async throws {
         // for-loop en vez de .map: un closure con literales anidados dispara "sending
         // non-Sendable [String: Any]" en Swift 6 al cruzar el await más abajo.
         var pagosSplitPayload: [[String: Any]] = []
@@ -463,6 +465,12 @@ final class TallerRepository: TallerRepositorio {
         } else {
             data["monto"] = monto
             data["medio_de_pago"] = medioDePago.rawValue
+        }
+        if let contactoId {
+            data["contactoId"] = contactoId
+        }
+        if forzarContactoNuevo == true {
+            data["forzarContactoNuevo"] = true
         }
 
         do {

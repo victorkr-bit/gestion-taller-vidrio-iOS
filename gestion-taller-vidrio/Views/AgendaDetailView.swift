@@ -264,8 +264,9 @@ struct AgendaDetailView: View {
             NavigationStack {
                 ConfirmarPreinscripcionView(
                     preinscripcion: preinscripcion,
-                    onConfirm: { monto, medio, pagosSplit in
-                        try await inscripcionesVM.confirmarPreinscripcion(preinscripcion, monto: monto, medioDePago: medio, pagosSplit: pagosSplit)
+                    contactosRepo: inscripcionesVM.contactosRepo,
+                    onConfirm: { monto, medio, pagosSplit, contactoId, forzarContactoNuevo in
+                        try await inscripcionesVM.confirmarPreinscripcion(preinscripcion, monto: monto, medioDePago: medio, pagosSplit: pagosSplit, contactoId: contactoId, forzarContactoNuevo: forzarContactoNuevo)
                     }
                 )
             }
