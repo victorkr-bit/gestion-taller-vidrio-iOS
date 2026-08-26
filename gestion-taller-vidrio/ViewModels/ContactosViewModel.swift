@@ -23,6 +23,8 @@ class ContactosViewModel: ObservableObject {
         } else {
             return contactos.filter { contacto in
                 contacto.nombreCompleto.localizedCaseInsensitiveContains(searchText)
+                || (contacto.telefono?.localizedCaseInsensitiveContains(searchText) ?? false)
+                || (contacto.email?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
         }
     }
