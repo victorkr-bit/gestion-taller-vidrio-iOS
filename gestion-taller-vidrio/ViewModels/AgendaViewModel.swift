@@ -46,7 +46,26 @@ class AgendaViewModel: ObservableObject {
         var id: String { self.rawValue }
     }
 
+    enum RangoHistorico: String, CaseIterable, Identifiable {
+        case tresMeses = "3 meses"
+        case seisMeses = "6 meses"
+        case unAño = "1 año"
+        case todos = "Todos"
+        var id: String { rawValue }
+
+        var fechaDesde: Date? {
+            let cal = Calendar.current
+            switch self {
+            case .tresMeses: return cal.date(byAdding: .month, value: -3, to: Date())
+            case .seisMeses: return cal.date(byAdding: .month, value: -6, to: Date())
+            case .unAño: return cal.date(byAdding: .year, value: -1, to: Date())
+            case .todos: return nil
+            }
+        }
+    }
+
     @Published var filtroSeleccionado: FiltroCronograma = .proximos
+    @Published var rangoHistorico: RangoHistorico = .tresMeses
 
     var cursosFiltrados: [CronogramaItem] {
         switch filtroSeleccionado {
@@ -118,7 +137,7 @@ class AgendaViewModel: ObservableObject {
         // Fetch de HISTORIAL (One-Shot)
         taskTracker.track(Task {
             do {
-                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
+                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos(desde: rangoHistorico.fechaDesde)
             } catch is CancellationError {
                 // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {
@@ -132,7 +151,22 @@ class AgendaViewModel: ObservableObject {
         // Recarga manual del historial
         taskTracker.track(Task {
             do {
-                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos()
+                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos(desde: rangoHistorico.fechaDesde)
+            } catch is CancellationError {
+                // Tarea cancelada por ciclo de vida — no mostrar al usuario.
+            } catch {
+                self.errorMessage = "Error actualizando historial: \(FirestoreManager.mensajeAmigable(error))"
+            }
+        })
+    }
+
+    /// Cambia el rango de fechas del historial y re-consulta Firestore acotado a ese rango.
+    func cambiarRangoHistorico(_ nuevo: RangoHistorico) {
+        guard nuevo != rangoHistorico else { return }
+        rangoHistorico = nuevo
+        taskTracker.track(Task {
+            do {
+                self.cursosHistoricos = try await tallerRepo.fetchCursosHistoricos(desde: nuevo.fechaDesde)
             } catch is CancellationError {
                 // Tarea cancelada por ciclo de vida — no mostrar al usuario.
             } catch {

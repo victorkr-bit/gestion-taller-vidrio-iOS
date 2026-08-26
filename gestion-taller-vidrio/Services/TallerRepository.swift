@@ -158,15 +158,21 @@ final class TallerRepository: TallerRepositorio {
         return SuscripcionActiva { registration.remove() }
     }
     
-    /// Obtiene los cursos YA REALIZADOS (Pasado).
-    func fetchCursosHistoricos() async throws -> [CronogramaItem] {
+    /// Obtiene los cursos YA REALIZADOS (Pasado). `desde`: cota inferior opcional para acotar el
+    /// query (ahorra lecturas de Firestore); nil trae todo el histórico.
+    func fetchCursosHistoricos(desde: Date?) async throws -> [CronogramaItem] {
         let hoy = Calendar.current.startOfDay(for: Date())
 
-        let snapshot = try await db.collection("cronograma")
+        var query: Query = db.collection("cronograma")
             .whereField("fecha", isLessThan: hoy)
+        if let desde {
+            query = query.whereField("fecha", isGreaterThanOrEqualTo: desde)
+        }
+
+        let snapshot = try await query
             .order(by: "fecha", descending: true)
             .getDocuments()
-            
+
         return snapshot.documents.compactMap { $0.decodeSafely(as: CronogramaItem.self) }
     }
     

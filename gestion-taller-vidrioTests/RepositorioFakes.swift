@@ -240,7 +240,7 @@ final class TallerRepositorioFake: TallerRepositorio {
         return SuscripcionActiva { [weak self] in self?.cancelacionesCronograma += 1 }
     }
 
-    func fetchCursosHistoricos() async throws -> [CronogramaItem] {
+    func fetchCursosHistoricos(desde: Date?) async throws -> [CronogramaItem] {
         try lanzarSiHayError()
         return cronogramaStub
     }

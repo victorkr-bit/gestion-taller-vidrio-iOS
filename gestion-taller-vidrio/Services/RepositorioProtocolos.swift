@@ -51,7 +51,7 @@ protocol TallerRepositorio: Sendable {
     // Cronograma
     func fetchCursosProximos() async throws -> [CronogramaItem]
     func listenToCursosProximos(completion: @escaping (Result<[CronogramaItem], Error>) -> Void) -> SuscripcionActiva
-    func fetchCursosHistoricos() async throws -> [CronogramaItem]
+    func fetchCursosHistoricos(desde: Date?) async throws -> [CronogramaItem]
     func fetchCronogramaItem(id: String) async throws -> CronogramaItem?
     func saveCronogramaItem(item: CronogramaItem) async throws
     func actualizarCronograma(id: String, nuevoPrecio: Double?, nuevaFecha: Date?, nuevasNotas: String?, nuevoCupo: Int?, horaInicio: String?, horaFin: String?) async throws
@@ -106,6 +106,7 @@ extension TallerRepositorio {
     func confirmarPreinscripcion(preinscripcionId: String, monto: Double, medioDePago: MedioDePago) async throws {
         try await confirmarPreinscripcion(preinscripcionId: preinscripcionId, monto: monto, medioDePago: medioDePago, pagosSplit: nil, contactoId: nil, forzarContactoNuevo: nil)
     }
+    func fetchCursosHistoricos() async throws -> [CronogramaItem] { try await fetchCursosHistoricos(desde: nil) }
 }
 
 

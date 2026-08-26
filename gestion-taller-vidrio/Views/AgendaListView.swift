@@ -17,7 +17,31 @@ struct AgendaListView: View {
             } else if agendaVM.cursosFiltrados.isEmpty {
                 ContentUnavailableView("No hay eventos", systemImage: "calendar.badge.exclamationmark")
             } else {
-                List {
+                VStack(spacing: 0) {
+                    if agendaVM.filtroSeleccionado == .historial {
+                        HStack {
+                            Spacer()
+                            Menu {
+                                ForEach(AgendaViewModel.RangoHistorico.allCases) { rango in
+                                    Button {
+                                        agendaVM.cambiarRangoHistorico(rango)
+                                    } label: {
+                                        if agendaVM.rangoHistorico == rango {
+                                            Label(rango.rawValue, systemImage: "checkmark")
+                                        } else {
+                                            Text(rango.rawValue)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(agendaVM.rangoHistorico.rawValue, systemImage: "line.3.horizontal.decrease.circle")
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, DesignSystem.Espaciado.xs)
+                    }
+
+                    List {
                     ForEach(agendaVM.cursosFiltrados) { item in
                         Button {
                             navManager.cronogramaPath.append(item)
@@ -111,6 +135,7 @@ struct AgendaListView: View {
                 }
                 .listStyle(.plain)
                 .refreshable { agendaVM.fetchCronograma() }
+                }
             }
         }
     }

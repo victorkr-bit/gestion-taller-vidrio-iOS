@@ -107,7 +107,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         Task { @MainActor in completion(.success(datos)) }
         return SuscripcionActiva {}
     }
-    func fetchCursosHistoricos() async throws -> [CronogramaItem] { historico }
+    func fetchCursosHistoricos(desde: Date?) async throws -> [CronogramaItem] { historico }
     func fetchCronogramaItem(id: String) async throws -> CronogramaItem? {
         proximos.first { $0.id == id } ?? historico.first { $0.id == id }
     }
