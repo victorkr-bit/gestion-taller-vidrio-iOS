@@ -26,7 +26,7 @@ struct MoverCronogramaView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: DesignSystem.Espaciado.sm) {
+                HStack(spacing: DesignSystem.Espaciado.s) {
                     Image(systemName: "calendar.badge.plus")
                         .foregroundStyle(DesignSystem.Color.accion)
                     Text(item.cursoNombre)

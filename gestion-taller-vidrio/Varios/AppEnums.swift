@@ -1,6 +1,18 @@
 import Foundation
 import SwiftUI
 
+/// Matching case/tilde-insensitive para enums Codable respaldados por String,
+/// usado por TipoVenta/MedioDePago/OrigenTipoPago para tolerar variantes
+/// del backend (ej. "taller" vs "Taller").
+extension RawRepresentable where Self: CaseIterable, RawValue == String {
+    static func foldedMatch(_ raw: String) -> Self? {
+        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        return allCases.first {
+            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
+        }
+    }
+}
+
 // Enum para el tipo de curso [cite: 169]
 enum TipoCurso: String, Codable, CaseIterable, Identifiable {
     case presencial = "presencial"
@@ -103,10 +115,7 @@ enum TipoVenta: String, Codable, CaseIterable, Identifiable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw = try container.decode(String.self)
-        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-        guard let valor = TipoVenta.allCases.first(where: {
-            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
-        }) else {
+        guard let valor = Self.foldedMatch(raw) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "TipoVenta inválido: '\(raw)'")
         }
         self = valor
@@ -153,10 +162,7 @@ enum MedioDePago: String, Codable, CaseIterable, Identifiable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw = try container.decode(String.self)
-        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-        guard let valor = MedioDePago.allCases.first(where: {
-            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
-        }) else {
+        guard let valor = Self.foldedMatch(raw) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "MedioDePago inválido: '\(raw)'")
         }
         self = valor
@@ -175,10 +181,7 @@ enum OrigenTipoPago: String, Codable, CaseIterable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw = try container.decode(String.self)
-        let normalizado = raw.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-        guard let valor = OrigenTipoPago.allCases.first(where: {
-            $0.rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) == normalizado
-        }) else {
+        guard let valor = Self.foldedMatch(raw) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "OrigenTipoPago inválido: '\(raw)'")
         }
         self = valor

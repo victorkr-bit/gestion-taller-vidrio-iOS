@@ -90,7 +90,7 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
                 if !proximaActividadVM.ocupacionesTaller.isEmpty {
-                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
                         Text("Ocupación por hora")
                             .font(.callout)
                             .fontWeight(.bold)
@@ -273,7 +273,7 @@ private struct ProximaActividadCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
             HStack {
                 Text(actividad.cursoTipo.descripcion.uppercased())
                     .font(.caption).fontWeight(.bold)
@@ -323,7 +323,7 @@ struct IngresoBarRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Espaciado.xs) {
             HStack {
-                HStack(spacing: DesignSystem.Espaciado.sm) {
+                HStack(spacing: DesignSystem.Espaciado.s) {
                     RoundedRectangle(cornerRadius: DesignSystem.Radio.indicador)
                         .fill(barColor)
                         .frame(width: 10, height: 10)

@@ -82,7 +82,7 @@ private struct InscripcionHistorialRow: View {
     let inscripcion: Inscripcion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
+        VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
             HStack {
                 Text(inscripcion.cursoNombre)
                     .font(.headline)

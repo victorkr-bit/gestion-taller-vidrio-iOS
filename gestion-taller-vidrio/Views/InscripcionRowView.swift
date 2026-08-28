@@ -46,7 +46,7 @@ struct InscripcionRowView: View {
                 let ocupacion = inscripcionesVM.ocupacionPorInscripcion[inscripcion.id ?? ""] ?? 0
 
                 HStack(alignment: .center, spacing: DesignSystem.Espaciado.m) {
-                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
 
                         // Línea 1: nombre + hora (en la misma línea superior)
                         HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Espaciado.s) {

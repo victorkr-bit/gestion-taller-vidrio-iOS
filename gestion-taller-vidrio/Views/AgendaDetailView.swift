@@ -347,9 +347,9 @@ private struct TallerOcupacionChart: View {
                 }
             }
             .padding(.horizontal, DesignSystem.Espaciado.m)
-            .padding(.bottom, DesignSystem.Espaciado.sm)
+            .padding(.bottom, DesignSystem.Espaciado.s)
         }
-        .padding(.vertical, DesignSystem.Espaciado.sm)
+        .padding(.vertical, DesignSystem.Espaciado.s)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.tarjeta))
         .sombraTarjeta(DesignSystem.Sombra.panel)

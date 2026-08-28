@@ -47,7 +47,7 @@ struct GenericRowView: View {
         HStack(alignment: .top, spacing: DesignSystem.Espaciado.m) {
 
             // --- COLUMNA IZQUIERDA ---
-            VStack(alignment: .leading, spacing: DesignSystem.Espaciado.sm) {
+            VStack(alignment: .leading, spacing: DesignSystem.Espaciado.s) {
                 Text(titulo)
                     .font(.headline)
                     .foregroundStyle(.primary)
