@@ -65,6 +65,12 @@ struct ActividadComercialView: View {
             }
             .padding(.horizontal)
 
+            if let sel = mesRetencionSeleccionado,
+               let dato = datos.first(where: { $0.labelEje == sel }) {
+                RetencionTooltip(label: dato.labelCompleto, nuevos: dato.nuevos, repiten: dato.repiten)
+                    .padding(.horizontal)
+            }
+
             if datos.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity)
@@ -120,11 +126,6 @@ struct ActividadComercialView: View {
                             Circle().fill(DesignSystem.Color.pendiente).frame(width: 8, height: 8)
                             Text("Repiten").font(.caption).foregroundStyle(.secondary)
                         }
-                    }
-
-                    if let sel = mesRetencionSeleccionado,
-                       let dato = datos.first(where: { $0.labelEje == sel }) {
-                        RetencionTooltip(label: dato.labelCompleto, nuevos: dato.nuevos, repiten: dato.repiten)
                     }
                 }
                 .padding()
