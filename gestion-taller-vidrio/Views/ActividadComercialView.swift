@@ -1,6 +1,10 @@
 import SwiftUI
 import Charts
 
+/// Azul-violeta dedicado a la serie "Repiten" — distinto de DesignSystem.Color.pendiente
+/// (token compartido para "pendiente de entrega" en otras vistas, significado no relacionado).
+private let colorRetencionRepite = Color.indigo
+
 struct ActividadComercialView: View {
     @ObservedObject var chartsVM: ChartsViewModel
     @ObservedObject var filter: FilterCoordinator
@@ -65,11 +69,9 @@ struct ActividadComercialView: View {
             }
             .padding(.horizontal)
 
-            if let sel = mesRetencionSeleccionado,
-               let dato = datos.first(where: { $0.labelEje == sel }) {
-                RetencionTooltip(label: dato.labelCompleto, nuevos: dato.nuevos, repiten: dato.repiten)
-                    .padding(.horizontal)
-            }
+            RetencionTooltip(dato: datos.first(where: { $0.labelEje == mesRetencionSeleccionado }))
+                .padding(.horizontal)
+                .animation(.easeInOut(duration: 0.15), value: mesRetencionSeleccionado)
 
             if datos.isEmpty {
                 ProgressView()
@@ -95,7 +97,7 @@ struct ActividadComercialView: View {
                     }
                     .chartForegroundStyleScale([
                         "Nuevos": DesignSystem.Color.exito,
-                        "Repiten": DesignSystem.Color.pendiente
+                        "Repiten": colorRetencionRepite
                     ])
                     .chartLegend(.hidden)
                     .frame(height: 200)
@@ -123,7 +125,7 @@ struct ActividadComercialView: View {
                             Text("Nuevos").font(.caption).foregroundStyle(.secondary)
                         }
                         HStack(spacing: 6) {
-                            Circle().fill(DesignSystem.Color.pendiente).frame(width: 8, height: 8)
+                            Circle().fill(colorRetencionRepite).frame(width: 8, height: 8)
                             Text("Repiten").font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -136,7 +138,6 @@ struct ActividadComercialView: View {
             }
         }
     }
-
 
     // MARK: - Evolución Mensual (12 meses, doble eje Y)
 
@@ -303,25 +304,34 @@ struct ActividadComercialView: View {
     }
 }
 
+/// Slot de altura fija: siempre ocupa el mismo lugar, tenga o no un bimestre seleccionado,
+/// para que tocar una barra nunca mueva el resto del layout (ver DatoBimestral/BimestreCalculator).
 private struct RetencionTooltip: View {
-    let label: String
-    let nuevos: Int
-    let repiten: Int
+    let dato: DatoBimestral?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 5) {
-                Circle().fill(DesignSystem.Color.exito).frame(width: 6, height: 6)
-                Text("Nuevos: \(nuevos)").font(.caption2)
-            }
-            HStack(spacing: 5) {
-                Circle().fill(DesignSystem.Color.pendiente).frame(width: 6, height: 6)
-                Text("Repiten: \(repiten)").font(.caption2)
+        Group {
+            if let dato {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(dato.labelCompleto)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 5) {
+                        Circle().fill(DesignSystem.Color.exito).frame(width: 6, height: 6)
+                        Text("Nuevos: \(dato.nuevos)").font(.caption2)
+                    }
+                    HStack(spacing: 5) {
+                        Circle().fill(colorRetencionRepite).frame(width: 6, height: 6)
+                        Text("Repiten: \(dato.repiten)").font(.caption2)
+                    }
+                }
+            } else {
+                Text("Tocá una barra para ver el detalle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
         .padding(8)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radio.etiqueta))
