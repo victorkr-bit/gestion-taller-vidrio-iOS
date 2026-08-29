@@ -53,23 +53,29 @@ struct ActividadComercialView: View {
         }
     }
 
-    // MARK: - Retención: Nuevos vs. Repiten (12 meses agrupados en 6 bimestres, barras apiladas)
+    // MARK: - Retención: Nuevos vs. Repiten (12 meses, barras apiladas, scrolleable)
 
+    /// El detalle se dispara con `.chartGesture` + `SpatialTapGesture`, NO con `.chartXSelection`:
+    /// esta última es drag-based y compite con el pan de `.chartScrollableAxes` (limitación conocida
+    /// de Swift Charts — con scroll activo la selección mata el scroll). Un tap discreto sí convive
+    /// con el pan, igual que una fila tocable dentro de una lista scrolleable.
     private var retencionSection: some View {
-        let datos = BimestreCalculator.agrupar(chartsVM.retencionAnual).reversed()
+        // Invertido: mes actual a la izquierda; el chart arranca en el borde leading,
+        // así que se ve lo más reciente y se scrollea a la derecha para ir al pasado.
+        let datos = Array(chartsVM.retencionAnual.reversed())
 
         return VStack(alignment: .leading, spacing: DesignSystem.Espaciado.m) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Alumnos Nuevos vs. Repiten (Presencial + Taller)")
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text("Últimos 12 meses (agrupados por bimestre) · un alumno es \"nuevo\" solo la primera vez que se inscribe en cualquier actividad (incluye online, que no aparece en las barras)")
+                Text("Últimos 12 meses · un alumno es \"nuevo\" solo la primera vez que se inscribe en cualquier actividad (incluye online, que no aparece en las barras)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal)
 
-            RetencionTooltip(dato: datos.first(where: { $0.labelEje == mesRetencionSeleccionado }))
+            RetencionTooltip(dato: datos.first(where: { $0.labelCorto == mesRetencionSeleccionado }))
                 .padding(.horizontal)
                 .animation(.easeInOut(duration: 0.15), value: mesRetencionSeleccionado)
 
@@ -82,14 +88,14 @@ struct ActividadComercialView: View {
                     Chart {
                         ForEach(datos) { dato in
                             BarMark(
-                                x: .value("Bimestre", dato.labelEje),
+                                x: .value("Mes", dato.labelCorto),
                                 y: .value("Alumnos", dato.nuevos)
                             )
                             .foregroundStyle(by: .value("Serie", "Nuevos"))
                         }
                         ForEach(datos) { dato in
                             BarMark(
-                                x: .value("Bimestre", dato.labelEje),
+                                x: .value("Mes", dato.labelCorto),
                                 y: .value("Alumnos", dato.repiten)
                             )
                             .foregroundStyle(by: .value("Serie", "Repiten"))
@@ -101,7 +107,14 @@ struct ActividadComercialView: View {
                     ])
                     .chartLegend(.hidden)
                     .frame(height: 200)
-                    .chartXSelection(value: $mesRetencionSeleccionado)
+                    .chartScrollableAxes(.horizontal)
+                    .chartXVisibleDomain(length: 6)
+                    .chartGesture { chart in
+                        SpatialTapGesture().onEnded { v in
+                            let tocado = chart.value(at: v.location, as: (String, Int).self)?.0
+                            mesRetencionSeleccionado = (mesRetencionSeleccionado == tocado) ? nil : tocado
+                        }
+                    }
                     .chartYAxis {
                         AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
                             AxisGridLine().foregroundStyle(.gray.opacity(0.2))
@@ -304,16 +317,16 @@ struct ActividadComercialView: View {
     }
 }
 
-/// Slot de altura fija: siempre ocupa el mismo lugar, tenga o no un bimestre seleccionado,
-/// para que tocar una barra nunca mueva el resto del layout (ver DatoBimestral/BimestreCalculator).
+/// Slot de altura fija: siempre ocupa el mismo lugar, tenga o no un mes seleccionado,
+/// para que tocar una barra nunca mueva el resto del layout.
 private struct RetencionTooltip: View {
-    let dato: DatoBimestral?
+    let dato: DatoMensualRetencion?
 
     var body: some View {
         Group {
             if let dato {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(dato.labelCompleto)
+                    Text(dato.labelCorto)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     HStack(spacing: 5) {
