@@ -47,6 +47,10 @@ struct Inscripcion: Codable, Identifiable {
 struct FechaFlexible: Codable {
     let value: Date?
 
+    init(value: Date?) {
+        self.value = value
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
         if let d = try? c.decode(Date.self)   { value = d; return }

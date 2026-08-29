@@ -135,6 +135,7 @@ final class TallerRepositorioPreview: TallerRepositorio {
         (inscripciones + inscripcionesOnline).filter { $0.alumnoId == alumnoId }
     }
     func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion] { inscripciones }
+    func fetchTodasLasInscripciones() async throws -> [Inscripcion] { inscripciones + inscripcionesOnline }
 
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
         Task { @MainActor in completion(.success([])) }

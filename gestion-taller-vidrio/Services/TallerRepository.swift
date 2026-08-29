@@ -389,6 +389,14 @@ final class TallerRepository: TallerRepositorio {
         return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
     }
 
+    /// Obtiene el historial completo de inscripciones, sin filtro de fecha.
+    /// Necesario para calcular retención (un alumno puede ser "nuevo" o "repite" contra
+    /// toda su vida, no solo la ventana de 12 meses que se grafica).
+    func fetchTodasLasInscripciones() async throws -> [Inscripcion] {
+        let snapshot = try await db.collection("inscripciones").getDocuments()
+        return snapshot.documents.compactMap { $0.decodeSafely(as: Inscripcion.self) }
+    }
+
     // MARK: - Preinscripciones (cursos presenciales)
 
     /// Escucha en tiempo real TODAS las preinscripciones de un cronograma.

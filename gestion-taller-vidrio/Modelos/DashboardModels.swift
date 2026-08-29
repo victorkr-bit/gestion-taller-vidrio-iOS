@@ -79,3 +79,19 @@ struct DatoMensualClases: Identifiable {
         return "\(cal.shortMonthSymbols[mes - 1].capitalized) \(año)"
     }
 }
+
+struct DatoMensualRetencion: Identifiable {
+    var id: String { "\(año)-\(mes)" }
+    let mes: Int
+    let año: Int
+    let nuevos: Int
+    let repiten: Int
+
+    /// Eje X del gráfico: "sep '25"
+    var labelCorto: String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.locale = Locale(identifier: "es_AR")
+        let abrev = cal.shortMonthSymbols[mes - 1].lowercased()
+        return "\(abrev) '\(String(format: "%02d", año % 100))"
+    }
+}

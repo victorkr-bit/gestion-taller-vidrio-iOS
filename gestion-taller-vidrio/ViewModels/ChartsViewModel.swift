@@ -8,6 +8,7 @@ class ChartsViewModel: ObservableObject {
 
     @Published var facturacionAnual: [DatoMensual] = []
     @Published var clasesAnuales: [DatoMensualClases] = []
+    @Published var retencionAnual: [DatoMensualRetencion] = []
     @Published var detalleClases = DetalleClases(taller: nil, presencial: [], online: [])
 
     private var anualListener: SuscripcionActiva?
@@ -25,6 +26,7 @@ class ChartsViewModel: ObservableObject {
 
         listenToFacturacionAnual()
         loadClasesAnuales()
+        loadRetencionAnual()
         loadDetalleClases()
         observeFilter()
     }
@@ -95,6 +97,26 @@ class ChartsViewModel: ObservableObject {
                     }
                     let clases = Set(delMes.compactMap { $0.cronogramaId }).count
                     return DatoMensualClases(mes: m, año: a, clases: clases, alumnos: delMes.count)
+                }
+            } catch { /* fallo silencioso */ }
+        })
+    }
+
+    // MARK: - Retención: nuevos vs. repiten (ventana fija 12 meses, historial completo)
+
+    private func loadRetencionAnual() {
+        taskTracker.track(Task {
+            do {
+                let todas = try await self.tallerRepo.fetchTodasLasInscripciones()
+                let porMes = RetencionCalculator.porMes(inscripciones: todas)
+                let cal = Calendar.current
+                self.retencionAnual = (0..<12).map { i in
+                    let mesDate = cal.date(byAdding: .month, value: -(11 - i), to: MesAño.current().fechaInicio)!
+                    let m = cal.component(.month, from: mesDate)
+                    let a = cal.component(.year, from: mesDate)
+                    let clave = String(format: "%04d-%02d", a, m)
+                    let dato = porMes[clave]
+                    return DatoMensualRetencion(mes: m, año: a, nuevos: dato?.nuevos ?? 0, repiten: dato?.repiten ?? 0)
                 }
             } catch { /* fallo silencioso */ }
         })
