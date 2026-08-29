@@ -66,6 +66,7 @@ protocol TallerRepositorio: Sendable {
     func deleteInscripcion(inscripcion: Inscripcion) async throws
     func fetchInscripcionesByAlumno(alumnoId: String) async throws -> [Inscripcion]
     func fetchInscripcionesPorFecha(from: Date, to: Date) async throws -> [Inscripcion]
+    func fetchTodasLasInscripciones() async throws -> [Inscripcion]
     // Preinscripciones (cursos presenciales)
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva
     func listenToPreinscripcionesPendientes(completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva

@@ -309,6 +309,11 @@ final class TallerRepositorioFake: TallerRepositorio {
         return inscripcionesStub
     }
 
+    func fetchTodasLasInscripciones() async throws -> [Inscripcion] {
+        try lanzarSiHayError()
+        return inscripcionesStub
+    }
+
     func listenToPreinscripciones(cronogramaID: String, completion: @escaping (Result<[Preinscripcion], Error>) -> Void) -> SuscripcionActiva {
         preinscripcionesCompletions[cronogramaID] = completion
         return SuscripcionActiva { [weak self] in self?.cancelacionesPreinscripciones[cronogramaID, default: 0] += 1 }

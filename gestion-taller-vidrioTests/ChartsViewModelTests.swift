@@ -91,6 +91,25 @@ struct ChartsViewModelTests {
         #expect(actual?.alumnos == 3)
     }
 
+    @Test func retencionAnualCuentaNuevosYRepitenPorMes() async {
+        let taller = TallerRepositorioFake()
+        let esteMes = Date()
+        taller.inscripcionesStub = [
+            TestFactory.inscripcion(id: "i1", alumnoId: "a1", cursoTipo: .presencial, fechaCurso: esteMes),
+            TestFactory.inscripcion(id: "i2", alumnoId: "a2", cursoTipo: .taller, fechaCurso: esteMes),
+            TestFactory.inscripcion(id: "i3", alumnoId: "a1", cursoTipo: .taller, fechaCurso: esteMes)
+        ]
+        let vm = ChartsViewModel(finanzasRepo: FinanzasRepositorioFake(), tallerRepo: taller, filter: FilterCoordinator())
+
+        let cargado = await esperarCondicion { vm.retencionAnual.contains { $0.nuevos > 0 || $0.repiten > 0 } }
+        #expect(cargado)
+        #expect(vm.retencionAnual.count == 12)
+
+        let actual = vm.retencionAnual.last
+        #expect(actual?.nuevos == 2) // a1 y a2 primera vez
+        #expect(actual?.repiten == 1) // a1 de nuevo
+    }
+
     @Test func cambioDeFiltroRecargaDetalleDelPeriodo() async {
         let taller = TallerRepositorioFake()
         let filter = FilterCoordinator()
