@@ -334,7 +334,7 @@ private struct TallerOcupacionChart: View {
             }
             .frame(height: 120)
             .chartYAxis(.hidden)
-            .chartYScale(domain: 0...5)
+            .chartYScale(domain: 0...max(5, (datos.map(\.cantidad).max() ?? 0) + 1))
             .chartXAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisValueLabel {
