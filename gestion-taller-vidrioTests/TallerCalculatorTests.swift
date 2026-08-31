@@ -58,57 +58,73 @@ struct OcupacionPorAlumnoTests {
     }
 }
 
-@Suite("TallerCalculator — ocupación por hora")
+@Suite("TallerCalculator — ocupación por hora leída de slot_ocupacion")
 struct OcupacionPorHoraTests {
 
-    @Test func sinInscripcionesDevuelveRangoFijoEnCero() {
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [])
-        #expect(resultado.count == 9)
+    @Test func sinSlotOcupacionDevuelveElHorarioDelTallerEnCero() {
+        let item = TestFactory.cronogramaItem(horaInicio: "13:00", horaFin: "21:00")
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
         #expect(resultado.map(\.hora) == Array(13...21))
         #expect(resultado.allSatisfy { $0.cantidad == 0 })
     }
 
-    @Test func inscripcionDeDosTurnosOcupaDosHoras() {
-        let i = TestFactory.inscripcion(horario: "14:00", turnos: 2)
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [i])
-        let porHora = Dictionary(uniqueKeysWithValues: resultado.map { ($0.hora, $0.cantidad) })
-        #expect(porHora[14] == 1)
-        #expect(porHora[15] == 1)
-        #expect(porHora[13] == 0)
-        #expect(porHora[16] == 0)
-    }
-
-    @Test func inicioConMinutosExtraOcupaHoraAdicional() {
-        // 14:30 con 1 turno → llega hasta 15:30 → afecta las horas 14 y 15.
-        let i = TestFactory.inscripcion(horario: "14:30", turnos: 1)
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [i])
-        let porHora = Dictionary(uniqueKeysWithValues: resultado.map { ($0.hora, $0.cantidad) })
-        #expect(porHora[14] == 1)
-        #expect(porHora[15] == 1)
-        #expect(porHora[16] == 0)
-    }
-
-    @Test func turnosNilCuentaComoUnTurno() {
-        let i = TestFactory.inscripcion(horario: "14:00", turnos: nil)
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [i])
-        let porHora = Dictionary(uniqueKeysWithValues: resultado.map { ($0.hora, $0.cantidad) })
-        #expect(porHora[14] == 1)
-        #expect(porHora[15] == 0)
-    }
-
-    @Test func horarioFueraDelRangoFijoNoApareceEnResultado() {
-        let i = TestFactory.inscripcion(horario: "10:00", turnos: 1)
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [i])
+    @Test func sinHorarioUsaElRangoPorDefecto() {
+        let item = TestFactory.cronogramaItem(slotOcupacion: ["14": 2])
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
         #expect(resultado.map(\.hora) == Array(13...21))
-        #expect(resultado.allSatisfy { $0.cantidad == 0 })
+        #expect(resultado.first { $0.hora == 14 }?.cantidad == 2)
     }
 
-    @Test func variasInscripcionesSeAcumulan() {
-        let i1 = TestFactory.inscripcion(horario: "14:00", turnos: 2)
-        let i2 = TestFactory.inscripcion(horario: "15:00", turnos: 1)
-        let resultado = TallerCalculator.calcularOcupacionPorHora(para: [i1, i2])
+    @Test func leeLasClavesConCeroAdelante() {
+        // El backend escribe las horas padeadas a dos dígitos: "09", no "9".
+        let item = TestFactory.cronogramaItem(
+            horaInicio: "09:00",
+            horaFin: "12:00",
+            slotOcupacion: ["09": 3, "10": 1]
+        )
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
         let porHora = Dictionary(uniqueKeysWithValues: resultado.map { ($0.hora, $0.cantidad) })
-        #expect(porHora[14] == 1)
-        #expect(porHora[15] == 2)
+        #expect(porHora[9] == 3)
+        #expect(porHora[10] == 1)
+        #expect(porHora[11] == 0)
+    }
+
+    @Test func elRangoSeEnsanchaSiHaySlotsFueraDelHorario() {
+        // Alguien quedó agendado a las 22 en un taller que cierra a las 21.
+        let item = TestFactory.cronogramaItem(
+            horaInicio: "13:00",
+            horaFin: "21:00",
+            slotOcupacion: ["22": 1]
+        )
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
+        #expect(resultado.map(\.hora) == Array(13...22))
+        #expect(resultado.last?.cantidad == 1)
+    }
+
+    @Test func elRangoSeEnsanchaHaciaAtras() {
+        let item = TestFactory.cronogramaItem(
+            horaInicio: "13:00",
+            horaFin: "21:00",
+            slotOcupacion: ["11": 2]
+        )
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
+        #expect(resultado.map(\.hora) == Array(11...21))
+        #expect(resultado.first?.cantidad == 2)
+    }
+
+    @Test func clavesInvalidasNoRompenElRango() {
+        let item = TestFactory.cronogramaItem(
+            horaInicio: "13:00",
+            horaFin: "21:00",
+            slotOcupacion: ["basura": 5, "15": 1]
+        )
+        let resultado = TallerCalculator.ocupacionPorHora(de: item)
+        #expect(resultado.map(\.hora) == Array(13...21))
+        #expect(resultado.first { $0.hora == 15 }?.cantidad == 1)
+    }
+
+    @Test func horarioInvertidoDevuelveVacioEnVezDeRomper() {
+        let item = TestFactory.cronogramaItem(horaInicio: "21:00", horaFin: "13:00")
+        #expect(TallerCalculator.ocupacionPorHora(de: item).isEmpty)
     }
 }

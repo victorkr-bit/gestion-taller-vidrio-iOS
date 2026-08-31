@@ -11,8 +11,8 @@ struct AgendaFormView: View {
     @State private var selectedCursoID: String = ""
     @State private var fecha: Date = .now
     @State private var cupoInput: String = ""
-    @State private var horaInicio: String = "09:00"
-    @State private var horaFin: String = "18:00"
+    @State private var horaInicio: String = "13:00"
+    @State private var horaFin: String = "21:00"
 
     private static let horasDisponibles: [String] = (0..<24).map { String(format: "%02d:00", $0) }
 

@@ -46,40 +46,44 @@ struct TallerCalculator {
         return ocupacion
     }
 
-    // MARK: - Cálculo de Ocupación por Hora (Rango Fijo 13–21)
+    // MARK: - Ocupación por Hora (la mantiene el backend)
+
+    /// Horario por defecto del taller, para docs viejos sin `hora_inicio`/`hora_fin`.
+    private static let aperturaPorDefecto = 13
+    private static let cierrePorDefecto = 21
 
     /**
-     * Calcula la ocupación total por hora para un conjunto de inscripciones.
-     * Se usa en `ProximaActividadViewModel` para el gráfico de barras.
-     * Siempre devuelve las 9 horas del rango fijo, aunque la ocupación sea 0.
+     * Lee la ocupación por hora que el backend guarda en `cronograma.slot_ocupacion`.
+     * La escribe el trigger `onInscripcionContador` (repo web) ante cualquier alta, baja
+     * o edición de inscripción, así que es la misma cuenta que usa el link público para
+     * bloquear los horarios llenos.
+     *
+     * El rango sale del horario del propio taller; se ensancha si hay slots fuera de esa
+     * ventana para no esconder a nadie que haya quedado agendado fuera de hora.
      */
-    static func calcularOcupacionPorHora(para inscripciones: [Inscripcion]) -> [OcupacionHoraDato] {
-        let rangoFijo = 13...21
+    static func ocupacionPorHora(de item: CronogramaItem) -> [OcupacionHoraDato] {
+        let slots = item.slot_ocupacion ?? [:]
+        let horasConDatos = slots.keys.compactMap(Int.init)
 
-        // 1. Inicializar cubetas en 0 para el rango fijo
-        var ocupacionPorHora: [Int: Int] = [:]
-        for hora in rangoFijo {
-            ocupacionPorHora[hora] = 0
+        let apertura = hora(de: item.hora_inicio) ?? aperturaPorDefecto
+        let cierre = hora(de: item.hora_fin) ?? cierrePorDefecto
+
+        let desde = min(apertura, horasConDatos.min() ?? apertura)
+        let hasta = max(cierre, horasConDatos.max() ?? cierre)
+        guard desde <= hasta else { return [] }
+
+        return (desde...hasta).map { hora in
+            OcupacionHoraDato(
+                hora: hora,
+                horaString: "\(hora)",
+                cantidad: slots[String(format: "%02d", hora)] ?? 0
+            )
         }
+    }
 
-        // 2. Procesar inscripciones
-        for inscripcion in inscripciones {
-            guard let inicioMinutos = minutosDesdeMedianoche(from: inscripcion.horario_inicio) else { continue }
-            let horaInicio = inicioMinutos / 60
-            let cantidadTurnos = inscripcion.turnos ?? 1
-            let minutosExtra = inicioMinutos % 60
-            let horasAfectadas = minutosExtra > 0 ? cantidadTurnos + 1 : cantidadTurnos
-
-            for i in 0..<horasAfectadas {
-                let horaAfectada = horaInicio + i
-                ocupacionPorHora[horaAfectada, default: 0] += 1
-            }
-        }
-
-        // 3. Convertir a Array ordenado para el gráfico
-        return rangoFijo.map { hora in
-            OcupacionHoraDato(hora: hora, horaString: "\(hora)", cantidad: ocupacionPorHora[hora] ?? 0)
-        }
+    /// "13:00" → 13
+    private static func hora(de hhmm: String?) -> Int? {
+        minutosDesdeMedianoche(from: hhmm).map { $0 / 60 }
     }
 
     /**
