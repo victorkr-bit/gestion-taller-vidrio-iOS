@@ -11,8 +11,8 @@ struct EditarAgendaView: View {
     @State private var fecha: Date = .now
     @State private var notas: String = ""
     @State private var cupoInput: String = ""
-    @State private var horaInicio: String = "09:00"
-    @State private var horaFin: String = "18:00"
+    @State private var horaInicio: String = "13:00"
+    @State private var horaFin: String = "21:00"
     @State private var isSaving = false
 
     private static let horasDisponibles: [String] = (0..<24).map { String(format: "%02d:00", $0) }
@@ -34,8 +34,8 @@ struct EditarAgendaView: View {
 
     private var horarioCambio: Bool {
         guard cronogramaItem.cursoTipo == .taller else { return false }
-        return horaInicio != (cronogramaItem.hora_inicio ?? "09:00") ||
-               horaFin != (cronogramaItem.hora_fin ?? "18:00")
+        return horaInicio != (cronogramaItem.hora_inicio ?? "13:00") ||
+               horaFin != (cronogramaItem.hora_fin ?? "21:00")
     }
 
     private var horarioValido: Bool {
@@ -172,8 +172,8 @@ struct EditarAgendaView: View {
             fecha = cronogramaItem.fecha
             notas = cronogramaItem.notas ?? ""
             cupoInput = cronogramaItem.cupo_maximo.map(String.init) ?? ""
-            horaInicio = cronogramaItem.hora_inicio ?? "09:00"
-            horaFin = cronogramaItem.hora_fin ?? "18:00"
+            horaInicio = cronogramaItem.hora_inicio ?? "13:00"
+            horaFin = cronogramaItem.hora_fin ?? "21:00"
         }
     }
 
@@ -187,8 +187,8 @@ struct EditarAgendaView: View {
         let nuevasNotas: String? = notas != (cronogramaItem.notas ?? "") ? notas : nil
         // nil = sin cambio; 0 = borrar (backend FieldValue.delete()); >0 = setear.
         let nuevoCupo: Int? = cupoCambio ? (cupoIngresado ?? 0) : nil
-        let nuevoHoraInicio: String? = (cronogramaItem.cursoTipo == .taller && horaInicio != (cronogramaItem.hora_inicio ?? "09:00")) ? horaInicio : nil
-        let nuevoHoraFin: String? = (cronogramaItem.cursoTipo == .taller && horaFin != (cronogramaItem.hora_fin ?? "18:00")) ? horaFin : nil
+        let nuevoHoraInicio: String? = (cronogramaItem.cursoTipo == .taller && horaInicio != (cronogramaItem.hora_inicio ?? "13:00")) ? horaInicio : nil
+        let nuevoHoraFin: String? = (cronogramaItem.cursoTipo == .taller && horaFin != (cronogramaItem.hora_fin ?? "21:00")) ? horaFin : nil
 
         isSaving = true
 

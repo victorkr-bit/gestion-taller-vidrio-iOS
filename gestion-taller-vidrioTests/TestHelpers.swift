@@ -134,7 +134,10 @@ enum TestFactory {
         cursoTipo: TipoCurso = .taller,
         fecha: Date = Date(timeIntervalSince1970: 1_750_000_000),
         inscriptos: Int? = nil,
-        cupo: Int? = nil
+        cupo: Int? = nil,
+        horaInicio: String? = nil,
+        horaFin: String? = nil,
+        slotOcupacion: [String: Int]? = nil
     ) -> CronogramaItem {
         CronogramaItem(
             id: id,
@@ -145,7 +148,10 @@ enum TestFactory {
             fecha: fecha,
             cant_inscriptos: inscriptos,
             cupo_maximo: cupo,
-            notas: nil
+            notas: nil,
+            hora_inicio: horaInicio,
+            hora_fin: horaFin,
+            slot_ocupacion: slotOcupacion
         )
     }
 

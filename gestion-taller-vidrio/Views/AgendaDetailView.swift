@@ -30,7 +30,7 @@ struct AgendaDetailView: View {
     var totalPago: Double { inscripcionesVM.inscripciones.reduce(0) { $0 + ($1.total_pago ?? 0) } }
 
     private var datosOcupacion: [OcupacionHoraDato] {
-        TallerCalculator.calcularOcupacionPorHora(para: inscripcionesVM.inscripciones)
+        TallerCalculator.ocupacionPorHora(de: displayItem)
     }
 
     var inscripcionesOrdenadas: [Inscripcion] {

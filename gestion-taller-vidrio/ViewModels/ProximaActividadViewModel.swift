@@ -11,8 +11,6 @@ class ProximaActividadViewModel: ObservableObject {
     @Published var ocupacionesTaller: [OcupacionTallerItem] = []
 
     private var cronogramaListener: SuscripcionActiva?
-    private var inscripcionListeners: [String: SuscripcionActiva] = [:]
-    private var currentTalleres: [String: CronogramaItem] = [:]
 
     private let tallerRepo: any TallerRepositorio
 
@@ -23,7 +21,6 @@ class ProximaActividadViewModel: ObservableObject {
 
     isolated deinit {
         cronogramaListener?.remove()
-        inscripcionListeners.values.forEach { $0.remove() }
     }
 
     private func listenToProximaClase() {
@@ -35,69 +32,27 @@ class ProximaActividadViewModel: ObservableObject {
 
             switch result {
             case .success(let proximos):
-                self.proximasClases = Array(proximos.prefix(2))
+                let visibles = Array(proximos.prefix(2))
+                self.proximasClases = visibles
 
-                let talleres = proximos.prefix(2).filter { $0.cursoTipo == .taller }
-                let tallerIDs = Set(talleres.compactMap { $0.id })
-                self.ocupacionesTaller.removeAll { !tallerIDs.contains($0.id) }
-
-                self.currentTalleres = [:]
-                for t in talleres { if let id = t.id { self.currentTalleres[id] = t } }
-
-                for (idx, item) in self.ocupacionesTaller.enumerated() {
-                    if let taller = self.currentTalleres[item.id] {
-                        let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
-                        if item.titulo != titulo {
-                            self.ocupacionesTaller[idx] = OcupacionTallerItem(id: item.id, titulo: titulo, datos: item.datos)
-                        }
+                // La ocupación por hora la mantiene el backend en `slot_ocupacion`, así que
+                // viene en el mismo doc de cronograma: no hace falta escuchar inscripciones.
+                self.ocupacionesTaller = visibles
+                    .filter { $0.cursoTipo == .taller }
+                    .compactMap { taller in
+                        guard let id = taller.id else { return nil }
+                        return OcupacionTallerItem(
+                            id: id,
+                            titulo: "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))",
+                            datos: TallerCalculator.ocupacionPorHora(de: taller)
+                        )
                     }
-                }
-
-                if talleres.isEmpty {
-                    self.cleanupInscripcionListeners(keepIDs: [])
-                } else {
-                    for taller in talleres {
-                        guard let id = taller.id else { continue }
-                        if self.inscripcionListeners[id] == nil {
-                            self.setupInscripcionListener(for: id)
-                        }
-                    }
-                    self.cleanupInscripcionListeners(keepIDs: tallerIDs)
-                }
                 self.isLoading = false
 
             case .failure(let error):
                 self.errorMessage = "Error sincronizando agenda: \(FirestoreManager.mensajeAmigable(error))"
                 self.isLoading = false
             }
-        }
-    }
-
-    private func setupInscripcionListener(for cronogramaID: String) {
-        inscripcionListeners[cronogramaID] = tallerRepo.listenToInscripciones(cronogramaID: cronogramaID) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let inscripciones):
-                guard let taller = self.currentTalleres[cronogramaID] else { return }
-                let titulo = "\(taller.cursoNombre) · \(Formatters.date(taller.fecha))"
-                let datos = TallerCalculator.calcularOcupacionPorHora(para: inscripciones)
-                let item = OcupacionTallerItem(id: cronogramaID, titulo: titulo, datos: datos)
-                if let idx = self.ocupacionesTaller.firstIndex(where: { $0.id == cronogramaID }) {
-                    self.ocupacionesTaller[idx] = item
-                } else {
-                    self.ocupacionesTaller.append(item)
-                }
-            case .failure(let error):
-                self.errorMessage = "Error calculando ocupación: \(FirestoreManager.mensajeAmigable(error))"
-                self.ocupacionesTaller.removeAll { $0.id == cronogramaID }
-            }
-        }
-    }
-
-    private func cleanupInscripcionListeners(keepIDs: Set<String>) {
-        for (id, listener) in inscripcionListeners where !keepIDs.contains(id) {
-            listener.remove()
-            inscripcionListeners.removeValue(forKey: id)
         }
     }
 }
